@@ -88,29 +88,29 @@ const AdminDashboard = () => {
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
       <div className="flex-grow">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex gap-8">
+        <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
             <AdminSidebar />
             
-            <div className="flex-grow">
+            <div className="flex-grow min-w-0">
               {/* Breadcrumbs */}
               <Breadcrumbs />
               
               {/* Welcome Header */}
-              <div className="mb-10 animate-fade-in">
-                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-2xl p-8 text-primary-foreground shadow-lg">
-                  <h1 className="text-4xl font-bold mb-2">Dashboard</h1>
-                  <p className="text-primary-foreground/90 text-lg">Welcome back, <span className="font-semibold">{userProfile?.email?.split('@')[0]}</span></p>
-                  <p className="text-primary-foreground/70 mt-1 text-sm">Here's what's happening with your business today</p>
+              <div className="mb-6 sm:mb-8 lg:mb-10 animate-fade-in">
+                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-primary-foreground shadow-lg">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Dashboard</h1>
+                  <p className="text-primary-foreground/90 text-base sm:text-lg">Welcome back, <span className="font-semibold">{userProfile?.email?.split('@')[0]}</span></p>
+                  <p className="text-primary-foreground/70 mt-1 text-xs sm:text-sm">Here's what's happening with your business today</p>
                 </div>
               </div>
 
               {/* Main Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8 lg:mb-10">
                 {/* Total Users Card */}
                 <Link 
                   to="/admin/users"
-                  className="group bg-card rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
+                  className="group bg-card rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-4 sm:p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
                 {/* Active Partners Card */}
                 <Link 
                   to="/admin/partners"
-                  className="group bg-card rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
+                  className="group bg-card rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-4 sm:p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
@@ -146,7 +146,7 @@ const AdminDashboard = () => {
                 {/* Total Orders Card */}
                 <Link 
                   to="/admin/orders"
-                  className="group bg-card rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
+                  className="group bg-card rounded-xl sm:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-4 sm:p-6 border border-border hover:border-primary animate-fade-in hover:scale-105 transform"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 p-3 rounded-xl group-hover:scale-110 transition-transform">
@@ -174,9 +174,9 @@ const AdminDashboard = () => {
               </div>
 
               {/* Content Grid */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8 mb-6 sm:mb-8 lg:mb-10">
                 {/* Recent Orders */}
-                <div className="lg:col-span-2 bg-card rounded-2xl shadow-md border border-border overflow-hidden hover:shadow-lg transition-shadow animate-fade-in">
+                <div className="xl:col-span-2 bg-card rounded-xl sm:rounded-2xl shadow-md border border-border overflow-hidden hover:shadow-lg transition-shadow animate-fade-in">
                   <div className="p-6 border-b border-border bg-gradient-to-r from-card to-card/50 flex justify-between items-center">
                     <div className="flex items-center gap-3">
                       <Package className="w-5 h-5 text-primary" />
