@@ -376,23 +376,23 @@ export default function Manufacturers() {
           </div>
 
           {/* Search and Filters */}
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-8">
+          <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 items-start lg:items-center justify-between mb-6 sm:mb-8">
             {/* Search */}
-            <div className="relative flex-1 max-w-md w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <div className="relative flex-1 max-w-full w-full lg:max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <Input
                 type="text"
                 placeholder="Search shops by name, location, or owner..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-11 pl-10 pr-4 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-shadow"
+                className="w-full h-10 sm:h-11 pl-9 sm:pl-10 pr-4 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-shadow text-sm sm:text-base"
               />
             </div>
 
             {/* Filters */}
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -467,14 +467,14 @@ export default function Manufacturers() {
           ) : filteredShops.length === 0 ? (
             <div className="text-center py-12">
               <div className="max-w-md mx-auto">
-                <Store className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No shops found</h3>
-                <p className="text-muted-foreground">
+                <Store className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-base sm:text-lg font-semibold mb-2">No shops found</h3>
+                <p className="text-muted-foreground text-sm sm:text-base">
                   Try adjusting your search terms or filters to find shops.
                 </p>
                 <Button 
                   variant="outline" 
-                  className="mt-4"
+                  className="mt-4 w-full sm:w-auto"
                   onClick={() => {
                     setSearchTerm("");
                     setCategoryFilter("all");
@@ -486,9 +486,9 @@ export default function Manufacturers() {
               </div>
             </div>
           ) : (
-            <div className={`grid gap-6 ${
+            <div className={`grid gap-4 sm:gap-6 ${
               viewMode === "grid" 
-                ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" 
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
                 : "grid-cols-1"
             }`}>
               {filteredShops.map((shop) => (

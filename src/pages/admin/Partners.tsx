@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabase/client';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
-import { Search, Store, MapPin, DollarSign, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Eye, Check, X, Clock } from 'lucide-react';
+import { Search, Store, MapPin, DollarSign, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Eye, Check, X, Clock, Power, PowerOff, Star, Edit, Save } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -19,6 +19,8 @@ interface Partner {
   partner_status: string;
   is_active: boolean;
   total_earnings: number;
+  store_visits: number;
+  rating: number;
   created_at: string;
   users: {
     email: string;
@@ -37,6 +39,11 @@ export default function AdminPartners() {
   const [filterActive, setFilterActive] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    store_visits: 0,
+    rating: 0
+  });
 
   useEffect(() => {
     // Redirect if not admin
@@ -107,6 +114,51 @@ export default function AdminPartners() {
     }
   };
 
+  const togglePartnerActiveStatus = async (partnerId: string, currentStatus: boolean) => {
+    const newStatus = currentStatus ? 'approved' : 'suspended';
+    await updatePartnerStatus(partnerId, newStatus);
+  };
+
+  const updateStoreVisits = async (partnerId: string, visits: number) => {
+    try {
+      const { error } = await supabase
+        .from('partner_profiles')
+        .update({ 
+          store_visits: visits,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', partnerId);
+
+      if (error) throw error;
+      
+      loadPartners();
+      alert(`Store visits updated to ${visits}`);
+    } catch (error) {
+      console.error('Error updating store visits:', error);
+      alert('Failed to update store visits');
+    }
+  };
+
+  const updatePartnerRating = async (partnerId: string, rating: number) => {
+    try {
+      const { error } = await supabase
+        .from('partner_profiles')
+        .update({ 
+          rating: rating,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', partnerId);
+
+      if (error) throw error;
+      
+      loadPartners();
+      alert(`Partner rating updated to ${rating}`);
+    } catch (error) {
+      console.error('Error updating partner rating:', error);
+      alert('Failed to update partner rating');
+    }
+  };
+
   const filteredPartners = partners.filter(partner => {
     const matchesSearch = 
       partner.store_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -135,6 +187,15 @@ export default function AdminPartners() {
   const openPartnerDetails = (partner: Partner) => {
     setSelectedPartner(partner);
     setShowModal(true);
+  };
+
+  const openEditModal = (partner: Partner) => {
+    setSelectedPartner(partner);
+    setEditForm({
+      store_visits: partner.store_visits || 0,
+      rating: partner.rating || 0
+    });
+    setShowEditModal(true);
   };
 
   return (
@@ -275,6 +336,8 @@ export default function AdminPartners() {
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Visits</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Rating</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Earnings</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Actions</th>
                         </tr>
@@ -323,10 +386,35 @@ export default function AdminPartners() {
                               </span>
                             </td>
                             <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium text-foreground">{partner.store_visits || 0}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <Star className="w-4 h-4 text-yellow-500" />
+                                <span className="text-sm font-medium text-foreground">{partner.rating || 0}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
                               <p className="text-sm font-bold text-primary">${(partner.total_earnings || 0).toLocaleString()}</p>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => togglePartnerActiveStatus(partner.id, partner.is_active)}
+                                  title={partner.is_active ? 'Deactivate Store' : 'Activate Store'}
+                                  className={`p-2 rounded-lg transition-all flex items-center gap-2 ${
+                                    partner.is_active 
+                                      ? 'bg-red-100 hover:bg-red-200 text-red-600' 
+                                      : 'bg-green-100 hover:bg-green-200 text-green-600'
+                                  }`}
+                                >
+                                  {partner.is_active ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                                  <span className="text-sm font-medium">
+                                    {partner.is_active ? 'Deactivate' : 'Activate'}
+                                  </span>
+                                </button>
                                 <button
                                   onClick={() => openPartnerDetails(partner)}
                                   title="View details"
@@ -334,24 +422,13 @@ export default function AdminPartners() {
                                 >
                                   <Eye className="w-4 h-4" />
                                 </button>
-                                {partner.partner_status === 'pending' && (
-                                  <>
-                                    <button
-                                      onClick={() => updatePartnerStatus(partner.id, 'approved')}
-                                      title="Approve"
-                                      className="p-2 hover:bg-green-100 rounded-lg transition-all text-green-600"
-                                    >
-                                      <Check className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => updatePartnerStatus(partner.id, 'rejected')}
-                                      title="Reject"
-                                      className="p-2 hover:bg-red-100 rounded-lg transition-all text-red-600"
-                                    >
-                                      <X className="w-4 h-4" />
-                                    </button>
-                                  </>
-                                )}
+                                <button
+                                  onClick={() => openEditModal(partner)}
+                                  title="Edit store info"
+                                  className="p-2 hover:bg-blue-100 rounded-lg transition-all text-blue-600"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -367,6 +444,72 @@ export default function AdminPartners() {
       </div>
       <Footer />
 
+
+      {/* Edit Partner Modal */}
+      {showEditModal && selectedPartner && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-200">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-slate-900 mb-6">Edit Partner Information</h2>
+              
+              <div className="space-y-4">
+                {/* Store Visits */}
+                <div>
+                  <label className="text-sm font-bold text-slate-700 mb-2 block">
+                    Store Visits
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.store_visits}
+                    onChange={(e) => setEditForm({...editForm, store_visits: parseInt(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+
+                {/* Rating */}
+                <div>
+                  <label className="text-sm font-bold text-slate-700 mb-2 block">
+                    Partner Rating (0-5)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={editForm.rating}
+                    onChange={(e) => setEditForm({...editForm, rating: parseFloat(e.target.value) || 0})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-end pt-4">
+                <button
+                  onClick={() => {
+                    // Update both store_visits and rating
+                    updateStoreVisits(selectedPartner.id, editForm.store_visits);
+                    updatePartnerRating(selectedPartner.id, editForm.rating);
+                    setShowEditModal(false);
+                    setEditForm({ store_visits: 0, rating: 0 });
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold transition-all"
+                >
+                  <Save className="w-4 h-4" />
+                  Save Changes
+                </button>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 bg-slate-600 hover:bg-slate-700 text-white py-2 px-4 rounded-lg font-semibold transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Partner Details Modal */}
       {showModal && selectedPartner && (

@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useCart } from '@/contexts/CartContext';
 import { productService } from '@/lib/supabase/product-service';
-import type { Product } from '@/lib/types';
+import { supabase } from '@/lib/supabase/client';
+import { getEffectivePrice } from '@/services/partnerProductsService';
+import type { Product, PartnerProduct } from '@/lib/types';
 import { toast } from '@/hooks/use-toast';
 import ProductRecommendations from '@/components/Product/ProductRecommendations';
 import Navbar from '@/components/Navbar';
@@ -72,8 +74,38 @@ const ProductDetail = () => {
     }).format(price);
   };
 
-  const handleAddToCart = () => {
-    if (product) {
+  const handleAddToCart = async () => {
+    if (!product) return;
+    
+    try {
+      // For now, let's create a simple partner product object using the product's original price
+      // This avoids the complex join issue and ensures we have a valid price
+      const partnerProduct: PartnerProduct = {
+        id: `temp-${product.id}`, // Temporary ID
+        partner_id: 'temp-partner', // Temporary partner ID
+        product_id: product.id,
+        selling_price: product.original_price || 0, // Use product's original price
+        profit_margin: 0,
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        partner_store_name: 'Direct Purchase' // Default store name
+      };
+      
+      console.log('Adding to cart with partner product:', {
+        product,
+        partnerProduct,
+        finalPrice: partnerProduct.selling_price || product.original_price
+      });
+      
+      addItem(product, partnerProduct, quantity);
+      toast({
+        title: 'Added to cart',
+        description: `${product.title} has been added to your cart.`,
+      });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      // Fallback to adding without partner product
       addItem(product, undefined, quantity);
       toast({
         title: 'Added to cart',
@@ -286,7 +318,7 @@ const ProductDetail = () => {
                     className="flex-1"
                     size="lg"
                     onClick={handleAddToCart}
-                    disabled={product.quantity_available === 0}
+                    disabled={product.stock_quantity === 0}
                   >
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     Add to Cart
@@ -313,7 +345,7 @@ const ProductDetail = () => {
                 />
                 </div>
 
-                {product.quantity_available === 0 && (
+                {product.stock_quantity === 0 && (
                   <p className="text-sm text-destructive">Out of stock</p>
                 )}
               </div>

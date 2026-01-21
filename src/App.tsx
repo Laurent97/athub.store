@@ -36,6 +36,7 @@ import DashboardSettings from "./pages/partner/DashboardSettings";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products-Enhanced";
 import AdminPartners from "./pages/admin/Partners";
+import AdminPartnersTest from "./pages/admin/Partners-Test";
 import AdminUsers from "./pages/admin/Users";
 import AdminOrders from "./pages/admin/Orders";
 import AdminSettings from "./pages/admin/Settings";
@@ -104,6 +105,7 @@ const App = () => (
               <Route path="/admin/products/new" element={<AdminOnlyRoute><ProductForm /></AdminOnlyRoute>} />
               <Route path="/admin/products/:id" element={<AdminOnlyRoute><ProductForm /></AdminOnlyRoute>} />
               <Route path="/admin/partners" element={<AdminOnlyRoute><AdminPartners /></AdminOnlyRoute>} />
+              <Route path="/admin/partners-test" element={<AdminOnlyRoute><AdminPartnersTest /></AdminOnlyRoute>} />
               <Route path="/admin/orders" element={<AdminOnlyRoute><AdminOrders /></AdminOnlyRoute>} />
               <Route path="/admin/settings" element={<AdminOnlyRoute><AdminSettings /></AdminOnlyRoute>} />
               <Route path="/shipping" element={<Shipping />} />

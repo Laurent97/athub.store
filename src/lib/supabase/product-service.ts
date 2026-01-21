@@ -13,7 +13,29 @@ export const productService = {
   ) {
     let query = supabase
       .from('products')
-      .select('*', { count: 'exact' })
+      .select(`
+        id,
+        sku,
+        title,
+        description,
+        category,
+        make,
+        model,
+        year,
+        mileage,
+        condition,
+        specifications,
+        original_price,
+        sale_price,
+        stock_quantity,
+        images,
+        is_active,
+        created_by,
+        created_at,
+        updated_at,
+        featured,
+        category_path
+      `, { count: 'exact' })
       .eq('is_active', true);
 
     // Apply filters
@@ -57,8 +79,22 @@ export const productService = {
     const to = from + limit - 1;
     const { data, error, count } = await query.range(from, to);
 
+    // Normalize data to ensure consistent structure
+    const normalizedData = data?.map(product => ({
+      ...product,
+      // Ensure images is always an array
+      images: Array.isArray(product.images) ? product.images : 
+              product.images ? [product.images] : [],
+      // Ensure we have a price
+      price: product.original_price || 0,
+      // Ensure title is available
+      title: product.title || `${product.make} ${product.model}`,
+      // Ensure stock quantity has a default
+      stock_quantity: product.stock_quantity || 10,
+    })) || [];
+
     return {
-      data: data as Product[] | null,
+      data: normalizedData as Product[],
       error,
       total: count || 0,
       page,
@@ -72,10 +108,49 @@ export const productService = {
   async getProductById(id: string) {
     const { data, error } = await supabase
       .from('products')
-      .select('*')
+      .select(`
+        id,
+        sku,
+        title,
+        description,
+        category,
+        make,
+        model,
+        year,
+        mileage,
+        condition,
+        specifications,
+        original_price,
+        sale_price,
+        stock_quantity,
+        images,
+        is_active,
+        created_by,
+        created_at,
+        updated_at,
+        featured,
+        category_path
+      `)
       .eq('id', id)
       .eq('is_active', true)
       .single();
+
+    // Normalize the data to ensure consistent structure
+    if (data) {
+      const normalizedProduct = {
+        ...data,
+        // Ensure images is always an array
+        images: Array.isArray(data.images) ? data.images : 
+                data.images ? [data.images] : [],
+        // Ensure we have a price
+        price: data.original_price || 0,
+        // Ensure title is available
+        title: data.title || `${data.make} ${data.model}`,
+        // Ensure stock quantity has a default
+        stock_quantity: data.stock_quantity || 10,
+      };
+      return { data: normalizedProduct as Product, error };
+    }
 
     return { data: data as Product | null, error };
   },

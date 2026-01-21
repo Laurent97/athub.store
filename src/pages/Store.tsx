@@ -33,7 +33,7 @@ interface StoreProduct {
     model: string;
     description?: string;
     category: string;
-    image_url?: string;
+    images: string[];
     created_at: string;
     title?: string;
     is_active?: boolean;
@@ -78,7 +78,7 @@ export default function Store() {
         .from('partner_products')
         .select(`
           *,
-          product:products(id, make, model, description, category, created_at)
+          product:products(id, make, model, description, category, created_at, images)
         `)
         .eq('partner_id', storeData.user_id)
         .eq('is_active', true);
@@ -89,6 +89,7 @@ export default function Store() {
         setProducts([]);
       } else {
         setProducts(productsData || []);
+        console.log('Loaded products:', productsData?.length, 'products');
       }
 
     } catch (error) {
@@ -105,18 +106,18 @@ export default function Store() {
     }
   }, [storeSlug, loadStore]);
 
-  const handleAddToCart = (product: StoreProduct) => {
-    if (!product.product) return;
+  const handleAddToCart = (storeProduct: StoreProduct) => {
+    if (!storeProduct.product) return;
     
     addItem({
-      id: product.product.id,
-      name: `${product.product.make} ${product.product.model}`,
-      price: product.selling_price,
+      id: storeProduct.product.id,
+      name: storeProduct.product?.title || `${storeProduct.product.make} ${storeProduct.product.model}`,
+      price: storeProduct.selling_price,
       quantity: 1,
-      image: '',
-      partner_id: product.partner_id,
-      product_id: product.product_id,
-      title: product.product?.title || `${product.product.make} ${product.product.model}`
+      image: storeProduct.product?.images?.[0] || '',
+      partner_id: storeProduct.partner_id,
+      product_id: storeProduct.product_id,
+      title: storeProduct.product?.title || `${storeProduct.product.make} ${storeProduct.product.model}`
     });
   };
 
@@ -215,15 +216,16 @@ export default function Store() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {products.map((storeProduct) => {
               const product = storeProduct.product;
+              console.log('Product data:', product);
               if (!product) return null;
 
               return (
                 <div key={storeProduct.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                   {/* Product Image */}
                   <div className="h-48 bg-gray-100 relative overflow-hidden">
-                    {product.image_url ? (
+                    {product?.images?.[0] ? (
                       <img
-                        src={product.image_url}
+                        src={product.images[0]}
                         alt={`${product.make} ${product.model}`}
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
@@ -234,15 +236,22 @@ export default function Store() {
                       </div>
                     )}
                     <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                      {product.is_active ? 'Available' : 'Out of Stock'}
+                      {storeProduct.is_active ? 'Available' : 'Out of Stock'}
                     </div>
                   </div>
 
                   {/* Product Info */}
                   <div className="p-4">
-                    <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                      {product.make} {product.model}
-                    </h3>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-lg text-gray-900">
+                        {product.make} {product.model}
+                      </h3>
+                      <div className="text-right">
+                        <span className="text-2xl font-bold text-blue-600">
+                          {formatCurrency(storeProduct.selling_price)}
+                        </span>
+                      </div>
+                    </div>
                     <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                       {product.description || 'Quality automotive part'}
                     </p>

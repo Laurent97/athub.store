@@ -46,43 +46,42 @@ export interface PartnerProfile {
 
 export interface Product {
   id: string;
-  sku: string;
-  title: string;
+  sku?: string;
+  title?: string;
+  name?: string;
   description?: string;
-  category: ProductCategory;
-  subcategory?: string;
+  category?: string;
   make?: string;
   model?: string;
   year?: number;
   mileage?: number;
-  condition?: Condition;
-  original_price: number;
-  price?: number; // For backward compatibility
-  stock_quantity: number;
-  specifications?: Record<string, any>;
-  images: string[];
-  is_active: boolean;
+  condition?: string;
+  specifications?: Record<string, unknown>;
+  price?: number; // Some products use this field
+  original_price?: number; // Some products use this field
+  stock_quantity?: number;
+  images?: string[];
+  is_active?: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;
-  category_path?: {
-    product_type?: string;
-    category_name?: string;
-    subcategory_name?: string;
-    specific_name?: string;
-  };
-  rating?: number;
   featured?: boolean;
+  category_path?: string;
+  rating?: number;
 }
 
 export interface PartnerProduct {
   id: string;
   partner_id: string;
   product_id: string;
-  custom_price: number;
-  is_available: boolean;
+  selling_price: number;
+  profit_margin?: number;
+  is_active: boolean;
   created_at: string;
+  updated_at: string;
   product?: Product;
+  partner_store_name?: string;
+  store_name?: string;
 }
 
 export interface Order {
@@ -162,6 +161,10 @@ export interface CartItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  name?: string;
+  title?: string;
+  partner_store_name?: string;
+  partner_id?: string;
 }
 
 export interface ShippingAddress {

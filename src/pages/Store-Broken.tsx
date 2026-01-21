@@ -32,8 +32,10 @@ interface PartnerStore {
 interface StoreProduct {
   id: string;
   product_id: string;
-  custom_price: number;
+  partner_id: string;
+  selling_price: number;
   is_available: boolean;
+  created_at: string;
   products: {
     id: string;
     sku: string;
@@ -167,7 +169,7 @@ export default function Store() {
       id: product.id,
       partner_id: store?.id || '',
       product_id: product.product_id,
-      custom_price: product.custom_price,
+      selling_price: product.selling_price, // ✅ Fixed: Use selling_price instead of custom_price
       is_available: product.is_available,
       created_at: new Date().toISOString()
     };
@@ -224,7 +226,7 @@ export default function Store() {
           product_id: product.product_id,
           partner_product_id: product.id,
           quantity: 1,
-          unit_price: product.custom_price
+          selling_price: product.selling_price, 
         });
 
       // Deduct from wallet

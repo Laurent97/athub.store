@@ -8,8 +8,8 @@ export interface PartnerProduct {
   id: string
   partner_id: string
   product_id: string
-  custom_price?: number
-  custom_description?: string
+  selling_price?: number
+  profit_margin?: number
   is_active: boolean
   created_at: string
   updated_at: string
@@ -74,8 +74,8 @@ export async function getPartnerProductsFallback(partnerId: string): Promise<Par
 export async function createPartnerProduct(
   partnerId: string,
   productId: string,
-  customPrice?: number,
-  customDescription?: string
+  sellingPrice?: number,
+  profitMargin?: number
 ): Promise<PartnerProduct | null> {
   try {
     const { data, error } = await supabase
@@ -83,8 +83,8 @@ export async function createPartnerProduct(
       .insert({
         partner_id: partnerId,
         product_id: productId,
-        custom_price: customPrice,
-        custom_description: customDescription,
+        selling_price: sellingPrice,
+        profit_margin: profitMargin,
         is_active: true
       })
       .select()
@@ -186,7 +186,7 @@ export async function hasCustomPricing(partnerId: string, productId: string): Pr
   try {
     const { data, error } = await supabase
       .from('partner_products')
-      .select('custom_price')
+      .select('selling_price')
       .eq('partner_id', partnerId)
       .eq('product_id', productId)
       .eq('is_active', true)
@@ -196,19 +196,19 @@ export async function hasCustomPricing(partnerId: string, productId: string): Pr
       return false
     }
 
-    return data && data.custom_price !== null && data.custom_price !== undefined
+    return data && data.selling_price !== null && data.selling_price !== undefined
   } catch (err) {
     console.error('Error checking custom pricing:', err)
     return false
   }
 }
 
-// Get partner's effective price (custom or original)
+// Get partner's effective price (selling or original)
 export async function getEffectivePrice(partnerId: string, productId: string): Promise<number> {
   try {
     const { data, error } = await supabase
       .from('partner_products')
-      .select('custom_price')
+      .select('selling_price')
       .eq('partner_id', partnerId)
       .eq('product_id', productId)
       .eq('is_active', true)
@@ -225,7 +225,7 @@ export async function getEffectivePrice(partnerId: string, productId: string): P
       return productData?.original_price || 0
     }
 
-    return data.custom_price || 0
+    return data.selling_price || 0
   } catch (err) {
     console.error('Error getting effective price:', err)
     return 0

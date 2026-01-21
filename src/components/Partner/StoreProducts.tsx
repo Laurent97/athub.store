@@ -5,8 +5,10 @@ import { useNavigate } from 'react-router-dom';
 interface StoreProduct {
   id: string;
   product_id: string;
-  custom_price: number;
+  partner_id: string;
+  selling_price: number;
   is_available: boolean;
+  created_at: string;
   products: {
     id: string;
     title: string;

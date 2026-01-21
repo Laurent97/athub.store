@@ -13,7 +13,4 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
-  global: {
-    headers: { 'x-application-name': 'auto-vault-ecommerce' },
-  },
 });

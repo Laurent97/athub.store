@@ -79,6 +79,7 @@ export default function AdminOrders() {
     }
   });
   const [partnerProducts, setPartnerProducts] = useState<PartnerProduct[]>([]);
+  const [loadingPartnerProducts, setLoadingPartnerProducts] = useState(false);
 
   useEffect(() => {
     if (userProfile?.user_type !== 'admin') {
@@ -194,14 +195,38 @@ export default function AdminOrders() {
   };
 
   const loadPartnerProducts = async (partnerId: string) => {
-    console.log('Loading products for partner:', partnerId);
+    console.log('Loading products for partner profile:', partnerId);
     
     if (!partnerId) {
       setPartnerProducts([]);
       return;
     }
 
+    setLoadingPartnerProducts(true);
+
     try {
+      // First get user_id for this partner profile
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('user_id')
+        .eq('id', partnerId)
+        .single();
+
+      if (profileError) {
+        console.error('Error getting partner profile:', profileError);
+        setPartnerProducts([]);
+        return;
+      }
+
+      if (!partnerProfile?.user_id) {
+        console.error('No user_id found for partner profile:', partnerId);
+        setPartnerProducts([]);
+        return;
+      }
+
+      console.log('Found user_id:', partnerProfile.user_id);
+
+      // Now query partner products using user_id
       const { data, error } = await supabase
         .from('partner_products')
         .select(`
@@ -218,7 +243,7 @@ export default function AdminOrders() {
             stock_quantity
           )
         `)
-        .eq('partner_id', partnerId)
+        .eq('partner_id', partnerProfile.user_id) // Use user_id instead of partner_profile_id
         .eq('is_active', true);
 
       console.log('Partner products data:', data);
@@ -231,6 +256,8 @@ export default function AdminOrders() {
     } catch (error) {
       console.error('Error loading partner products:', error);
       setPartnerProducts([]);
+    } finally {
+      setLoadingPartnerProducts(false);
     }
   };
 
@@ -1113,15 +1140,27 @@ export default function AdminOrders() {
                       }}
                       style={{ backgroundColor: 'white', color: '#111827', fontWeight: '500' }}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                      disabled={!newOrder.partner_id}
+                      disabled={!newOrder.partner_id || loadingPartnerProducts}
                     >
-                      <option value="">Select a product...</option>
-                      {partnerProducts.map((partnerProduct) => (
+                      <option value="">
+                        {loadingPartnerProducts 
+                          ? 'Loading products...' 
+                          : newOrder.partner_id 
+                            ? 'Select a product...' 
+                            : 'Select a partner shop first'
+                        }
+                      </option>
+                      {!loadingPartnerProducts && partnerProducts.map((partnerProduct) => (
                         <option key={partnerProduct.id} value={partnerProduct.id}>
                           {partnerProduct.product?.title || 'Unknown Product'} - ${partnerProduct.selling_price}
                         </option>
                       ))}
                     </select>
+                    {newOrder.partner_id && !loadingPartnerProducts && partnerProducts.length === 0 && (
+                      <p className="text-red-500 text-sm mt-1">
+                        No products found for this partner shop
+                      </p>
+                    )}
                   </div>
                 </div>
 

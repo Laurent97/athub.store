@@ -155,19 +155,28 @@ const FeaturedProducts = () => {
         case 'liked':
           // Get liked products
           if (user) {
-            const { data: likedItems } = await supabase
-              .from('liked_items')
-              .select('item_id')
-              .eq('user_id', user.id);
-            
-            if (likedItems && likedItems.length > 0) {
-              const likedIds = likedItems.map(item => item.item_id);
-              const allProducts = await productService.getProducts(1);
-              const likedProducts = allProducts.data.filter((p: any) => 
-                likedIds.includes(p.id)
-              ).slice(0, 6);
-              setProducts(likedProducts);
-            } else {
+            try {
+              const { data: likedItems, error: likedError } = await supabase
+                .from('liked_items')
+                .select('item_id')
+                .eq('user_id', user.id)
+                .eq('item_type', 'product');
+              
+              if (likedError) {
+                console.error('Error fetching liked items:', likedError);
+                setProducts([]);
+              } else if (likedItems && likedItems.length > 0) {
+                const likedIds = likedItems.map(item => item.item_id);
+                const allProducts = await productService.getProducts(1);
+                const likedProducts = allProducts.data.filter((p: any) => 
+                  likedIds.includes(p.id)
+                ).slice(0, 6);
+                setProducts(likedProducts);
+              } else {
+                setProducts([]);
+              }
+            } catch (error) {
+              console.error('Error in liked products fetch:', error);
               setProducts([]);
             }
           } else {
