@@ -83,7 +83,7 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
     <Link to={`/store/${shop.store_slug}`} className="group block">
       <Card className="overflow-hidden border border-border hover:border-accent transition-all duration-300 hover:shadow-lg">
         {/* Banner/Logo */}
-        <div className="relative h-48 bg-gradient-to-br from-accent/20 to-accent/5">
+        <div className="relative h-48 sm:h-48 bg-gradient-to-br from-accent/20 to-accent/5">
           {shop.banner_url ? (
             <img
               src={shop.banner_url}
@@ -92,13 +92,13 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <Store className="w-16 h-16 text-accent/30" />
+              <Store className="w-12 h-12 sm:w-16 sm:h-16 text-accent/30" />
             </div>
           )}
           
           {/* Logo Overlay */}
-          <div className="absolute top-4 left-4">
-            <div className="w-16 h-16 rounded-lg bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center overflow-hidden">
+          <div className="absolute top-3 sm:top-4 left-3 sm:left-4">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-background/90 backdrop-blur-sm border border-border flex items-center justify-center overflow-hidden">
               {shop.logo_url ? (
                 <img
                   src={shop.logo_url}
@@ -106,20 +106,20 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Store className="w-8 h-8 text-muted-foreground" />
+                <Store className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground" />
               )}
             </div>
           </div>
 
           {/* Status Badges */}
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute top-3 sm:top-4 right-3 sm:right-4 flex gap-1 sm:gap-2">
             {shop.is_active && shop.partner_status === 'approved' && (
-              <Badge className="bg-green-500 text-white text-xs">
+              <Badge className="bg-green-500 text-white text-xs px-2 py-1">
                 Active
               </Badge>
             )}
             {shop.rating >= 4.5 && (
-              <Badge className="bg-yellow-500 text-white text-xs">
+              <Badge className="bg-yellow-500 text-white text-xs px-2 py-1">
                 Top Rated
               </Badge>
             )}
@@ -127,55 +127,55 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
         </div>
 
         {/* Content */}
-        <CardContent className="p-4">
+        <CardContent className="p-3 sm:p-4">
           {/* Shop Name */}
-          <h3 className="font-semibold text-lg text-foreground mb-2 group-hover:text-accent transition-colors">
+          <h3 className="font-semibold text-base sm:text-lg text-foreground mb-2 group-hover:text-accent transition-colors">
             {shop.store_name}
           </h3>
 
           {/* Description */}
           {shop.description && (
-            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3 line-clamp-2">
               {shop.description}
             </p>
           )}
 
           {/* Location */}
           {(shop.city || shop.country) && (
-            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-3">
-              <MapPin className="w-4 h-4" />
-              <span>
+            <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
+              <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="truncate">
                 {shop.city && shop.country ? `${shop.city}, ${shop.country}` : shop.city || shop.country}
               </span>
             </div>
           )}
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="text-center p-2 bg-muted/50 rounded-lg">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4">
+            <div className="text-center p-2 sm:p-2 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <Package className="w-4 h-4 text-accent" />
+                <Package className="w-3 h-3 sm:w-4 sm:h-4 text-accent" />
                 <span className="text-xs text-muted-foreground">Products</span>
               </div>
-              <div className="font-semibold text-foreground">{productCount}</div>
+              <div className="font-semibold text-sm sm:text-base text-foreground">{productCount}</div>
             </div>
-            <div className="text-center p-2 bg-muted/50 rounded-lg">
+            <div className="text-center p-2 sm:p-2 bg-muted/50 rounded-lg">
               <div className="flex items-center justify-center gap-1 mb-1">
-                <TrendingUp className="w-4 h-4 text-green-600" />
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
                 <span className="text-xs text-muted-foreground">Orders</span>
               </div>
-              <div className="font-semibold text-foreground">{formatNumber(shop.total_orders)}</div>
+              <div className="font-semibold text-sm sm:text-base text-foreground">{formatNumber(shop.total_orders)}</div>
             </div>
           </div>
 
           {/* Rating */}
           {shop.rating > 0 && (
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-1 sm:gap-2 mb-2 sm:mb-3">
               <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
+                    className={`w-3 h-3 sm:w-4 sm:h-4 ${
                       i < Math.floor(shop.rating)
                         ? 'fill-yellow-400 text-yellow-400'
                         : 'text-muted-foreground'
@@ -183,22 +183,24 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
                   />
                 ))}
               </div>
-              <span className="text-sm font-medium">{shop.rating.toFixed(1)}</span>
-              <span className="text-xs text-muted-foreground">({shop.total_orders} reviews)</span>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-0 sm:gap-1">
+                <span className="text-xs sm:text-sm font-medium">{shop.rating.toFixed(1)}</span>
+                <span className="text-xs text-muted-foreground">({shop.total_orders} reviews)</span>
+              </div>
             </div>
           )}
 
           {/* Contact Info */}
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
             {shop.contact_email && (
-              <div className="flex items-center gap-1">
-                <Mail className="w-4 h-4" />
+              <div className="flex items-center gap-1 truncate">
+                <Mail className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="truncate">{shop.contact_email}</span>
               </div>
             )}
             {shop.contact_phone && (
-              <div className="flex items-center gap-1">
-                <Phone className="w-4 h-4" />
+              <div className="flex items-center gap-1 truncate">
+                <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span>{shop.contact_phone}</span>
               </div>
             )}

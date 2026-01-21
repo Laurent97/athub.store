@@ -54,7 +54,7 @@ const Cart = () => {
                   {/* Product Image */}
                   <Link
                     to={`/products/${item.product.id}`}
-                    className="w-32 h-32 rounded-lg overflow-hidden bg-secondary flex-shrink-0"
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden bg-secondary flex-shrink-0"
                   >
                     <img
                       src={item.product.images[0] || '/placeholder.svg'}
@@ -79,33 +79,33 @@ const Cart = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 sm:h-8 sm:w-8"
                           onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
                         >
-                          <Minus className="w-4 h-4" />
+                          <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
-                        <span className="w-12 text-center font-medium">{item.quantity}</span>
+                        <span className="w-12 text-center font-medium text-sm sm:text-base">{item.quantity}</span>
                         <Button
                           variant="outline"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 sm:h-8 sm:w-8"
                           onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </div>
 
-                      <div className="flex items-center gap-4">
-                        <span className="text-lg font-bold text-foreground">
+                      <div className="flex items-center gap-2 sm:gap-4">
+                        <span className="text-base sm:text-lg font-bold text-foreground">
                           {formatPrice(item.subtotal)}
                         </span>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => removeItem(item.product.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 sm:h-10 sm:w-10"
                         >
-                          <Trash2 className="w-5 h-5" />
+                          <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                         </Button>
                       </div>
                     </div>
