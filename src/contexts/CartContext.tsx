@@ -19,9 +19,22 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 const CART_STORAGE_KEY = 'auto_vault_cart';
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
+  // Initialize cart from localStorage first
+  const [items, setItems] = useState<CartItem[]>(() => {
+    try {
+      const savedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        console.log('Loaded cart from localStorage:', parsedCart);
+        return parsedCart || [];
+      }
+    } catch (error) {
+      console.error('Error loading cart from localStorage:', error);
+    }
+    return [];
+  });
 
-  // Fetch cart from partner shopping cart database
+  // Fetch cart from partner shopping cart database (optional sync)
   useEffect(() => {
     const fetchCartFromDatabase = async () => {
       try {
@@ -48,10 +61,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
         if (error) {
           console.error('Error fetching cart from database:', error);
+          // Don't return here - we already have localStorage data
           return;
         }
 
-        if (cartItems) {
+        if (cartItems && cartItems.length > 0) {
           const transformedItems: CartItem[] = cartItems.map((item: any) => ({
             product: item.products,
             partner_product: item.partner_products,
@@ -60,19 +74,26 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             subtotal: item.subtotal,
             name: item.products?.title || `${item.products.make} ${item.products.model}`,
             title: item.products?.title || `${item.products.make} ${item.products.model}`,
-            partner_store_name: 'Partner Store', // Default since we removed the join
+            partner_store_name: 'Partner Store',
             partner_id: item.partner_products?.partner_id || '',
           }));
 
-          setItems(transformedItems);
+          // Only use database data if localStorage is empty
+          if (items.length === 0) {
+            console.log('Using database cart data:', transformedItems);
+            setItems(transformedItems);
+          }
         }
       } catch (error) {
         console.error('Error in fetchCartFromDatabase:', error);
       }
     };
 
-    fetchCartFromDatabase();
-  }, []);
+    // Only fetch from database if localStorage is empty
+    if (items.length === 0) {
+      fetchCartFromDatabase();
+    }
+  }, []); // Remove items dependency to prevent infinite loop
 
   // Save to localStorage whenever items change
   useEffect(() => {
@@ -197,7 +218,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     getTotal,
     getItemCount,
     getPartnerCartItems,
-    getPartnerStoreName,
     clearPartnerCart,
   };
 
