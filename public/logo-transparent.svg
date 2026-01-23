@@ -2,20 +2,20 @@
   <!-- Transparent background - no background element -->
   
   <!-- Outer gear ring -->
-  <circle cx="100" cy="100" r="75" fill="none" stroke="#2D6FF7" stroke-width="10"/>
+  <circle cx="100" cy="100" r="75" fill="none" stroke="#F59E0B" stroke-width="10"/>
   
   <!-- Inner gear circle -->
-  <circle cx="100" cy="100" r="50" fill="#2D6FF7"/>
+  <circle cx="100" cy="100" r="50" fill="#F59E0B"/>
   
   <!-- Gear teeth (8 teeth) -->
-  <rect x="85" y="15" width="30" height="35" rx="15" fill="#2D6FF7"/>
-  <rect x="85" y="150" width="30" height="35" rx="15" fill="#2D6FF7"/>
-  <rect x="15" y="85" width="35" height="30" rx="15" fill="#2D6FF7"/>
-  <rect x="150" y="85" width="35" height="30" rx="15" fill="#2D6FF7"/>
-  <rect x="40" y="40" width="30" height="30" rx="15" fill="#2D6FF7"/>
-  <rect x="130" y="40" width="30" height="30" rx="15" fill="#2D6FF7"/>
-  <rect x="40" y="130" width="30" height="30" rx="15" fill="#2D6FF7"/>
-  <rect x="130" y="130" width="30" height="30" rx="15" fill="#2D6FF7"/>
+  <rect x="85" y="15" width="30" height="35" rx="15" fill="#F59E0B"/>
+  <rect x="85" y="150" width="30" height="35" rx="15" fill="#F59E0B"/>
+  <rect x="15" y="85" width="35" height="30" rx="15" fill="#F59E0B"/>
+  <rect x="150" y="85" width="35" height="30" rx="15" fill="#F59E0B"/>
+  <rect x="40" y="40" width="30" height="30" rx="15" fill="#F59E0B"/>
+  <rect x="130" y="40" width="30" height="30" rx="15" fill="#F59E0B"/>
+  <rect x="40" y="130" width="30" height="30" rx="15" fill="#F59E0B"/>
+  <rect x="130" y="130" width="30" height="30" rx="15" fill="#F59E0B"/>
   
   <!-- Car body -->
   <rect x="70" y="85" width="60" height="25" rx="12" fill="white"/>
