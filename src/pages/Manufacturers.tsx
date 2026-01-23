@@ -293,17 +293,60 @@ export default function Manufacturers() {
   };
 
   const filteredShops = shops.filter(shop => {
-    const matchesSearch = 
-      shop.store_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.city?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.country?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      shop.users?.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchLower = searchTerm.toLowerCase();
+    const searchWords = searchLower.split(' ').filter(word => word.length > 0);
+    
+    // Enhanced search terms for automotive categories
+    const automotiveKeywords = {
+      cars: ['car', 'cars', 'vehicle', 'vehicles', 'automotive', 'auto', 'motor', 'motor vehicle'],
+      parts: ['part', 'parts', 'component', 'components', 'spare', 'spares', 'replacement', 'oem', 'aftermarket'],
+      accessories: ['accessory', 'accessories', 'gear', 'gears', 'equipment', 'tools', 'electronics', 'interior', 'exterior']
+    };
 
-    // Filter by category (simplified since we're not using partner_products)
-    const matchesCategory = categoryFilter === "all"; // Show all shops for now
+    // Check if any search word matches
+    const hasSearchMatch = searchWords.some(word => 
+      shop.store_name.toLowerCase().includes(word) ||
+      shop.description?.toLowerCase().includes(word) ||
+      shop.city?.toLowerCase().includes(word) ||
+      shop.country?.toLowerCase().includes(word) ||
+      shop.users?.full_name?.toLowerCase().includes(word)
+    );
 
-    return matchesSearch && matchesCategory;
+    // Check for automotive category matches
+    const hasAutomotiveMatch = searchWords.some(word => {
+      // Cars/Vehicles category
+      if (automotiveKeywords.cars.includes(word)) {
+        return shop.description?.toLowerCase().includes('car') || 
+               shop.description?.toLowerCase().includes('vehicle') || 
+               shop.description?.toLowerCase().includes('automotive') ||
+               shop.description?.toLowerCase().includes('motor') ||
+               shop.store_name.toLowerCase().includes('car') ||
+               shop.store_name.toLowerCase().includes('auto');
+      }
+      
+      // Parts category
+      if (automotiveKeywords.parts.includes(word)) {
+        return shop.description?.toLowerCase().includes('part') || 
+               shop.description?.toLowerCase().includes('component') ||
+               shop.description?.toLowerCase().includes('spare') ||
+               shop.description?.toLowerCase().includes('oem') ||
+               shop.store_name.toLowerCase().includes('part');
+      }
+      
+      // Accessories category
+      if (automotiveKeywords.accessories.includes(word)) {
+        return shop.description?.toLowerCase().includes('accessory') || 
+               shop.description?.toLowerCase().includes('gear') ||
+               shop.description?.toLowerCase().includes('equipment') ||
+               shop.description?.toLowerCase().includes('interior') ||
+               shop.description?.toLowerCase().includes('exterior') ||
+               shop.store_name.toLowerCase().includes('accessory');
+      }
+      
+      return false;
+    });
+
+    return hasSearchMatch || hasAutomotiveMatch;
   });
 
   return (
@@ -361,7 +404,7 @@ export default function Manufacturers() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search shops by name, location, or owner..."
+                placeholder="Search shops, cars, vehicles, parts, accessories..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full h-10 sm:h-11 pl-9 sm:pl-10 pr-4 rounded-lg bg-card border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-shadow text-sm sm:text-base"
