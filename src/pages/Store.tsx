@@ -109,16 +109,47 @@ export default function Store() {
   const handleAddToCart = (storeProduct: StoreProduct) => {
     if (!storeProduct.product) return;
     
-    addItem({
+    console.log('=== PARTNER STORE PRODUCT DATA ===');
+    console.log('StoreProduct:', storeProduct);
+    console.log('Product:', storeProduct.product);
+    console.log('Image URL:', storeProduct.product?.images?.[0]);
+    console.log('Stock quantity:', (storeProduct.product as any).stock_quantity);
+    console.log('=== END DEBUG ===');
+    
+    // Normalize product data to match cart context expectations
+    const normalizedProduct = {
       id: storeProduct.product.id,
-      name: storeProduct.product?.title || `${storeProduct.product.make} ${storeProduct.product.model}`,
-      price: storeProduct.selling_price,
-      quantity: 1,
-      image: storeProduct.product?.images?.[0] || '',
-      partner_id: storeProduct.partner_id,
+      title: storeProduct.product?.title || `${storeProduct.product.make} ${storeProduct.product.model}`,
+      make: storeProduct.product.make,
+      model: storeProduct.product.model,
+      description: storeProduct.product.description || 'Quality automotive part',
+      category: storeProduct.product.category || 'Vehicle',
+      images: storeProduct.product?.images || [],
+      stock_quantity: (storeProduct.product as any).stock_quantity || 50, // Default stock
+      original_price: storeProduct.selling_price * 1.2, // Estimate original price
+      price: storeProduct.selling_price, // Use selling price as current price
+      is_active: storeProduct.product?.is_active !== false,
+      created_at: storeProduct.product?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString() // Required field
+    };
+    
+    // Create partner product object
+    const partnerProduct = {
+      id: storeProduct.id,
       product_id: storeProduct.product_id,
-      title: storeProduct.product?.title || `${storeProduct.product.make} ${storeProduct.product.model}`
-    });
+      partner_id: storeProduct.partner_id,
+      selling_price: storeProduct.selling_price,
+      profit_margin: storeProduct.profit_margin,
+      is_active: storeProduct.is_active,
+      partner_store_name: store.store_name,
+      created_at: storeProduct.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('Normalized product:', normalizedProduct);
+    console.log('Partner product:', partnerProduct);
+    
+    addItem(normalizedProduct, partnerProduct, 1);
   };
 
   const formatCurrency = (amount: number) => {
