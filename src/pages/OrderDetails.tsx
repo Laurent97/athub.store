@@ -68,6 +68,7 @@ export default function OrderDetails() {
         console.log('Order number lookup result:', { data, error });
       }
       
+      // Enhanced error handling
       if (error) {
         console.error('Order lookup failed:', error);
         console.error('Error details:', {
@@ -76,7 +77,20 @@ export default function OrderDetails() {
           details: error.details,
           hint: error.hint
         });
-        throw new Error(`Order not found: ${error.message || 'Unknown error'}`);
+        
+        // Provide more specific error messages
+        let errorMessage = 'Order not found';
+        if (error.code === 'PGRST116') {
+          errorMessage = 'Order not found: The order does not exist in the database';
+        } else if (error.code === '42703') {
+          errorMessage = 'Database error: Column does not exist. Check database schema.';
+        } else if (error.code === '42501') {
+          errorMessage = 'Permission denied: You do not have access to view this order';
+        } else if (error.message) {
+          errorMessage = `Database error: ${error.message}`;
+        }
+        
+        throw new Error(errorMessage);
       }
       
       if (!data) {
@@ -85,6 +99,14 @@ export default function OrderDetails() {
         console.log('1. The order does not exist in the database');
         console.log('2. The order number/ID is incorrect');
         console.log('3. There might be a database schema issue');
+        console.log('4. The order exists but user lacks permission to view it');
+        
+        // Check if this is a common order number format issue
+        if (orderId.startsWith('ORD-') && orderId.length === 16) {
+          console.log('Note: This appears to be an old format order number (16 chars)');
+          console.log('Current format is: ORD-timestamp-randomstring');
+        }
+        
         throw new Error('Order not found');
       }
       
