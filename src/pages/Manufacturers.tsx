@@ -230,8 +230,7 @@ export default function Manufacturers() {
             full_name
           )
         `)
-        .eq('is_active', true)
-        .eq('partner_status', 'approved');
+        .eq('partner_status', 'approved'); // Only filter by approval status, not is_active
 
       // Apply filters
       if (countryFilter !== "all") {
@@ -258,7 +257,13 @@ export default function Manufacturers() {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database error:', error);
+        throw error;
+      }
+      
+      console.log('Loaded shops:', data?.length || 0);
+      console.log('Shop data:', data);
       setShops(data || []);
     } catch (error) {
       console.error('Error loading shops:', error);
@@ -278,8 +283,10 @@ export default function Manufacturers() {
         .select('id');
 
       const totalShops = shopsData?.length || 0;
-      const activeShops = shopsData?.filter(s => s.is_active && s.partner_status === 'approved').length || 0;
+      const activeShops = shopsData?.filter(s => s.partner_status === 'approved').length || 0; // Only filter by approval status
       const totalProducts = productsData?.length || 0;
+
+      console.log('Stats:', { totalShops, activeShops, totalProducts });
 
       setStats({
         totalShops,
