@@ -121,6 +121,22 @@ const fallbackProducts = [
     rating: 4.9,
     image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&auto=format&fit=crop",
   },
+  {
+    id: "10",
+    title: "2022 Ford F-150 Truck",
+    category: "vehicles",
+    category_path: { product_type: "cars", category_name: "Trucks" },
+    price: 45000,
+    originalPrice: 52000,
+    year: 2022,
+    mileage: 25000,
+    location: "USA",
+    condition: "Used",
+    make: "Ford",
+    model: "F-150",
+    rating: 4.7,
+    image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&auto=format&fit=crop",
+  },
 ];
 
 // Enhanced category structure
@@ -327,8 +343,18 @@ export default function ProductsEnhanced() {
       if (result.data && result.data.length > 0) {
         // Apply filters client-side for now
         let filtered = result.data.filter((product: any) => {
-          // Filter by main category
-          if (categoryFilter !== "all" && product.category_path?.product_type !== categoryFilter) return false;
+          // Filter by main category - handle both cars and vehicles for the same display
+          if (categoryFilter !== "all") {
+            const productType = product.category_path?.product_type;
+            const productCategory = product.category;
+            
+            // Map both 'cars' and 'vehicles' to the same filter
+            if (categoryFilter === "cars") {
+              if (productType !== "cars" && productCategory !== "car" && productCategory !== "vehicles") return false;
+            } else {
+              if (productType !== categoryFilter && productCategory !== categoryFilter) return false;
+            }
+          }
           
           // Filter by subcategory
           if (subcategoryFilter && product.category_path?.category_name !== subcategoryFilter) return false;
@@ -358,8 +384,18 @@ export default function ProductsEnhanced() {
       } else {
         // Fallback to demo data
         let filtered = fallbackProducts.filter((product: any) => {
-          // Filter by main category
-          if (categoryFilter !== "all" && product.category_path?.product_type !== categoryFilter) return false;
+          // Filter by main category - handle both cars and vehicles for the same display
+          if (categoryFilter !== "all") {
+            const productType = product.category_path?.product_type;
+            const productCategory = product.category;
+            
+            // Map both 'cars' and 'vehicles' to the same filter
+            if (categoryFilter === "cars") {
+              if (productType !== "cars" && productCategory !== "car" && productCategory !== "vehicles") return false;
+            } else {
+              if (productType !== categoryFilter && productCategory !== categoryFilter) return false;
+            }
+          }
           
           // Filter by subcategory
           if (subcategoryFilter && product.category_path?.category_name !== subcategoryFilter) return false;
@@ -453,7 +489,18 @@ export default function ProductsEnhanced() {
       console.error('Error loading products:', error);
       // Fallback to demo data
       const filtered = fallbackProducts.filter((product: any) => {
-        if (categoryFilter !== "all" && product.category_path?.product_type !== categoryFilter) return false;
+        // Filter by main category - handle both cars and vehicles for the same display
+        if (categoryFilter !== "all") {
+          const productType = product.category_path?.product_type;
+          const productCategory = product.category;
+          
+          // Map both 'cars' and 'vehicles' to the same filter
+          if (categoryFilter === "cars") {
+            if (productType !== "cars" && productCategory !== "car" && productCategory !== "vehicles") return false;
+          } else {
+            if (productType !== categoryFilter && productCategory !== categoryFilter) return false;
+          }
+        }
         if (subcategoryFilter && product.category_path?.category_name !== subcategoryFilter) return false;
         if (searchQuery && !product.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         return true;
