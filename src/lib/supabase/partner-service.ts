@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { walletService } from './wallet-service';
 import type { PartnerProfile, User } from '../types';
 
 export interface PartnerRegistrationData {
@@ -134,49 +135,74 @@ export const partnerService = {
    */
   async processOrderPayment(orderId: string, userId: string) {
     try {
+      console.log('Processing payment for order:', orderId, 'by user:', userId);
+      
+      // Get partner profile for this user first
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError || !partnerProfile) {
+        throw new Error('Partner profile not found');
+      }
+
+      console.log('Partner profile ID:', partnerProfile.id);
+      
       // Get order details first
       const { data: order, error: orderError } = await supabase
         .from('orders')
-        .select('id, order_number, total_amount, payment_status')
+        .select('id, order_number, total_amount, payment_status, partner_id')
         .eq('id', orderId)
         .single();
 
-      if (orderError) throw orderError;
-      if (!order) throw new Error('Order not found');
+      if (orderError) {
+        console.error('Order fetch error:', orderError);
+        throw new Error(`Order not found: ${orderError.message}`);
+      }
+      
+      if (!order) {
+        throw new Error('Order not found');
+      }
+      
       if (order.payment_status === 'paid') {
         throw new Error('Order is already paid');
       }
 
-      // Get wallet balance from CORRECT table
-      const { data: wallet, error: walletError } = await supabase
-        .from('wallet_balances')
-        .select('balance')
-        .eq('user_id', userId)
-        .single();
-
-      if (walletError?.code === 'PGRST116') {
-        // Create wallet if doesn't exist
-        const { error: createError } = await supabase
-          .from('wallet_balances')
-          .insert({
-            user_id: userId,
-            balance: 0,
-            currency: 'USD',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          });
-        
-        if (createError) throw createError;
-        throw new Error('Wallet created with $0 balance. Please add funds.');
+      // Verify the order belongs to this partner using partner profile ID
+      if (order.partner_id !== partnerProfile.id) {
+        console.error('Order partner_id:', order.partner_id, 'Partner profile ID:', partnerProfile.id);
+        throw new Error('This order is not assigned to you');
       }
-      if (walletError) throw walletError || new Error('Partner wallet not found');
+
+      console.log('Order details:', { orderNumber: order.order_number, amount: order.total_amount });
+
+      // Get wallet balance using wallet service for consistency
+      const { data: wallet, error: walletError } = await walletService.getBalance(userId);
+      
+      if (walletError) {
+        console.error('Wallet fetch error:', walletError);
+        throw new Error(`Failed to fetch wallet: ${walletError}`);
+      }
+
+      if (!wallet || wallet.balance === undefined) {
+        throw new Error('Wallet not found or invalid');
+      }
+
+      console.log('Current wallet balance:', wallet.balance);
 
       if (wallet.balance < order.total_amount) {
         const needed = order.total_amount - wallet.balance;
-        throw new Error(`Insufficient wallet balance. Add $${needed.toFixed(2)} to proceed.`);
+        throw new Error(`Insufficient wallet balance. Current: $${wallet.balance.toFixed(2)}, Required: $${order.total_amount.toFixed(2)}. Need additional $${needed.toFixed(2)}.`);
       }
 
-      // Update order status
+      console.log('Sufficient balance, processing payment...');
+
+      // Start transaction-like operations
+      const newBalance = wallet.balance - order.total_amount;
+      
+      // Update order status first
       const { error: updateError } = await supabase
         .from('orders')
         .update({
@@ -186,18 +212,33 @@ export const partnerService = {
         })
         .eq('id', orderId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Order update error:', updateError);
+        throw new Error(`Failed to update order: ${updateError.message}`);
+      }
 
-      // Deduct from wallet
-      const { error: walletUpdateError } = await supabase
-        .from('wallet_balances')
-        .update({ 
-          balance: wallet.balance - order.total_amount,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
+      console.log('Order updated successfully');
 
-      if (walletUpdateError) throw walletUpdateError;
+      // Deduct from wallet using wallet service
+      const { error: walletUpdateError } = await walletService.updateBalance(userId, {
+        balance: newBalance
+      });
+      
+      if (walletUpdateError) {
+        console.error('Wallet update error:', walletUpdateError);
+        // Try to rollback order status
+        await supabase
+          .from('orders')
+          .update({
+            status: 'pending',
+            payment_status: 'pending',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+        throw new Error(`Failed to update wallet: ${walletUpdateError}`);
+      }
+
+      console.log('Wallet updated successfully');
 
       // Create wallet transaction record
       const { error: transactionError } = await supabase
@@ -209,11 +250,16 @@ export const partnerService = {
           description: `Payment for order ${order.order_number || orderId}`,
           order_id: orderId,
           status: 'completed',
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         });
 
-      if (transactionError) console.error('Transaction log error:', transactionError);
+      if (transactionError) {
+        console.error('Transaction log error:', transactionError);
+        // Don't fail the payment, just log the error
+      }
 
+      console.log('Payment processed successfully');
       return { success: true, message: 'Payment processed successfully' };
     } catch (error) {
       console.error('Error processing order payment:', error);

@@ -8,6 +8,7 @@ import { adminService } from '../../lib/supabase/admin-service';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { CancelOrderButton } from '../../components/CancelOrderButton';
 import { useOrderRealtime } from '../../hooks/useOrderRealtime';
+import ShippingModal from '../../components/Admin/ShippingModal';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
@@ -68,6 +69,8 @@ export default function AdminOrders() {
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedPartner, setSelectedPartner] = useState('');
   const [showCreateOrderModal, setShowCreateOrderModal] = useState(false);
+  const [showShippingModal, setShowShippingModal] = useState(false);
+  const [selectedOrderForShipping, setSelectedOrderForShipping] = useState<OrderWithDetails | null>(null);
   const [newOrder, setNewOrder] = useState({
     customer_email: '',
     customer_name: '',
@@ -377,7 +380,7 @@ export default function AdminOrders() {
           customer_id: customerId,
           partner_id: newOrder.partner_id,
           total_amount: newOrder.quantity * newOrder.unit_price,
-          status: 'confirmed',
+          status: 'pending',
           shipping_address: newOrder.shipping_address,
           payment_status: 'pending',
           notes: `Created by admin for ${newOrder.customer_name}`,
@@ -442,6 +445,7 @@ export default function AdminOrders() {
         .from('orders')
         .update({ 
           partner_id: partnerId,
+          status: 'pending', // Ensure order starts in pending status when assigned
           updated_at: new Date().toISOString()
         })
         .eq('id', orderId);
@@ -565,28 +569,9 @@ export default function AdminOrders() {
     }
   };
 
-  const handleMarkAsShipped = async (order: OrderWithDetails) => {
-    const trackingNumber = prompt('Enter tracking number:');
-    if (!trackingNumber) return;
-
-    const carrier = prompt('Enter carrier name:') || 'Standard Shipping';
-    
-    try {
-      const result = await adminService.markOrderAsShipped(order.id, trackingNumber, carrier);
-      
-      if (result.success) {
-        alert(`✅ Order #${order.order_number || order.id} marked as shipped!\nTracking: ${trackingNumber}\nCarrier: ${carrier}`);
-        loadOrders();
-        if (orderDetails?.id === order.id) {
-          loadOrderDetails(order.id);
-        }
-      } else {
-        alert(`❌ Error: ${result.error}`);
-      }
-    } catch (error) {
-      console.error('Error marking order as shipped:', error);
-      alert('Failed to mark order as shipped');
-    }
+  const handleMarkAsShipped = (order: OrderWithDetails) => {
+    setSelectedOrderForShipping(order);
+    setShowShippingModal(true);
   };
 
   const handleCompleteOrder = async (order: OrderWithDetails) => {
@@ -981,6 +966,25 @@ export default function AdminOrders() {
         </div>
       </div>
       <Footer />
+
+      {/* Shipping Modal */}
+      {showShippingModal && selectedOrderForShipping && (
+        <ShippingModal
+          isOpen={showShippingModal}
+          onClose={() => {
+            setShowShippingModal(false);
+            setSelectedOrderForShipping(null);
+          }}
+          orderId={selectedOrderForShipping.order_number}
+          partnerId={selectedOrderForShipping.partner_id || ''}
+          onSuccess={() => {
+            loadOrders();
+            if (orderDetails?.id === selectedOrderForShipping.id) {
+              loadOrderDetails(selectedOrderForShipping.id);
+            }
+          }}
+        />
+      )}
 
       {/* Order Details Modal */}
       {showOrderModal && selectedOrder && orderDetails && (

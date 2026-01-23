@@ -28,6 +28,10 @@ import DashboardOverview from "./pages/partner/DashboardOverview";
 import DashboardProducts from "./pages/partner/DashboardProducts";
 import DashboardOrders from "./pages/partner/DashboardOrders";
 import DashboardWallet from "./pages/partner/DashboardWallet";
+import DashboardInventory from "./pages/partner/DashboardInventory";
+import DashboardEarnings from "./pages/partner/DashboardEarnings";
+import DashboardAnalytics from "./pages/partner/DashboardAnalytics";
+import DashboardSettings from "./pages/partner/DashboardSettings";
 import WalletDeposit from "./pages/partner/WalletDeposit";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminProducts from "./pages/admin/Products-Enhanced";
@@ -86,6 +90,10 @@ const App = () => (
                 <Route index element={<DashboardOverview />} />
                 <Route path="products" element={<DashboardProducts />} />
                 <Route path="orders" element={<DashboardOrders />} />
+                <Route path="inventory" element={<DashboardInventory />} />
+                <Route path="earnings" element={<DashboardEarnings />} />
+                <Route path="analytics" element={<DashboardAnalytics />} />
+                <Route path="settings" element={<DashboardSettings />} />
                 <Route path="wallet" element={<DashboardWallet />} />
                 <Route path="wallet/deposit" element={<WalletDeposit />} />
               </Route>

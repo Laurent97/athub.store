@@ -7,6 +7,50 @@ import { createProduct, updateProduct, getProductById, validateProductData, chec
 import { uploadImageToCloudinary, uploadMultipleImagesToCloudinary, deleteImageFromCloudinary, getPublicIdFromUrl } from '../../services/cloudinaryService'
 import { supabase } from '../../lib/supabase/client'
 
+// Retry wrapper for SKU validation with exponential backoff
+const checkSkuExistsWithRetry = async (sku: string, maxRetries = 3): Promise<boolean> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await checkSkuExists(sku)
+      return result
+    } catch (error) {
+      console.warn(`SKU validation attempt ${attempt} failed:`, error)
+      
+      // If it's the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw error
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, attempt - 1) * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  return false
+}
+
+// Retry wrapper for Cloudinary uploads with exponential backoff
+const uploadMultipleImagesToCloudinaryWithRetry = async (files: File[], maxRetries = 3): Promise<string[]> => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await uploadMultipleImagesToCloudinary(files)
+      return result
+    } catch (error) {
+      console.warn(`Cloudinary upload attempt ${attempt} failed:`, error)
+      
+      // If it's the last attempt, throw the error
+      if (attempt === maxRetries) {
+        throw error
+      }
+      
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, attempt - 1) * 1000
+      await new Promise(resolve => setTimeout(resolve, delay))
+    }
+  }
+  return []
+}
+
 interface ProductFormData {
   sku: string
   title: string
@@ -118,9 +162,9 @@ export default function ProductForm({ productId: propProductId, onSuccess }: { p
         console.log('Setting form data with:', {
           sku: data.sku,
           title: data.title,
-          brand: data.brand,
-          price: data.price,
-          stock: data.stock,
+          make: data.make,
+          original_price: data.original_price,
+          stock_quantity: data.stock_quantity,
           featured: data.featured
         })
         
@@ -129,14 +173,14 @@ export default function ProductForm({ productId: propProductId, onSuccess }: { p
           title: data.title || '',
           description: data.description || '',
           category: data.category || 'part',
-          make: data.brand || '',        // Use brand field from database
+          make: data.make || '',        // Use make field from database
           model: data.model || '',
           year: data.year || new Date().getFullYear(),
           mileage: data.mileage || 0,
           condition: data.condition || 'new',
-          original_price: data.price || 0,  // Use price field from database
+          original_price: data.original_price || 0,  // Use original_price field from database
           sale_price: data.sale_price || 0,
-          stock_quantity: data.stock || 0,  // Use stock field from database
+          stock_quantity: data.stock_quantity || 0,  // Use stock_quantity field from database
           is_active: data.is_active !== undefined ? data.is_active : true,
           featured: data.featured || false
         })
@@ -170,27 +214,33 @@ export default function ProductForm({ productId: propProductId, onSuccess }: { p
       }
     }
     
-    // Check SKU uniqueness with proper debouncing
-    if (value.trim()) {
+    // Check SKU uniqueness with improved debouncing and error handling
+    if (name === 'sku' && value.trim()) {
       // Clear any existing timeout
       if (skuTimeoutId) {
         clearTimeout(skuTimeoutId)
       }
       
-      // Set a new timeout to check after user stops typing
+      // Set a new timeout to check after user stops typing (increased to 2 seconds)
       const timeoutId = setTimeout(async () => {
-        try {
-          const exists = await checkSkuExists(value.trim())
-          if (exists) {
-            setSkuError(`SKU "${value}" already exists. Please use a different SKU.`)
-          } else {
-            // Clear the error if SKU is available
+        // Only check if SKU is at least 3 characters long
+        if (value.trim().length >= 3) {
+          try {
+            const exists = await checkSkuExistsWithRetry(value.trim())
+            if (exists) {
+              setSkuError(`SKU "${value}" already exists. Please use a different SKU.`)
+            } else {
+              // Clear the error if SKU is available
+              setSkuError('')
+            }
+          } catch (err) {
+            // Don't show error for validation check failures, but log for debugging
+            console.warn('SKU validation failed:', err)
+            // Optionally clear error to allow user to proceed
             setSkuError('')
           }
-        } catch (err) {
-          // Don't show error for validation check failures
         }
-      }, 1000) // Wait 1 second after user stops typing
+      }, 2000) // Wait 2 seconds after user stops typing
       
       setSkuTimeoutId(timeoutId)
     }
@@ -252,12 +302,17 @@ export default function ProductForm({ productId: propProductId, onSuccess }: { p
     
     setUploading(true)
     try {
-      const urls = await uploadMultipleImagesToCloudinary(images)
+      const urls = await uploadMultipleImagesToCloudinaryWithRetry(images)
       setUploadedImageUrls(urls)
       return urls
     } catch (error) {
       console.error('Error uploading images:', error)
-      setError('Failed to upload images to Cloudinary')
+      // Provide more user-friendly error message
+      if (error.message.includes('DNS') || error.message.includes('network')) {
+        setError('Network connection issue. Please check your internet connection and try again.')
+      } else {
+        setError('Failed to upload images to Cloudinary. Please try again.')
+      }
       throw error
     } finally {
       setUploading(false)
@@ -294,14 +349,14 @@ export default function ProductForm({ productId: propProductId, onSuccess }: { p
         title: formData.title,
         description: formData.description,
         category: formData.category,
-        brand: formData.make,        // Map make to brand field
+        make: formData.make,        // Use make field directly
         model: formData.model,
         year: formData.year,
         mileage: formData.mileage,
         condition: formData.condition,
-        price: formData.original_price,  // Map original_price to price field
+        original_price: formData.original_price,  // Use original_price field directly
         sale_price: formData.sale_price,
-        stock: formData.stock_quantity,  // Map stock_quantity to stock field
+        stock_quantity: formData.stock_quantity,  // Use stock_quantity field directly
         is_active: formData.is_active,
         featured: formData.featured,
         images: imageUrls

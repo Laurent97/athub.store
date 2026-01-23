@@ -436,9 +436,9 @@ export default function DashboardWallet() {
               <ul className={`text-sm space-y-1 ${
                 isDarkMode ? 'text-blue-200/80' : 'text-blue-800'
               }`}>
-                <li>• Your available balance is automatically used when customers purchase from your store</li>
+                <li>• Your available balance is automatically used when you process or pay for your pending order</li>
                 <li>• Pending balance includes earnings from orders that are still processing</li>
-                <li>• You can add funds via PayPal, credit card, or cryptocurrency</li>
+                <li>• You can add funds via PayPal or cryptocurrency</li>
                 <li>• Withdrawals are processed within 24-48 hours</li>
               </ul>
             </div>

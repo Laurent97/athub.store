@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { partnerService } from '../../lib/supabase/partner-service';
+import { partnerTrackingAPI } from '../../services/tracking-api';
 import { walletService } from '../../lib/supabase/wallet-service';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import ThemeSwitcher from '../../components/ThemeSwitcher';
 import OrderActionsDropdown from '../../components/Partner/OrderActionsDropdown';
+import OrderTrackingBadge from '../../components/Partner/OrderTrackingBadge';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { useOrderRealtime } from '../../hooks/useOrderRealtime';
 import { 
@@ -16,6 +18,7 @@ import {
 export default function DashboardOrders() {
   const { user, userProfile } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
+  const [trackingData, setTrackingData] = useState<{[key: string]: any}>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'processing' | 'shipped' | 'completed' | 'cancelled'>('all');
@@ -38,6 +41,7 @@ export default function DashboardOrders() {
     if (partnerProfile) {
       loadOrders();
       loadWalletBalance();
+      loadTrackingData();
     }
   }, [partnerProfile]);
 
@@ -45,20 +49,38 @@ export default function DashboardOrders() {
   useOrderRealtime({
     enabled: !!partnerProfile,
     onOrderUpdate: (payload) => {
-      // Update specific order in state
-      setOrders(prev => prev.map(order => 
-        order.id === payload.new.id 
-          ? { ...order, ...payload.new }
-          : order
-      ));
+      // Only update if this order is assigned to current partner
+      if (payload.new.partner_id === partnerProfile?.id) {
+        // Update specific order in state
+        setOrders(prev => prev.map(order => 
+          order.id === payload.new.id 
+            ? { ...order, ...payload.new }
+            : order
+        ));
+      } else {
+        // If order was reassigned from this partner, remove it
+        if (payload.old?.partner_id === partnerProfile?.id && payload.new.partner_id !== partnerProfile?.id) {
+          setOrders(prev => prev.filter(order => order.id !== payload.new.id));
+        }
+        // If order was assigned to this partner, add it
+        if (payload.old?.partner_id !== partnerProfile?.id && payload.new.partner_id === partnerProfile?.id) {
+          setOrders(prev => [payload.new, ...prev]);
+        }
+      }
     },
     onOrderInsert: (payload) => {
-      // Add new order to beginning of list
-      setOrders(prev => [payload.new, ...prev]);
+      // Only add new order if it's assigned to current partner
+      if (payload.new.partner_id === partnerProfile?.id) {
+        // Add new order to beginning of list
+        setOrders(prev => [payload.new, ...prev]);
+      }
     },
     onOrderDelete: (payload) => {
-      // Remove order from state
-      setOrders(prev => prev.filter(order => order.id !== payload.old.id));
+      // Only remove order if it was assigned to current partner
+      if (payload.old.partner_id === partnerProfile?.id) {
+        // Remove order from state
+        setOrders(prev => prev.filter(order => order.id !== payload.old.id));
+      }
     }
   });
 
@@ -91,18 +113,33 @@ export default function DashboardOrders() {
     }
   };
 
-  const loadOrders = async () => {
+  const loadTrackingData = async () => {
     if (!partnerProfile?.id) return;
     
-    setLoading(true);
-    setError(null);
     try {
-      const { data, error } = await partnerService.getPartnerOrders(partnerProfile.id);
-      if (error) throw error;
-      setOrders(data || []);
+      const result = await partnerTrackingAPI.getPartnerTracking(partnerProfile.id);
+      if (result.success && result.data) {
+        const trackingMap: {[key: string]: any} = {};
+        result.data.forEach((tracking: any) => {
+          trackingMap[tracking.order_id] = tracking;
+        });
+        setTrackingData(trackingMap);
+      }
+    } catch (err) {
+      console.error('Failed to load tracking data:', err);
+    }
+  };
+
+  const loadOrders = async () => {
+    if (!partnerProfile) return;
+    
+    setLoading(true);
+    try {
+      const { data: ordersData } = await partnerService.getPartnerOrders(partnerProfile.id);
+      setOrders(ordersData || []);
     } catch (err) {
       console.error('Failed to load orders:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load orders');
+      setError('Failed to load orders');
     } finally {
       setLoading(false);
     }
@@ -126,23 +163,37 @@ export default function DashboardOrders() {
 
   // Action handlers for OrderActionsDropdown
   const handleProcessOrder = async (order: any) => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      alert('Authentication required. Please log in again.');
+      return;
+    }
+    
+    // Confirm before processing
+    const confirmPayment = window.confirm(
+      `Process payment for Order #${order.order_number || order.id}?\n\nAmount: $${order.total_amount?.toFixed(2) || '0.00'}\n\nThis will deduct the amount from your wallet balance.`
+    );
+    
+    if (!confirmPayment) return;
     
     try {
+      console.log('Processing payment for order:', order.id);
       const { success, error, message } = await partnerService.processOrderPayment(order.id, user.id);
       
       if (error) {
-        alert(`Payment failed: ${error}`);
+        console.error('Payment processing failed:', error);
+        alert(`❌ Payment Failed: ${error}`);
         return;
       }
       
-      alert('✅ Payment processed successfully! Order status updated.');
-      await loadOrders(); // Refresh orders
-      await loadWalletBalance(); // Refresh wallet balance
+      console.log('Payment processed successfully');
+      alert('✅ Payment processed successfully! Order status updated to "Waiting Confirmation".');
       
+      // Refresh data
+      await loadOrders();
+      await loadWalletBalance();
     } catch (err) {
-      console.error('Payment error:', err);
-      alert('Payment processing failed');
+      console.error('Unexpected error processing payment:', err);
+      alert('❌ An unexpected error occurred. Please try again or contact support.');
     }
   };
 
@@ -248,6 +299,7 @@ export default function DashboardOrders() {
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Items</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Status</th>
+                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Tracking</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
                 <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Actions</th>
               </tr>
@@ -295,6 +347,12 @@ export default function DashboardOrders() {
                   </td>
                   <td className="px-6 py-4">
                     <OrderStatusBadge status={order.status} size="sm" />
+                  </td>
+                  <td className="px-6 py-4">
+                    <OrderTrackingBadge 
+                      tracking={trackingData[order.order_number] || null} 
+                      orderId={order.order_number}
+                    />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
                     {new Date(order.created_at).toLocaleDateString()}

@@ -19,13 +19,13 @@ export default function DashboardOverview() {
         const { data: partnerData } = await partnerService.getPartnerProfile(user.id);
         
         if (partnerData) {
-          const { data: analytics } = await partnerService.getPartnerAnalytics(partnerData.id);
-          if (analytics) {
+          const { data: stats } = await partnerService.getPartnerStats(partnerData.id);
+          if (stats) {
             setStats({
-              totalSales: analytics.total_sales || 0,
-              pendingOrders: analytics.pending_orders || 0,
-              totalEarnings: analytics.total_earnings || 0,
-              conversionRate: analytics.conversion_rate || 0
+              totalSales: stats.totalOrders || 0,
+              pendingOrders: stats.pendingOrders || 0,
+              totalEarnings: stats.totalEarnings || 0,
+              conversionRate: stats.totalOrders > 0 ? (stats.completedOrders / stats.totalOrders * 100) : 0
             });
           }
         }

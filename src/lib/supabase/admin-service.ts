@@ -74,6 +74,7 @@ export const adminService = {
       .from('orders')
       .update({
         partner_id: partnerId,
+        status: 'pending', // Ensure order starts in pending status when assigned
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId)

@@ -286,21 +286,54 @@ export function validateProductData(data: ProductFormData): { isValid: boolean; 
   }
 }
 
-// Check if SKU already exists
+// Check if SKU already exists with improved error handling
 export async function checkSkuExists(sku: string): Promise<boolean> {
   try {
+    // Add timeout to prevent hanging requests
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
     const { data, error } = await supabase
-      .rpc('check_sku_exists', { p_sku: sku })
+      .rpc('check_sku_exists', { 
+        p_sku: sku 
+      }, {
+        // @ts-ignore - AbortSignal is supported but not in types
+        signal: controller.signal
+      })
+
+    clearTimeout(timeoutId);
 
     if (error) {
-      console.error('Error checking SKU:', error)
-      return false
+      console.error('Error checking SKU:', error);
+      
+      // Handle specific error cases
+      if (error.message.includes('timeout') || error.message.includes('aborted')) {
+        throw new Error('SKU validation timed out');
+      } else if (error.message.includes('network') || error.message.includes('connection')) {
+        throw new Error('Network connection failed');
+      } else {
+        // For other errors, return false to allow user to proceed
+        console.warn('SKU validation failed, allowing user to proceed:', error);
+        return false;
+      }
     }
 
-    return data || false
+    return data || false;
   } catch (err) {
-    console.error('Unexpected error:', err)
-    return false
+    console.error('Unexpected error in SKU validation:', err);
+    
+    // If it's a network error, we want to retry
+    if (err instanceof TypeError && 
+        (err.message.includes('Failed to fetch') || 
+         err.message.includes('NetworkError') ||
+         err.message.includes('ERR_NETWORK') ||
+         err.message.includes('ERR_NAME_NOT_RESOLVED'))) {
+      throw err; // Re-throw network errors for retry mechanism
+    }
+    
+    // For other unexpected errors, return false to allow user to proceed
+    console.warn('Unexpected SKU validation error, allowing user to proceed:', err);
+    return false;
   }
 }
 
