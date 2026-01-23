@@ -65,9 +65,6 @@ const Navbar = () => {
 
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-              <Search className="w-5 h-5" />
-            </Button>
             <Link to="/cart">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative">
                 <ShoppingCart className="w-5 h-5" />
