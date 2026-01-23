@@ -34,7 +34,12 @@ export default function OrderDetails() {
       return;
     }
 
+    console.log('=== ORDER LOOKUP DEBUG ===');
     console.log('Loading order with ID:', orderId);
+    console.log('User logged in:', user ? 'Yes' : 'No');
+    console.log('User ID:', user?.id);
+    console.log('User email:', user?.email);
+    
     setLoading(true);
     setError(null);
     
@@ -43,6 +48,7 @@ export default function OrderDetails() {
       
       // Check if orderId is a UUID or order number
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(orderId);
+      console.log('Is UUID:', isUUID);
       
       if (isUUID) {
         // Try to get by UUID
@@ -64,15 +70,33 @@ export default function OrderDetails() {
       
       if (error) {
         console.error('Order lookup failed:', error);
+        console.error('Error details:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        });
         throw new Error(`Order not found: ${error.message || 'Unknown error'}`);
       }
       
       if (!data) {
         console.log('No order found with identifier:', orderId);
+        console.log('This could mean:');
+        console.log('1. The order does not exist in the database');
+        console.log('2. The order number/ID is incorrect');
+        console.log('3. There might be a database schema issue');
         throw new Error('Order not found');
       }
       
       console.log('Order loaded successfully:', data);
+      console.log('Order details:', {
+        id: data.id,
+        order_number: data.order_number,
+        customer_id: data.customer_id,
+        status: data.status,
+        total_amount: data.total_amount,
+        created_at: data.created_at
+      });
       
       // Check if user is authorized to view this order
       if (!user) {
@@ -82,6 +106,11 @@ export default function OrderDetails() {
         return;
       }
       
+      console.log('Authorization check:');
+      console.log('Order customer_id:', data.customer_id);
+      console.log('Current user ID:', user.id);
+      console.log('Match:', data.customer_id === user.id);
+      
       if (data.customer_id !== user.id) {
         console.log('Authorization check failed:', { 
           orderCustomerId: data.customer_id, 
@@ -90,9 +119,14 @@ export default function OrderDetails() {
         throw new Error('You are not authorized to view this order');
       }
       
+      console.log('=== ORDER LOOKUP SUCCESS ===');
       setOrder(data);
     } catch (err) {
+      console.error('=== ORDER LOOKUP FAILED ===');
       console.error('Error loading order:', err);
+      console.error('Error type:', err.constructor.name);
+      console.error('Error message:', err.message);
+      
       const errorMessage = err instanceof Error ? err.message : 'Failed to load order';
       setError(errorMessage);
     } finally {
