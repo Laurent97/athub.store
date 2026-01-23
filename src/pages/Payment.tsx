@@ -40,6 +40,13 @@ export default function Payment() {
     }
 
     try {
+      // Get shipping address from checkout state
+      const checkoutShippingAddress = location.state?.shippingAddress;
+      
+      console.log('=== SHIPPING ADDRESS DEBUG ===');
+      console.log('Location state:', location.state);
+      console.log('Shipping address from checkout:', checkoutShippingAddress);
+      
       // Prepare order data similar to Checkout.tsx
       const orderItems = items.map((item) => ({
         product_id: item.product.id,
@@ -51,14 +58,14 @@ export default function Payment() {
       const orderData = {
         customer_id: user.id,
         items: orderItems,
-        shipping_address: {
+        shipping_address: checkoutShippingAddress || {
           full_name: user.user_metadata?.full_name || user.email || 'User',
-          address_line1: 'User Address',
-          city: 'User City',
-          state: 'User State',
-          postal_code: '12345',
-          country: 'User Country',
-          phone: 'User Phone',
+          address_line1: '',
+          city: '',
+          state: '',
+          postal_code: '',
+          country: '',
+          phone: user.user_metadata?.phone || '',
         },
         payment_method: paymentData.method || 'card',
         payment_intent_id: paymentData.paymentIntentId,
