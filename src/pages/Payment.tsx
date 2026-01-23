@@ -67,6 +67,15 @@ export default function Payment() {
       console.log('Location state:', location.state);
       console.log('Shipping address from checkout:', checkoutShippingAddress);
       
+      if (!checkoutShippingAddress) {
+        console.error('❌ NO SHIPPING ADDRESS FOUND - This should not happen!');
+        console.error('❌ Current location.state:', location.state);
+        console.error('❌ Items in cart:', items);
+        throw new Error('Shipping address is required. Please complete the checkout process first.');
+      }
+      
+      console.log('✅ Shipping address found:', checkoutShippingAddress);
+      
       // Prepare order data similar to Checkout.tsx
       const orderItems = items.map((item) => ({
         product_id: item.product.id,
@@ -78,18 +87,14 @@ export default function Payment() {
       const orderData = {
         customer_id: user.id,
         items: orderItems,
-        shipping_address: checkoutShippingAddress || {
-          full_name: user.user_metadata?.full_name || user.email || 'User',
-          address_line1: '',
-          city: '',
-          state: '',
-          postal_code: '',
-          country: '',
-          phone: user.user_metadata?.phone || '',
-        },
+        shipping_address: checkoutShippingAddress,
         payment_method: paymentData.method || 'card',
         payment_intent_id: paymentData.paymentIntentId,
       };
+
+      console.log('=== ORDER CREATION DATA ===');
+      console.log('Full order data:', JSON.stringify(orderData, null, 2));
+      console.log('Shipping address being saved:', orderData.shipping_address);
 
       console.log('=== PAYMENT ORDER CREATION DEBUG ===');
       console.log('Creating order with data:', orderData);

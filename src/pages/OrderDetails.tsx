@@ -155,6 +155,17 @@ export default function OrderDetails() {
       }
       
       console.log('=== ORDER LOOKUP SUCCESS ===');
+      console.log('Full order data:', data);
+      console.log('Shipping address:', data.shipping_address);
+      console.log('Shipping address fields:', {
+        full_name: data.shipping_address?.full_name,
+        address_line1: data.shipping_address?.address_line1,
+        city: data.shipping_address?.city,
+        state: data.shipping_address?.state,
+        postal_code: data.shipping_address?.postal_code,
+        country: data.shipping_address?.country,
+        phone: data.shipping_address?.phone,
+      });
       setOrder(data);
     } catch (err) {
       console.error('=== ORDER LOOKUP FAILED ===');
@@ -422,9 +433,9 @@ export default function OrderDetails() {
                 {order.shipping_address ? (
                   <div className="text-gray-700 dark:text-gray-300">
                     <p className="font-medium">{order.shipping_address.full_name}</p>
-                    <p>{order.shipping_address.address_line_1}</p>
-                    {order.shipping_address.address_line_2 && (
-                      <p>{order.shipping_address.address_line_2}</p>
+                    <p>{order.shipping_address.address_line1}</p>
+                    {order.shipping_address.address_line2 && (
+                      <p>{order.shipping_address.address_line2}</p>
                     )}
                     <p>
                       {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}
