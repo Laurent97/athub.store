@@ -28,6 +28,7 @@ import Manufacturers from "./pages/Manufacturers";
 import PartnerRegister from "./pages/partner/Register";
 import PartnerPending from "./pages/partner/Pending";
 import PartnerDashboard from "./pages/partner/Dashboard";
+import PartnerInfo from "./pages/partner/Info";
 import DashboardOverview from "./pages/partner/DashboardOverview";
 import DashboardProducts from "./pages/partner/DashboardProducts";
 import DashboardOrders from "./pages/partner/DashboardOrders";
@@ -92,6 +93,7 @@ const App = () => (
               <Route path="/store/:storeSlug" element={<Store />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/partner/register" element={<PartnerRegister />} />
+              <Route path="/partner/info" element={<PartnerInfo />} />
               <Route path="/partner/pending" element={<PartnerPending />} />
               <Route path="/partner/dashboard" element={<PartnerOnlyRoute requireApproved={true}><PartnerDashboard /></PartnerOnlyRoute>}>
                 <Route index element={<DashboardOverview />} />
