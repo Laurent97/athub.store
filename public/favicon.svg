@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="4" fill="#F59E0B"/>
+  <rect width="32" height="32" rx="4" fill="#000000"/>
   <!-- Gear -->
   <circle cx="10" cy="10" r="8" fill="none" stroke="white" stroke-width="1.5"/>
   <circle cx="10" cy="10" r="5" fill="white"/>
@@ -14,7 +14,7 @@
   <rect x="11" y="13" width="3" height="3" rx="1.5" fill="white"/>
   
   <!-- Car icon -->
-  <rect x="7" y="8" width="6" height="3" rx="1.5" fill="#F59E0B"/>
+  <rect x="7" y="8" width="6" height="3" rx="1.5" fill="#000000"/>
   <circle cx="8.5" cy="7.5" r="1.5" fill="white"/>
   <circle cx="11.5" cy="7.5" r="1.5" fill="white"/>
   
