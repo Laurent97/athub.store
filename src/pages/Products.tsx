@@ -1,11 +1,31 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Filter, Grid, List, ChevronDown, Star, MapPin, Heart, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Search, Filter, Grid, List, ChevronDown, Star, MapPin, Heart, SlidersHorizontal, X, Loader2, Car, Wrench, Battery, Settings, PaintBucket, Gauge, Hammer, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { productService } from "@/lib/supabase/product-service";
 import type { Product } from "@/lib/types";
 import PublicLayout from "@/components/PublicLayout";
+
+// Category icon mapping
+const getCategoryIcon = (categoryId: string) => {
+  const iconMap: { [key: string]: React.ReactNode } = {
+    car: <Car className="w-6 h-6" />,
+    engine: <Gauge className="w-6 h-6" />,
+    transmission: <Settings className="w-6 h-6" />,
+    suspension: <Car className="w-6 h-6" />,
+    brakes: <Settings className="w-6 h-6" />,
+    electrical: <Battery className="w-6 h-6" />,
+    interior: <PaintBucket className="w-6 h-6" />,
+    exterior: <Car className="w-6 h-6" />,
+    performance: <Gauge className="w-6 h-6" />,
+    tools: <Wrench className="w-6 h-6" />,
+    maintenance: <Droplets className="w-6 h-6" />,
+    part: <Hammer className="w-6 h-6" />,
+    accessory: <Star className="w-6 h-6" />,
+  };
+  return iconMap[categoryId] || <Car className="w-6 h-6" />;
+};
 
 // Keep demo products as fallback if Supabase is not configured
 const fallbackProducts = [
@@ -433,6 +453,31 @@ const Products = () => {
             <p className="text-muted-foreground">
               {loading ? 'Loading...' : `${total} products found`}
             </p>
+          </div>
+
+          {/* Prominent Category Buttons */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Shop by Category</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+              {categories.filter(cat => cat.id !== 'all').map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.id)}
+                  className={`p-4 rounded-lg border transition-all hover:shadow-md ${
+                    categoryFilter === category.id
+                      ? "bg-accent text-accent-foreground border-accent-foreground"
+                      : "bg-background border-border hover:bg-secondary/50"
+                  }`}
+                >
+                  <div className="flex flex-col items-center text-center">
+                    <div className="text-2xl mb-2">
+                      {getCategoryIcon(category.id)}
+                    </div>
+                    <span className="text-sm font-medium">{category.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Filters Bar */}
