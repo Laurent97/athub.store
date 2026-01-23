@@ -112,7 +112,7 @@ const Checkout = () => {
       clearCart();
       navigate(`/order-success`, {
         state: {
-          orderId: order?.id || orderId,
+          orderId: order?.order_number || orderId, // Use order_number instead of id
           orderData: order,
           paymentData,
         },
