@@ -309,21 +309,59 @@ const Products = () => {
       console.log('Filter options result:', filterOptions);
       console.log('Categories from database:', filterOptions.categories);
       
-      if (filterOptions.categories) {
+      let finalCategories = [{ id: "all", label: "All Products" }];
+      
+      if (filterOptions.categories && filterOptions.categories.length > 0) {
         const dbCategories = filterOptions.categories.map((cat: string) => ({
           id: cat.toLowerCase().replace(/\s+/g, '-'),
           label: cat.charAt(0).toUpperCase() + cat.slice(1)
         }));
         console.log('Formatted categories:', dbCategories);
-        setCategories([{ id: "all", label: "All Products" }, ...dbCategories]);
-        console.log('Final categories state:', [{ id: "all", label: "All Products" }, ...dbCategories]);
+        finalCategories = [{ id: "all", label: "All Products" }, ...dbCategories];
       } else {
-        console.log('No categories found in database');
+        console.log('No categories found in database, using fallback categories');
+        // Use comprehensive automotive categories as fallback
+        finalCategories = [
+          { id: "all", label: "All Products" },
+          { id: "engine", label: "Engine" },
+          { id: "transmission", label: "Transmission" },
+          { id: "suspension", label: "Suspension" },
+          { id: "brakes", label: "Brakes" },
+          { id: "electrical", label: "Electrical" },
+          { id: "interior", label: "Interior" },
+          { id: "exterior", label: "Exterior" },
+          { id: "performance", label: "Performance" },
+          { id: "tools", label: "Tools" },
+          { id: "maintenance", label: "Maintenance" },
+          { id: "car", label: "Vehicles" },
+          { id: "part", label: "Parts" },
+          { id: "accessory", label: "Accessories" },
+        ];
       }
+      
+      console.log('Final categories state:', finalCategories);
+      setCategories(finalCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
-      // Keep hardcoded categories as fallback
-      console.log('Using fallback categories');
+      console.log('Using fallback categories due to error');
+      // Use comprehensive automotive categories as fallback
+      const fallbackCategories = [
+        { id: "all", label: "All Products" },
+        { id: "engine", label: "Engine" },
+        { id: "transmission", label: "Transmission" },
+        { id: "suspension", label: "Suspension" },
+        { id: "brakes", label: "Brakes" },
+        { id: "electrical", label: "Electrical" },
+        { id: "interior", label: "Interior" },
+        { id: "exterior", label: "Exterior" },
+        { id: "performance", label: "Performance" },
+        { id: "tools", label: "Tools" },
+        { id: "maintenance", label: "Maintenance" },
+        { id: "car", label: "Vehicles" },
+        { id: "part", label: "Parts" },
+        { id: "accessory", label: "Accessories" },
+      ];
+      setCategories(fallbackCategories);
     }
   };
 
