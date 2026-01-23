@@ -303,6 +303,24 @@ export default function Manufacturers() {
     const searchLower = searchTerm.toLowerCase();
     const searchWords = searchLower.split(' ').filter(word => word.length > 0);
     
+    // Debug logging for first few shops
+    if (shops.indexOf(shop) < 3) {
+      console.log('Filtering shop:', {
+        name: shop.store_name,
+        description: shop.description,
+        city: shop.city,
+        country: shop.country,
+        searchTerm,
+        categoryFilter,
+        countryFilter
+      });
+    }
+    
+    // If no search term and no category filter, show all shops
+    if (searchWords.length === 0 && categoryFilter === 'all' && countryFilter === 'all') {
+      return true;
+    }
+    
     // Enhanced search terms for automotive categories
     const automotiveKeywords = {
       cars: ['car', 'cars', 'vehicle', 'vehicles', 'automotive', 'auto', 'motor', 'motor vehicle'],
@@ -353,8 +371,22 @@ export default function Manufacturers() {
       return false;
     });
 
-    return hasSearchMatch || hasAutomotiveMatch;
+    const result = hasSearchMatch || hasAutomotiveMatch;
+    
+    // Debug logging for first few shops
+    if (shops.indexOf(shop) < 3) {
+      console.log('Shop filter result:', {
+        name: shop.store_name,
+        hasSearchMatch,
+        hasAutomotiveMatch,
+        result
+      });
+    }
+
+    return result;
   });
+
+  console.log('Final filtered shops count:', filteredShops.length);
 
   return (
     <div className="min-h-screen bg-background">
