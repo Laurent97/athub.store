@@ -43,6 +43,8 @@ export default function Contact() {
                     <h3 className="font-bold mb-1">Email</h3>
                     <p className="text-muted-foreground">support@autotradehub.com</p>
                     <p className="text-muted-foreground text-sm">Response within 24 hours</p>
+                    <p className="text-muted-foreground text-sm">automotivetradehub@gmail.com</p>
+                    <p className="text-muted-foreground text-sm">Alternative contact</p>
                   </div>
                 </div>
               </div>
