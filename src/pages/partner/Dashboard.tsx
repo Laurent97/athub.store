@@ -236,37 +236,9 @@ export default function PartnerDashboard() {
           <div className="mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">⚡ Quick Actions</h3>
-                  <p className="text-gray-600 dark:text-gray-400 text-sm">Manage your store quickly</p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    onClick={() => navigate('/partner/products/add')}
-                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                  >
-                    <span>➕</span>
-                    Add Product
-                  </button>
-                  <button
-                    onClick={() => navigate('/partner/orders')}
-                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                  >
-                    <span>📦</span>
-                    View Orders
-                  </button>
-                  <button
-                    onClick={() => navigate('/partner/settings')}
-                    className="bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                  >
-                    <span>⚙️</span>
-                    Store Settings
-                  </button>
-                </div>
               </div>
             </div>
           </div>
-
           {/* Dashboard Content */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             {/* Sidebar Navigation */}

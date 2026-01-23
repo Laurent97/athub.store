@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { partnerService } from '../../lib/supabase/partner-service';
 
 export default function DashboardOverview() {
   const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalSales: 0,
     pendingOrders: 0,
@@ -108,15 +110,24 @@ export default function DashboardOverview() {
         <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
           <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">Quick Actions</h4>
           <div className="space-y-2">
-            <button className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-              📦 Browse Products
-            </button>
-            <button className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-              🛒 View Orders
-            </button>
-            <button className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600">
-              💰 Check Earnings
-            </button>
+                  <button
+                    onClick={() => navigate('/partner/dashboard/products')}
+                    className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
+                  >
+                    📦 Browse Products
+                  </button>
+                  <button
+                    onClick={() => navigate('/partner/dashboard/orders')}
+                    className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
+                  >
+                    🛒 View Orders
+                  </button>
+                  <button
+                    onClick={() => navigate('/partner/dashboard/wallet')}
+                    className="w-full text-left px-4 py-2 bg-white dark:bg-gray-800 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600"
+                  >
+                    💰 Check Earnings
+                  </button>
           </div>
         </div>
 
