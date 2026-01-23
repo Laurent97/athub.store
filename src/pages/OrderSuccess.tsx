@@ -13,6 +13,11 @@ export default function OrderSuccess() {
   const orderId = location.state?.orderId;
   const paymentData = location.state?.paymentData;
 
+  console.log('=== ORDER SUCCESS DEBUG ===');
+  console.log('Received orderId:', orderId);
+  console.log('Received paymentData:', paymentData);
+  console.log('Location state:', location.state);
+
   useEffect(() => {
     // Redirect if no order data
     if (!orderId && !location.state) {

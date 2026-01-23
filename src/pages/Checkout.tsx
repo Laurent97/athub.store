@@ -102,7 +102,28 @@ const Checkout = () => {
 
       const { data: order, error } = await orderService.createOrder(orderData);
 
-      if (error) throw error;
+      console.log('=== ORDER CREATION DEBUG ===');
+      console.log('Order creation result:', { data: order, error });
+      console.log('Order data:', orderData);
+      console.log('User ID:', user!.id);
+      console.log('Items count:', orderItems.length);
+
+      if (error) {
+        console.error('Order creation failed:', error);
+        throw error;
+      }
+
+      if (!order) {
+        console.error('Order creation returned null data');
+        throw new Error('Order creation failed: No order data returned');
+      }
+
+      console.log('Order created successfully:', {
+        id: order.id,
+        order_number: order.order_number,
+        customer_id: order.customer_id,
+        total_amount: order.total_amount
+      });
 
       toast({
         title: 'Order placed successfully!',
