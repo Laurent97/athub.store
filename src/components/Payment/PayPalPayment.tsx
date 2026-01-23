@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { paymentService } from '../../lib/supabase/payment-service';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,8 +13,14 @@ interface PayPalPaymentProps {
 export default function PayPalPayment({ amount, orderId, onSuccess, onError }: PayPalPaymentProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   
   const paypalClientId = import.meta.env.VITE_PAYPAL_CLIENT_ID || 'test';
+
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+    setIsDarkMode(htmlElement.classList.contains('dark'));
+  }, []);
 
   const createOrder = async () => {
     setLoading(true);
@@ -72,7 +78,7 @@ export default function PayPalPayment({ amount, orderId, onSuccess, onError }: P
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-50 p-6 rounded-lg">
+      <div className={`p-6 rounded-lg ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50 border border-gray-200'}`}>
         <PayPalScriptProvider
           options={{
             clientId: paypalClientId,
@@ -89,15 +95,15 @@ export default function PayPalPayment({ amount, orderId, onSuccess, onError }: P
             }}
             createOrder={createOrder}
             onApprove={onApprove}
-            onError={(err) => onError(err.message)}
+            onError={(err) => onError(typeof err === 'string' ? err : err?.message || 'PayPal payment error')}
             disabled={loading}
           />
         </PayPalScriptProvider>
       </div>
 
-      <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-        <h4 className="font-semibold text-yellow-800 mb-2">PayPal Information:</h4>
-        <ul className="text-sm text-yellow-700 space-y-1">
+      <div className={`p-4 rounded-lg border ${isDarkMode ? 'bg-yellow-900/40 border-yellow-800' : 'bg-yellow-50 border border-yellow-200'}`}>
+        <h4 className={`font-semibold mb-2 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>PayPal Information:</h4>
+        <ul className={`text-sm space-y-1 ${isDarkMode ? 'text-yellow-300' : 'text-yellow-700'}`}>
           <li>• You'll be redirected to PayPal to complete payment</li>
           <li>• Use sandbox account for testing: sb-4a1dq39276485@personal.example.com</li>
           <li>• Password: K5L=fP2+</li>
