@@ -13,10 +13,10 @@ export default function CreateAccount() {
       <h2>Creating Your AutoTradeHub Account</h2>
       <p>Getting started with AutoTradeHub is quick and easy. Follow this step-by-step guide to create your account and start buying or selling automotive parts.</p>
 
-      <h3>Step 1: Visit the Sign Up Page</h3>
+      <h3>Step 1: Visit the Sign Up Page</h2>
       <p>Navigate to <a href="/auth" className="text-primary hover:underline">AutoTradeHub.com/auth</a> and click on the "Sign Up" button. You can also find the sign-up option in the top navigation menu.</p>
 
-      <h3>Step 2: Choose Your Account Type</h3>
+      <h3>Step 2: Choose Your Account Type</h2>
       <p>Select the account type that best fits your needs:</p>
       <ul>
         <li><strong>Customer Account:</strong> For buying automotive parts and accessories</li>
@@ -24,7 +24,7 @@ export default function CreateAccount() {
         <li><strong>Admin Account:</strong> For platform administrators (invite only)</li>
       </ul>
 
-      <h3>Step 3: Enter Your Information</h3>
+      <h3>Step 3: Enter Your Information</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Info className="w-4 h-4" />
@@ -38,7 +38,7 @@ export default function CreateAccount() {
         </ul>
       </div>
 
-      <h3>Step 4: Create a Strong Password</h3>
+      <h3>Step 4: Create a Strong Password</h2>
       <p>Your password should contain:</p>
       <ul>
         <li>At least 8 characters</li>
@@ -60,10 +60,10 @@ export default function CreateAccount() {
         </ul>
       </div>
 
-      <h3>Step 5: Verify Your Email</h3>
+      <h3>Step 5: Verify Your Email</h2>
       <p>After registration, you'll receive a verification email. Click the verification link to activate your account.</p>
 
-      <h3>Step 6: Complete Your Profile</h3>
+      <h3>Step 6: Complete Your Profile</h2>
       <p>Once your account is verified, you can:</p>
       <ul>
         <li>Add your profile picture</li>
@@ -74,21 +74,21 @@ export default function CreateAccount() {
 
       <h2>Troubleshooting Common Issues</h2>
       
-      <h3>Email Not Received?</h3>
+      <h3>Email Not Received?</h2>
       <ul>
         <li>Check your spam or junk folder</li>
         <li>Add noreply@autotradehub.com to your contacts</li>
         <li>Request a new verification email from the login page</li>
       </ul>
 
-      <h3>Password Reset Issues?</h3>
+      <h3>Password Reset Issues?</h2>
       <ul>
         <li>Use the "Forgot Password" link on the login page</li>
         <li>Check that you're using the correct email address</li>
         <li>Password reset links expire after 24 hours</li>
       </ul>
 
-      <h3>Account Already Exists?</h3>
+      <h3>Account Already Exists?</h2>
       <ul>
         <li>Try logging in with your existing credentials</li>
         <li>Use the "Forgot Password" option if you don't remember your password</li>

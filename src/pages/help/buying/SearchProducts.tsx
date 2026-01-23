@@ -13,7 +13,7 @@ export default function SearchProducts() {
       <h2>Master Product Search on AutoTradeHub</h2>
       <p>Finding the right automotive parts is easy with our powerful search tools. This guide will help you become a search expert and find exactly what you need.</p>
 
-      <h3>Basic Search Techniques</h3>
+      <h3>Basic Search Techniques</h2>
       
       <h4>Simple Keyword Search</h4>
       <p>Start with basic terms:</p>
@@ -38,9 +38,9 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h2>Advanced Search Strategies</h3>
+      <h2>Advanced Search Strategies</h2>
       
-      <h3>Using Search Operators</h3>
+      <h3>Using Search Operators</h2>
       <p>Refine your search with these operators:</p>
       <ul>
         <li><strong>Quotes (""):</strong> Exact phrase search - "brake caliper"</li>
@@ -49,7 +49,7 @@ export default function SearchProducts() {
         <li><strong>Asterisk (*):</strong> Wildcard - "brake*"</li>
       </ul>
 
-      <h3>Search Examples</h3>
+      <h3>Search Examples</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2">Effective Search Queries</h4>
         <ul className="space-y-2 text-sm">
@@ -60,9 +60,9 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h2>Using Filters Effectively</h3>
+      <h2>Using Filters Effectively</h2>
       
-      <h3>Vehicle Filters</h3>
+      <h3>Vehicle Filters</h2>
       <p>Narrow down by vehicle specifications:</p>
       <ul>
         <li><strong>Make:</strong> Toyota, Honda, Ford, BMW, etc.</li>
@@ -72,7 +72,7 @@ export default function SearchProducts() {
         <li><strong>Trim:</strong> LE, EX, Sport, Limited</li>
       </ul>
 
-      <h3>Product Filters</h3>
+      <h3>Product Filters</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Filter className="w-4 h-4" />
@@ -87,7 +87,7 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h3>Advanced Filtering</h3>
+      <h3>Advanced Filtering</h2>
       <p>Power users can filter by:</p>
       <ul>
         <li><strong>Specifications:</strong> Dimensions, weight, material</li>
@@ -96,9 +96,9 @@ export default function SearchProducts() {
         <li><strong>Availability:</strong> In stock, made to order</li>
       </ul>
 
-      <h2>Browse by Category</h3>
+      <h2>Browse by Category</h2>
       
-      <h3>Popular Categories</h3>
+      <h3>Popular Categories</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 my-4">
         <div className="p-3 bg-card rounded-lg border border-border">
           <h4 className="font-semibold">Engine System</h4>
@@ -126,7 +126,7 @@ export default function SearchProducts() {
         </div>
       </div>
 
-      <h3>Navigating Categories</h3>
+      <h3>Navigating Categories</h2>
       <ul>
         <li>Click on main categories to see subcategories</li>
         <li>Use breadcrumb navigation to go back</li>
@@ -134,9 +134,9 @@ export default function SearchProducts() {
         <li>Save category searches for later</li>
       </ul>
 
-      <h2>Search Tips and Tricks</h3>
+      <h2>Search Tips and Tricks</h2>
       
-      <h3>Find Compatible Parts</h3>
+      <h3>Find Compatible Parts</h2>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -151,7 +151,7 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h3>Price Comparison</h3>
+      <h3>Price Comparison</h2>
       <ul>
         <li>Sort by price (low to high or high to low)</li>
         <li>Compare similar items side by side</li>
@@ -160,7 +160,7 @@ export default function SearchProducts() {
         <li>Factor in warranty value</li>
       </ul>
 
-      <h3>Quality Indicators</h3>
+      <h3>Quality Indicators</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Star className="w-4 h-4" />
@@ -175,9 +175,9 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h2>Mobile Search Features</h3>
+      <h2>Mobile Search Features</h2>
       
-      <h3>App-Specific Tools</h3>
+      <h3>App-Specific Tools</h2>
       <ul>
         <li><strong>Barcode Scanner:</strong> Scan product barcodes</li>
         <li><strong>VIN Scanner:</strong> Scan vehicle VIN</li>
@@ -186,7 +186,7 @@ export default function SearchProducts() {
         <li><strong>Location Services:</strong> Find nearby parts</li>
       </ul>
 
-      <h3>Mobile Optimization</h3>
+      <h3>Mobile Optimization</h2>
       <ul>
         <li>Thumb-friendly interface</li>
         <li>Swipe through product images</li>
@@ -194,9 +194,9 @@ export default function SearchProducts() {
         <li>Offline search history</li>
       </ul>
 
-      <h2>Saved Searches and Alerts</h3>
+      <h2>Saved Searches and Alerts</h2>
       
-      <h3>Save Search Preferences</h3>
+      <h3>Save Search Preferences</h2>
       <ul>
         <li>Save frequently used search combinations</li>
         <li>Create custom filter presets</li>
@@ -204,7 +204,7 @@ export default function SearchProducts() {
         <li>Share saved searches with others</li>
       </ul>
 
-      <h3>Price Alerts</h3>
+      <h3>Price Alerts</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <TrendingUp className="w-4 h-4" />
@@ -218,9 +218,9 @@ export default function SearchProducts() {
         </ul>
       </div>
 
-      <h2>Troubleshooting Search Issues</h3>
+      <h2>Troubleshooting Search Issues</h2>
       
-      <h3>No Results Found?</h3>
+      <h3>No Results Found?</h2>
       <ul>
         <li>Check spelling and typos</li>
         <li>Try broader search terms</li>
@@ -229,7 +229,7 @@ export default function SearchProducts() {
         <li>Contact support for help</li>
       </ul>
 
-      <h3>Too Many Results?</h3>
+      <h3>Too Many Results?</h2>
       <ul>
         <li>Add more specific keywords</li>
         <li>Use additional filters</li>
@@ -238,7 +238,7 @@ export default function SearchProducts() {
         <li>Set price range</li>
       </ul>
 
-      <h3>Search Not Working?</h3>
+      <h3>Search Not Working?</h2>
       <ul>
         <li>Clear browser cache and cookies</li>
         <li>Try a different browser</li>
@@ -247,9 +247,9 @@ export default function SearchProducts() {
         <li>Report technical issues</li>
       </ul>
 
-      <h2>Pro Search Techniques</h3>
+      <h2>Pro Search Techniques</h2>
       
-      <h3>Power User Strategies</h3>
+      <h3>Power User Strategies</h2>
       <ul>
         <li>Use part numbers for exact matches</li>
         <li>Search by OEM part numbers</li>
@@ -258,7 +258,7 @@ export default function SearchProducts() {
         <li>Use manufacturer catalogs</li>
       </ul>
 
-      <h3>Research Techniques</h3>
+      <h3>Research Techniques</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Clock className="w-4 h-4" />
@@ -273,9 +273,9 @@ export default function SearchProducts() {
         </ol>
       </div>
 
-      <h2>Search Best Practices</h3>
+      <h2>Search Best Practices</h2>
       
-      <h3>Before You Search</h3>
+      <h3>Before You Search</h2>
       <ul>
         <li>Know your vehicle details</li>
         <li>Have your VIN ready</li>
@@ -284,7 +284,7 @@ export default function SearchProducts() {
         <li>Read reviews and guides</li>
       </ul>
 
-      <h3>During Search</h3>
+      <h3>During Search</h2>
       <ul>
         <li>Start broad, then narrow down</li>
         <li>Use multiple search terms</li>
@@ -293,7 +293,7 @@ export default function SearchProducts() {
         <li>Ask sellers questions</li>
       </ul>
 
-      <h3>After Search</h3>
+      <h3>After Search</h2>
       <ul>
         <li>Save promising searches</li>
         <li>Set up price alerts</li>
@@ -303,7 +303,7 @@ export default function SearchProducts() {
       </ul>
 
       <div className="bg-gradient-accent rounded-lg text-white p-6 mt-8 text-center">
-        <h3 className="text-xl font-bold mb-2">Become a Search Expert</h3>
+        <h3 className="text-xl font-bold mb-2">Become a Search Expert</h2>
         <p className="mb-4">Practice these techniques and you'll find exactly what you need every time!</p>
         <a href="/products" className="inline-block bg-white text-primary px-6 py-2 rounded-lg font-medium hover:bg-white/90 transition-colors">
           Start Searching Now

@@ -13,7 +13,7 @@ export default function VerifyIdentity() {
       <h2>Identity Verification on AutoTradeHub</h2>
       <p>Identity verification helps create a trusted marketplace for all users. This guide explains the verification process and its benefits.</p>
 
-      <h3>Why Verification Matters</h3>
+      <h3>Why Verification Matters</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Shield className="w-4 h-4" />
@@ -28,7 +28,7 @@ export default function VerifyIdentity() {
         </ul>
       </div>
 
-      <h3>Verification Levels</h3>
+      <h3>Verification Levels</h2>
       <p>AutoTradeHub offers different verification levels:</p>
       <ul>
         <li><strong>Email Verification:</strong> Basic verification for all users</li>
@@ -37,7 +37,7 @@ export default function VerifyIdentity() {
         <li><strong>Business Verification:</strong> For business accounts</li>
       </ul>
 
-      <h2>Email Verification</h3>
+      <h2>Email Verification</h2>
       <p>This is the first step in verification:</p>
       <ol>
         <li>Check your email for a verification message</li>
@@ -45,7 +45,7 @@ export default function VerifyIdentity() {
         <li>Your account will be marked as email verified</li>
       </ol>
 
-      <h3>Troubleshooting Email Verification</h3>
+      <h3>Troubleshooting Email Verification</h2>
       <ul>
         <li>Check your spam folder</li>
         <li>Add noreply@autotradehub.com to your contacts</li>
@@ -63,7 +63,7 @@ export default function VerifyIdentity() {
         <li>Your phone number will be verified</li>
       </ol>
 
-      <h3>Phone Verification Tips</h3>
+      <h3>Phone Verification Tips</h2>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -80,7 +80,7 @@ export default function VerifyIdentity() {
       <h2>ID Verification</h2>
       <p>For maximum trust and access to premium features:</p>
 
-      <h3>Required Documents</h3>
+      <h3>Required Documents</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <FileText className="w-4 h-4" />
@@ -94,7 +94,7 @@ export default function VerifyIdentity() {
         </ul>
       </div>
 
-      <h3>Verification Process</h3>
+      <h3>Verification Process</h2>
       <ol>
         <li>Navigate to Profile Settings → Verification</li>
         <li>Select "Start ID Verification"</li>
@@ -105,7 +105,7 @@ export default function VerifyIdentity() {
         <li>Wait for verification (usually 1-2 business days)</li>
       </ol>
 
-      <h3>Taking Good Photos</h3>
+      <h3>Taking Good Photos</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Camera className="w-4 h-4" />
@@ -123,7 +123,7 @@ export default function VerifyIdentity() {
       <h2>Business Verification</h2>
       <p>For business accounts and partner sellers:</p>
 
-      <h3>Required Documents</h3>
+      <h3>Required Documents</h2>
       <ul>
         <li><strong>Business Registration:</strong> Certificate of incorporation</li>
         <li><strong>Business License:</strong> Current business license</li>
@@ -132,7 +132,7 @@ export default function VerifyIdentity() {
         <li><strong>Owner ID:</strong> Government ID of business owner</li>
       </ul>
 
-      <h3>Business Verification Process</h3>
+      <h3>Business Verification Process</h2>
       <ol>
         <li>Complete basic account setup</li>
         <li>Upgrade to business account</li>
@@ -141,7 +141,7 @@ export default function VerifyIdentity() {
         <li>Receive business verification badge</li>
       </ol>
 
-      <h2>Verification Status</h3>
+      <h2>Verification Status</h2>
       <p>Track your verification status in your profile:</p>
       <ul>
         <li><strong>Pending:</strong> Under review</li>
@@ -150,7 +150,7 @@ export default function VerifyIdentity() {
         <li><strong>Expired:</strong> Re-verification required</li>
       </ul>
 
-      <h3>What to Do If Rejected</h3>
+      <h3>What to Do If Rejected</h2>
       <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -164,7 +164,7 @@ export default function VerifyIdentity() {
         </ul>
       </div>
 
-      <h2>Privacy and Security</h3>
+      <h2>Privacy and Security</h2>
       <p>Your verification information is protected:</p>
       <ul>
         <li>All documents are encrypted and stored securely</li>
@@ -173,7 +173,7 @@ export default function VerifyIdentity() {
         <li>We comply with data protection regulations</li>
       </ul>
 
-      <h3>Privacy Settings</h3>
+      <h3>Privacy Settings</h2>
       <p>Control who sees your verification status:</p>
       <ul>
         <li>Show verification badge publicly</li>
@@ -181,9 +181,9 @@ export default function VerifyIdentity() {
         <li>Keep verification status private</li>
       </ul>
 
-      <h2>Verification Benefits</h3>
+      <h2>Verification Benefits</h2>
       
-      <h3>For Buyers</h3>
+      <h3>For Buyers</h2>
       <ul>
         <li>Priority customer support</li>
         <li>Access to premium listings</li>
@@ -191,7 +191,7 @@ export default function VerifyIdentity() {
         <li>Faster order processing</li>
       </ul>
 
-      <h3>For Sellers</h3>
+      <h3>For Sellers</h2>
       <ul>
         <li>Increased visibility in search results</li>
         <li>Higher conversion rates</li>
@@ -207,7 +207,7 @@ export default function VerifyIdentity() {
         <p className="text-sm">Verified users receive 25% more messages and close deals 40% faster than unverified users!</p>
       </div>
 
-      <h2>Getting Help</h3>
+      <h2>Getting Help</h2>
       <p>If you need assistance with verification:</p>
       <ul>
         <li>📧 Email: verification@autotradehub.com</li>
@@ -215,7 +215,7 @@ export default function VerifyIdentity() {
         <li>📞 Phone: 1-800-AUTO-HUB (9 AM - 6 PM EST)</li>
       </ul>
 
-      <h2>Next Steps</h3>
+      <h2>Next Steps</h2>
       <p>After verification, you can:</p>
       <ul>
         <li>Start buying and selling with confidence</li>

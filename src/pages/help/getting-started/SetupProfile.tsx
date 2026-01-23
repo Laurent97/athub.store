@@ -13,7 +13,7 @@ export default function SetupProfile() {
       <h2>Complete Your AutoTradeHub Profile</h2>
       <p>A complete profile helps you build trust with other users and get better recommendations. Follow this guide to set up your profile effectively.</p>
 
-      <h3>Accessing Your Profile</h3>
+      <h3>Accessing Your Profile</h2>
       <p>To access your profile settings:</p>
       <ol>
         <li>Log in to your AutoTradeHub account</li>
@@ -21,7 +21,7 @@ export default function SetupProfile() {
         <li>Select "Profile Settings" from the dropdown menu</li>
       </ol>
 
-      <h3>Profile Picture</h3>
+      <h3>Profile Picture</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Camera className="w-4 h-4" />
@@ -35,7 +35,7 @@ export default function SetupProfile() {
         </ul>
       </div>
 
-      <h3>Basic Information</h3>
+      <h3>Basic Information</h2>
       <p>Complete these essential fields:</p>
       <ul>
         <li><strong>Full Name:</strong> Your real name for verification</li>
@@ -44,7 +44,7 @@ export default function SetupProfile() {
         <li><strong>Location:</strong> Your city and country for local recommendations</li>
       </ul>
 
-      <h3>Contact Information</h3>
+      <h3>Contact Information</h2>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Shield className="w-4 h-4" />
@@ -58,7 +58,7 @@ export default function SetupProfile() {
         </ul>
       </div>
 
-      <h3>Business Information (For Sellers)</h3>
+      <h3>Business Information (For Sellers)</h2>
       <p>If you're a partner account holder, complete these additional fields:</p>
       <ul>
         <li><strong>Business Name:</strong> Your registered business name</li>
@@ -68,7 +68,7 @@ export default function SetupProfile() {
         <li><strong>Website:</strong> Your business website (optional)</li>
       </ul>
 
-      <h3>Verification Status</h3>
+      <h3>Verification Status</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <CheckCircle className="w-4 h-4" />
@@ -84,7 +84,7 @@ export default function SetupProfile() {
 
       <h2>Profile Completion Tips</h2>
       
-      <h3>Write a Compelling Bio</h3>
+      <h3>Write a Compelling Bio</h2>
       <p>Your bio is your chance to make a great first impression:</p>
       <ul>
         <li>Be authentic and honest</li>
@@ -93,14 +93,14 @@ export default function SetupProfile() {
         <li>Keep it professional but friendly</li>
       </ul>
 
-      <h3>Choose the Right Profile Type</h3>
+      <h3>Choose the Right Profile Type</h2>
       <ul>
         <li><strong>Personal:</strong> For individual buyers and collectors</li>
         <li><strong>Business:</strong> For automotive businesses and professionals</li>
         <li><strong>Dealer:</strong> For car dealerships and parts stores</li>
       </ul>
 
-      <h3>Set Your Location</h3>
+      <h3>Set Your Location</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <MapPin className="w-4 h-4" />
@@ -114,7 +114,7 @@ export default function SetupProfile() {
         </ul>
       </div>
 
-      <h2>Profile Statistics</h3>
+      <h2>Profile Statistics</h2>
       <p>Your profile displays these metrics to build credibility:</p>
       <ul>
         <li><strong>Member Since:</strong> When you joined AutoTradeHub</li>
@@ -123,9 +123,9 @@ export default function SetupProfile() {
         <li><strong>Rating:</strong> Average rating from other users</li>
       </ul>
 
-      <h2>Managing Your Profile</h3>
+      <h2>Managing Your Profile</h2>
       
-      <h3>Regular Updates</h3>
+      <h3>Regular Updates</h2>
       <p>Keep your profile current by:</p>
       <ul>
         <li>Updating your bio with new interests</li>
@@ -134,7 +134,7 @@ export default function SetupProfile() {
         <li>Updating your location if you move</li>
       </ul>
 
-      <h3>Profile Visibility</h3>
+      <h3>Profile Visibility</h2>
       <p>Control your privacy with these settings:</p>
       <ul>
         <li><strong>Search Visibility:</strong> Appear in user searches</li>
@@ -144,7 +144,7 @@ export default function SetupProfile() {
 
       <h2>Troubleshooting</h2>
       
-      <h3>Profile Picture Not Uploading?</h3>
+      <h3>Profile Picture Not Uploading?</h2>
       <ul>
         <li>Check file size (max 5MB)</li>
         <li>Ensure file format is supported</li>
@@ -152,7 +152,7 @@ export default function SetupProfile() {
         <li>Clear your browser cache</li>
       </ul>
 
-      <h3>Information Not Saving?</h3>
+      <h3>Information Not Saving?</h2>
       <ul>
         <li>Check your internet connection</li>
         <li>Ensure all required fields are filled</li>
@@ -162,7 +162,7 @@ export default function SetupProfile() {
 
       <h2>Best Practices</h2>
       
-      <h3>For Buyers</h3>
+      <h3>For Buyers</h2>
       <ul>
         <li>Complete your profile to build trust with sellers</li>
         <li>Add your location for local pickup options</li>
@@ -170,7 +170,7 @@ export default function SetupProfile() {
         <li>Keep your contact information updated</li>
       </ul>
 
-      <h3>For Sellers</h3>
+      <h3>For Sellers</h2>
       <ul>
         <li>Include business information for credibility</li>
         <li>Add professional photos and descriptions</li>

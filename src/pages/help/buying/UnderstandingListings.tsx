@@ -13,7 +13,7 @@ export default function UnderstandingListings() {
       <h2>Decoding AutoTradeHub Product Listings</h2>
       <p>Every product listing on AutoTradeHub contains valuable information to help you make informed purchasing decisions. This guide will help you understand all the elements of a product listing.</p>
 
-      <h3>Listing Overview</h3>
+      <h3>Listing Overview</h2>
       <p>A typical product listing includes:</p>
       <ul>
         <li>Product title and description</li>
@@ -26,7 +26,7 @@ export default function UnderstandingListings() {
 
       <h2>Product Information</h2>
       
-      <h3>Title and Description</h3>
+      <h3>Title and Description</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <FileText className="w-4 h-4" />
@@ -41,7 +41,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Reading Product Descriptions</h3>
+      <h3>Reading Product Descriptions</h2>
       <p>A good description should include:</p>
       <ul>
         <li><strong>Compatibility:</strong> Vehicle makes, models, years</li>
@@ -51,7 +51,7 @@ export default function UnderstandingListings() {
         <li><strong>Warranty:</strong> Warranty information</li>
       </ul>
 
-      <h3>Red Flags in Descriptions</h3>
+      <h3>Red Flags in Descriptions</h2>
       <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -68,7 +68,7 @@ export default function UnderstandingListings() {
 
       <h2>Images and Media</h2>
       
-      <h3>Photo Quality</h3>
+      <h3>Photo Quality</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Camera className="w-4 h-4" />
@@ -83,7 +83,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>What to Look for in Photos</h3>
+      <h3>What to Look for in Photos</h2>
       <ul>
         <li><strong>Overall Condition:</strong> Look for scratches, dents, rust</li>
         <li><strong>Part Numbers:</strong> Verify part numbers match</li>
@@ -92,7 +92,7 @@ export default function UnderstandingListings() {
         <li><strong>Packaging:</strong> Original packaging if applicable</li>
       </ul>
 
-      <h3>Video Content</h3>
+      <h3>Video Content</h2>
       <p>Some listings include videos showing:</p>
       <ul>
         <li>Product in action</li>
@@ -103,7 +103,7 @@ export default function UnderstandingListings() {
 
       <h2>Pricing Information</h2>
       
-      <h3>Understanding Prices</h3>
+      <h3>Understanding Prices</h2>
       <ul>
         <li><strong>Base Price:</strong> The listed price of the item</li>
         <li><strong>Shipping:</strong> Additional shipping costs</li>
@@ -112,7 +112,7 @@ export default function UnderstandingListings() {
         <li><strong>Total Cost:</strong> Final amount you'll pay</li>
       </ul>
 
-      <h3>Price Indicators</h3>
+      <h3>Price Indicators</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Eye className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Payment Options</h3>
+      <h3>Payment Options</h2>
       <p>Common payment methods include:</p>
       <ul>
         <li>Credit/debit cards</li>
@@ -139,7 +139,7 @@ export default function UnderstandingListings() {
 
       <h2>Seller Information</h2>
       
-      <h3>Seller Profile</h3>
+      <h3>Seller Profile</h2>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Star className="w-4 h-4" />
@@ -154,7 +154,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Seller Types</h3>
+      <h3>Seller Types</h2>
       <ul>
         <li><strong>Individual:</strong> Private sellers, hobbyists</li>
         <li><strong>Business:</strong> Professional parts stores</li>
@@ -162,7 +162,7 @@ export default function UnderstandingListings() {
         <li><strong>Manufacturer:</strong> Direct from manufacturer</li>
       </ul>
 
-      <h3>Seller Reputation</h3>
+      <h3>Seller Reputation</h2>
       <p>Look for these indicators:</p>
       <ul>
         <li>High ratings (4.5+ stars)</li>
@@ -174,7 +174,7 @@ export default function UnderstandingListings() {
 
       <h2>Shipping and Delivery</h2>
       
-      <h3>Shipping Options</h3>
+      <h3>Shipping Options</h2>
       <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <MapPin className="w-4 h-4" />
@@ -189,7 +189,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Shipping Costs</h3>
+      <h3>Shipping Costs</h2>
       <p>Factors affecting shipping cost:</p>
       <ul>
         <li>Package weight and dimensions</li>
@@ -199,7 +199,7 @@ export default function UnderstandingListings() {
         <li>Fuel surcharges</li>
       </ul>
 
-      <h3>Delivery Tracking</h3>
+      <h3>Delivery Tracking</h2>
       <ul>
         <li>Tracking numbers provided</li>
         <li>Real-time tracking updates</li>
@@ -210,7 +210,7 @@ export default function UnderstandingListings() {
 
       <h2>Condition and Quality</h2>
       
-      <h3>Condition Grades</h3>
+      <h3>Condition Grades</h2>
       <ul>
         <li><strong>New:</strong> Never used, in original packaging</li>
         <li><strong>Like New:</strong> Used minimally, excellent condition</li>
@@ -219,7 +219,7 @@ export default function UnderstandingListings() {
         <li><strong>Fair:</strong> Significant wear, may need repair</li>
       </ul>
 
-      <h3>Quality Indicators</h3>
+      <h3>Quality Indicators</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Shield className="w-4 h-4" />
@@ -234,7 +234,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Authenticity</h3>
+      <h3>Authenticity</h2>
       <p>How to verify authenticity:</p>
       <ul>
         <li>Check brand logos and markings</li>
@@ -246,7 +246,7 @@ export default function UnderstandingListings() {
 
       <h2>Customer Reviews</h2>
       
-      <h3>Review Analysis</h3>
+      <h3>Review Analysis</h2>
       <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <Star className="w-4 h-4" />
@@ -261,7 +261,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Review Red Flags</h3>
+      <h3>Review Red Flags</h2>
       <ul>
         <li>All reviews are very recent</li>
         <li>Similar wording across reviews</li>
@@ -272,7 +272,7 @@ export default function UnderstandingListings() {
 
       <h2>Listing Best Practices</h2>
       
-      <h3>Before Buying</h3>
+      <h3>Before Buying</h2>
       <ol>
         <li>Read the entire description carefully</li>
         <li>Examine all photos closely</li>
@@ -283,7 +283,7 @@ export default function UnderstandingListings() {
         <li>Ask questions if unsure</li>
       </ol>
 
-      <h3>Questions to Ask</h3>
+      <h3>Questions to Ask</h2>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800 my-4">
         <h4 className="font-semibold mb-2">Essential Questions</h4>
         <ul className="space-y-1 text-sm">
@@ -295,7 +295,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Trust Your Instincts</h3>
+      <h3>Trust Your Instincts</h2>
       <ul>
         <li>If it seems too good to be true, it probably is</li>
         <li>Don't rush into purchases</li>
@@ -306,7 +306,7 @@ export default function UnderstandingListings() {
 
       <h2>Common Listing Types</h2>
       
-      <h3>Auction Listings</h3>
+      <h3>Auction Listings</h2>
       <ul>
         <li>Bidding system</li>
         <li>Reserve prices</li>
@@ -315,7 +315,7 @@ export default function UnderstandingListings() {
         <li>Auto-bid options</li>
       </ul>
 
-      <h3>Fixed Price Listings</h3>
+      <h3>Fixed Price Listings</h2>
       <ul>
         <li>Set prices</li>
         <li>Best offer options</li>
@@ -324,7 +324,7 @@ export default function UnderstandingListings() {
         <li>Bundle deals</li>
       </ul>
 
-      <h3>Classified Ads</h3>
+      <h3>Classified Ads</h2>
       <ul>
         <li>Contact seller directly</li>
         <li>Local pickup</li>
@@ -335,7 +335,7 @@ export default function UnderstandingListings() {
 
       <h2>Troubleshooting Listing Issues</h2>
       
-      <h3>Inaccurate Information</h3>
+      <h3>Inaccurate Information</h2>
       <ul>
         <li>Contact seller for clarification</li>
         <li>Request additional photos</li>
@@ -344,7 +344,7 @@ export default function UnderstandingListings() {
         <li>Walk away if unsure</li>
       </ul>
 
-      <h3>Communication Problems</h3>
+      <h3>Communication Problems</h2>
       <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <AlertCircle className="w-4 h-4" />
@@ -359,7 +359,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Platform Protection</h3>
+      <h3>Platform Protection</h2>
       <ul>
         <li>Use platform messaging</li>
         <li>Keep all communications</li>
@@ -370,7 +370,7 @@ export default function UnderstandingListings() {
 
       <h2>Advanced Tips</h2>
       
-      <h3>Research Techniques</h3>
+      <h3>Research Techniques</h2>
       <ul>
         <li>Research market prices</li>
         <li>Check part interchange data</li>
@@ -379,7 +379,7 @@ export default function UnderstandingListings() {
         <li>Consult with mechanics</li>
       </ul>
 
-      <h3>Negotiation Strategies</h3>
+      <h3>Negotiation Strategies</h2>
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800 my-4">
         <h4 className="font-semibold mb-2 flex items-center gap-2">
           <CheckCircle className="w-4 h-4" />
@@ -394,7 +394,7 @@ export default function UnderstandingListings() {
         </ul>
       </div>
 
-      <h3>Timing Your Purchase</h3>
+      <h3>Timing Your Purchase</h2>
       <ul>
         <li>End of month sales</li>
         <li>Holiday promotions</li>
@@ -404,7 +404,7 @@ export default function UnderstandingListings() {
       </ul>
 
       <div className="bg-gradient-accent rounded-lg text-white p-6 mt-8 text-center">
-        <h3 className="text-xl font-bold mb-2">Become a Smart Buyer</h3>
+        <h3 className="text-xl font-bold mb-2">Become a Smart Buyer</h2>
         <p className="mb-4">Understanding listings is the key to successful online parts shopping!</p>
         <a href="/products" className="inline-block bg-white text-primary px-6 py-2 rounded-lg font-medium hover:bg-white/90 transition-colors">
           Browse Products Now
