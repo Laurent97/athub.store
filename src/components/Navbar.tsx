@@ -46,10 +46,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
-              <span className="text-accent-foreground font-black text-xl">A</span>
-            </div>
-            <span className="font-bold text-xl text-foreground">AutoVault</span>
+            <img src="/logo.svg" alt="AutoTradeHub" className="w-10 h-10" />
+            <span className="font-bold text-xl text-foreground">AutoTradeHub</span>
           </Link>
 
           {/* Desktop Navigation */}

@@ -1,10 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
-  <rect width="32" height="32" rx="4" fill="#2563eb"/>
-  <path d="M8 12h16v2H8v-2Z" fill="white"/>
-  <path d="M8 16h16v2H8v-2Z" fill="white"/>
-  <path d="M8 20h10v2H8v-2Z" fill="white"/>
-  <circle cx="22" cy="20" r="2" fill="white"/>
-  <path d="M6 8h20v1H6V8Z" fill="white"/>
-  <path d="M10 10v10l-2-1V10h2Z" fill="white"/>
-  <path d="M24 10v10l-2-1V10h2Z" fill="white"/>
+  <rect width="32" height="32" rx="4" fill="#2D6FF7"/>
+  <!-- Gear -->
+  <circle cx="10" cy="10" r="8" fill="none" stroke="white" stroke-width="1.5"/>
+  <circle cx="10" cy="10" r="5" fill="white"/>
+  <!-- Gear teeth -->
+  <rect x="8.5" y="2" width="3" height="4" rx="1.5" fill="white"/>
+  <rect x="8.5" y="14" width="3" height="4" rx="1.5" fill="white"/>
+  <rect x="2" y="8.5" width="4" height="3" rx="1.5" fill="white"/>
+  <rect x="14" y="8.5" width="4" height="3" rx="1.5" fill="white"/>
+  <rect x="6" y="4" width="3" height="3" rx="1.5" fill="white"/>
+  <rect x="11" y="4" width="3" height="3" rx="1.5" fill="white"/>
+  <rect x="6" y="13" width="3" height="3" rx="1.5" fill="white"/>
+  <rect x="11" y="13" width="3" height="3" rx="1.5" fill="white"/>
+  
+  <!-- Car icon -->
+  <rect x="7" y="8" width="6" height="3" rx="1.5" fill="#2D6FF7"/>
+  <circle cx="8.5" cy="7.5" r="1.5" fill="white"/>
+  <circle cx="11.5" cy="7.5" r="1.5" fill="white"/>
+  
+  <!-- AT text -->
+  <text x="22" y="22" font-family="Arial, sans-serif" font-size="8" font-weight="bold" fill="white">AT</text>
 </svg>

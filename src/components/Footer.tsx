@@ -156,7 +156,7 @@ const Footer = () => {
         <div className="container-wide py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-primary-foreground/60">
-              © {new Date().getFullYear()} AutoVault. All rights reserved.
+              © {new Date().getFullYear()} AutoTradeHub. All rights reserved.
             </p>
             <div className="flex gap-6">
               {footerLinks.legal.map((link, index) => (
