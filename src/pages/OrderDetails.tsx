@@ -157,6 +157,8 @@ export default function OrderDetails() {
       console.log('=== ORDER LOOKUP SUCCESS ===');
       console.log('Full order data:', data);
       console.log('Shipping address:', data.shipping_address);
+      console.log('Shipping address TYPE:', typeof data.shipping_address);
+      console.log('Shipping address KEYS:', data.shipping_address ? Object.keys(data.shipping_address) : 'NULL');
       console.log('Shipping address fields:', {
         full_name: data.shipping_address?.full_name,
         address_line1: data.shipping_address?.address_line1,
@@ -166,6 +168,19 @@ export default function OrderDetails() {
         country: data.shipping_address?.country,
         phone: data.shipping_address?.phone,
       });
+      
+      // Also log what the display will show
+      if (data.shipping_address) {
+        console.log('WHAT WILL BE DISPLAYED:');
+        console.log('Name:', data.shipping_address.full_name);
+        console.log('Address 1:', data.shipping_address.address_line1);
+        console.log('City:', data.shipping_address.city);
+        console.log('State:', data.shipping_address.state);
+        console.log('Postal:', data.shipping_address.postal_code);
+        console.log('Country:', data.shipping_address.country);
+        console.log('Phone:', data.shipping_address.phone);
+      }
+      
       setOrder(data);
     } catch (err) {
       console.error('=== ORDER LOOKUP FAILED ===');
@@ -430,18 +445,33 @@ export default function OrderDetails() {
                   <MapPin className="w-5 h-5 mr-2" />
                   Shipping Information
                 </h3>
+                
+                {/* Debug: Log what we're about to render */}
+                {(() => {
+                  console.log('=== RENDER DEBUG ===');
+                  console.log('Order object:', order);
+                  console.log('Shipping address in render:', order.shipping_address);
+                  console.log('Has shipping address:', !!order.shipping_address);
+                  if (order.shipping_address) {
+                    console.log('Shipping address keys:', Object.keys(order.shipping_address));
+                    console.log('Full name field:', order.shipping_address.full_name);
+                    console.log('Address line1 field:', order.shipping_address.address_line1);
+                  }
+                  return null;
+                })()}
+                
                 {order.shipping_address ? (
                   <div className="text-gray-700 dark:text-gray-300">
-                    <p className="font-medium">{order.shipping_address.full_name}</p>
-                    <p>{order.shipping_address.address_line1}</p>
+                    <p className="font-medium">{order.shipping_address.full_name || 'No name'}</p>
+                    <p>{order.shipping_address.address_line1 || 'No address line 1'}</p>
                     {order.shipping_address.address_line2 && (
                       <p>{order.shipping_address.address_line2}</p>
                     )}
                     <p>
-                      {order.shipping_address.city}, {order.shipping_address.state} {order.shipping_address.postal_code}
+                      {order.shipping_address.city || 'No city'}, {order.shipping_address.state || 'No state'} {order.shipping_address.postal_code || 'No postal code'}
                     </p>
-                    <p>{order.shipping_address.country}</p>
-                    <p className="mt-2">Phone: {order.shipping_address.phone}</p>
+                    <p>{order.shipping_address.country || 'No country'}</p>
+                    <p className="mt-2">Phone: {order.shipping_address.phone || 'No phone'}</p>
                   </div>
                 ) : (
                   <p className="text-gray-500 dark:text-gray-400">Shipping information not available</p>
