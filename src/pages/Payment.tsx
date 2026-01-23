@@ -31,6 +31,26 @@ export default function Payment() {
     // Get order ID from location state or generate
     const stateOrderId = location.state?.orderId || `ORD-${Date.now()}`;
     setOrderId(stateOrderId);
+    
+    // Debug: Check if we have shipping address from checkout
+    console.log('=== PAYMENT PAGE MOUNT DEBUG ===');
+    console.log('Location pathname:', location.pathname);
+    console.log('Location state:', location.state);
+    console.log('Has shipping address:', !!location.state?.shippingAddress);
+    console.log('User came from checkout:', document.referrer.includes('/checkout'));
+    
+    // If no shipping address, redirect to checkout
+    if (!location.state?.shippingAddress) {
+      console.log('No shipping address found, redirecting to checkout...');
+      
+      // Show a message to the user
+      if (items.length > 0) {
+        alert('Please complete the checkout process first. You will be redirected to the checkout page to enter your shipping information.');
+      }
+      
+      navigate('/checkout');
+      return;
+    }
   }, [items, location.state, navigate]);
 
   const handlePaymentSuccess = async (paymentData: any) => {
