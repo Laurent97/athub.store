@@ -335,24 +335,30 @@ ALTER TABLE invitation_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE referral_tiers ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for referral_benefits
+DROP POLICY IF EXISTS "Users can view their own referral benefits" ON referral_benefits;
 CREATE POLICY "Users can view their own referral benefits" ON referral_benefits
     FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = referrer_id));
 
+DROP POLICY IF EXISTS "Users can view benefits they received" ON referral_benefits;
 CREATE POLICY "Users can view benefits they received" ON referral_benefits
     FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = referred_id));
 
 -- RLS policies for invitation_logs
+DROP POLICY IF EXISTS "Users can view logs for their invitation codes" ON invitation_logs;
 CREATE POLICY "Users can view logs for their invitation codes" ON invitation_logs
     FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = referrer_id));
 
 -- RLS policies for referral_tiers (public read access)
+DROP POLICY IF EXISTS "Everyone can view referral tiers" ON referral_tiers;
 CREATE POLICY "Everyone can view referral tiers" ON referral_tiers
     FOR SELECT USING (true);
 
 -- Storage policies
+DROP POLICY IF EXISTS "Partner assets are publicly accessible" ON storage.objects;
 CREATE POLICY "Partner assets are publicly accessible" ON storage.objects
     FOR SELECT USING (bucket_id = 'partner-assets');
 
+DROP POLICY IF EXISTS "Partners can upload their own assets" ON storage.objects;
 CREATE POLICY "Partners can upload their own assets" ON storage.objects
     FOR INSERT WITH CHECK (
         bucket_id = 'partner-assets' AND 
