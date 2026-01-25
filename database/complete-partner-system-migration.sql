@@ -251,7 +251,7 @@ END $$;
 CREATE TABLE IF NOT EXISTS referral_benefits (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     referrer_id UUID NOT NULL REFERENCES partner_profiles(id) ON DELETE CASCADE,
-    new_partner_id UUID NOT NULL REFERENCES partner_profiles(id) ON DELETE CASCADE,
+    referred_id UUID NOT NULL REFERENCES partner_profiles(id) ON DELETE CASCADE,
     benefit_type VARCHAR(50) NOT NULL CHECK (benefit_type IN ('welcome_bonus', 'commission_discount', 'credit', 'extended_trial')),
     benefit_amount DECIMAL(10,2) NOT NULL,
     benefit_details JSONB DEFAULT '{}',
@@ -260,7 +260,7 @@ CREATE TABLE IF NOT EXISTS referral_benefits (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     
-    UNIQUE(referrer_id, new_partner_id)
+    UNIQUE(referrer_id, referred_id)
 );
 
 -- Create invitation_logs table for tracking invitation usage
@@ -306,7 +306,7 @@ CREATE INDEX IF NOT EXISTS idx_partner_profiles_referred_by ON partner_profiles(
 
 -- Referral system indexes
 CREATE INDEX IF NOT EXISTS idx_referral_benefits_referrer_id ON referral_benefits(referrer_id);
-CREATE INDEX IF NOT EXISTS idx_referral_benefits_new_partner_id ON referral_benefits(new_partner_id);
+CREATE INDEX IF NOT EXISTS idx_referral_benefits_referred_id ON referral_benefits(referred_id);
 CREATE INDEX IF NOT EXISTS idx_invitation_logs_invitation_code ON invitation_logs(invitation_code);
 CREATE INDEX IF NOT EXISTS idx_invitation_logs_created_at ON invitation_logs(created_at);
 
@@ -339,7 +339,7 @@ CREATE POLICY "Users can view their own referral benefits" ON referral_benefits
     FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = referrer_id));
 
 CREATE POLICY "Users can view benefits they received" ON referral_benefits
-    FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = new_partner_id));
+    FOR SELECT USING (auth.uid() IN (SELECT user_id FROM partner_profiles WHERE id = referred_id));
 
 -- RLS policies for invitation_logs
 CREATE POLICY "Users can view logs for their invitation codes" ON invitation_logs
@@ -470,7 +470,7 @@ $$ LANGUAGE plpgsql;
 -- Function to create referral benefit
 CREATE OR REPLACE FUNCTION create_referral_benefit(
     p_referrer_id UUID,
-    p_new_partner_id UUID,
+    p_referred_id UUID,
     p_benefit_type VARCHAR(50),
     p_benefit_amount DECIMAL(10,2),
     p_benefit_details JSONB DEFAULT '{}',
@@ -489,14 +489,14 @@ BEGIN
     -- Create benefit
     INSERT INTO referral_benefits (
         referrer_id,
-        new_partner_id,
+        referred_id,
         benefit_type,
         benefit_amount,
         benefit_details,
         expires_at
     ) VALUES (
         p_referrer_id,
-        p_new_partner_id,
+        p_referred_id,
         p_benefit_type,
         p_benefit_amount,
         p_benefit_details,
@@ -555,9 +555,19 @@ CREATE TRIGGER trigger_auto_generate_referral_code
 -- =====================================================
 
 -- Add check constraint for business hours
-ALTER TABLE partner_profiles 
-ADD CONSTRAINT IF NOT EXISTS valid_business_hours 
-CHECK (validate_business_hours(business_hours));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT FROM information_schema.table_constraints 
+        WHERE table_name = 'partner_profiles' 
+        AND constraint_name = 'valid_business_hours'
+    ) THEN
+        ALTER TABLE partner_profiles 
+        ADD CONSTRAINT valid_business_hours 
+        CHECK (validate_business_hours(business_hours));
+        RAISE NOTICE 'Added valid_business_hours constraint to partner_profiles';
+    END IF;
+END $$;
 
 -- =====================================================
 -- 9. DEFAULT DATA

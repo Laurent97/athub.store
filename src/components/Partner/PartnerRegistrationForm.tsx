@@ -449,7 +449,7 @@ const PartnerRegistrationForm: React.FC = () => {
             .from('referral_benefits')
             .insert({
               referrer_id: invitationValidation.referrerId,
-              new_partner_id: partner.id,
+              referred_id: partner.id,
               benefit_type: 'welcome_bonus',
               benefit_amount: 50,
               benefit_details: {
