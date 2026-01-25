@@ -31,6 +31,7 @@ import Auth from "./pages/Auth";
 import Manufacturers from "./pages/Manufacturers";
 import AppLayout from "./components/Layout/AppLayout";
 import PartnerPending from "./pages/partner/Pending";
+import PartnerRegisterRedirect from "./pages/PartnerRegisterRedirect";
 import PartnerDashboard from "./pages/partner/Dashboard";
 import PartnerInfo from "./pages/partner/Info";
 import DashboardOverview from "./pages/partner/DashboardOverview";
@@ -102,6 +103,8 @@ const App = () => (
               <Route path="/manufacturers" element={<Manufacturers />} />
               <Route path="/store/:storeSlug" element={<Store />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/partner/register" element={<PartnerRegisterRedirect />} />
+              <Route path="/partner/apply" element={<PartnerRegisterRedirect />} />
                             <Route path="/partner/info" element={<PartnerInfo />} />
               <Route path="/partner/pending" element={<PartnerPending />} />
               <Route path="/partner/dashboard" element={<PartnerOnlyRoute requireApproved={true}><PartnerDashboard /></PartnerOnlyRoute>}>
