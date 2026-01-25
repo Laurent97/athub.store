@@ -6,7 +6,8 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
 import StoreIdBadge from '../../components/ui/StoreIdBadge';
-import { Search, Store, MapPin, DollarSign, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Eye, Check, X, Clock, Power, PowerOff, Star, Edit, Save } from 'lucide-react';
+import PartnerNotificationModal from '../../components/Admin/PartnerNotificationModal';
+import { Search, Store, MapPin, DollarSign, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Eye, Check, X, Clock, Power, PowerOff, Star, Edit, Save, Bell } from 'lucide-react';
 
 interface Partner {
   id: string;
@@ -47,6 +48,8 @@ export default function AdminPartners() {
   const [selectedPartner, setSelectedPartner] = useState<Partner | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [selectedPartnerForNotification, setSelectedPartnerForNotification] = useState<Partner | null>(null);
   const [editForm, setEditForm] = useState({
     store_visits: 0,
     rating: 0
@@ -203,6 +206,11 @@ export default function AdminPartners() {
       rating: partner.rating || 0
     });
     setShowEditModal(true);
+  };
+
+  const openNotificationModal = (partner: Partner) => {
+    setSelectedPartnerForNotification(partner);
+    setShowNotificationModal(true);
   };
 
   return (
@@ -489,6 +497,13 @@ export default function AdminPartners() {
                                 >
                                   <Edit className="w-4 h-4" />
                                 </button>
+                                <button
+                                  onClick={() => openNotificationModal(partner)}
+                                  title="Send notification"
+                                  className="p-2 hover:bg-purple-100 rounded-lg transition-all text-purple-600"
+                                >
+                                  <Bell className="w-4 h-4" />
+                                </button>
                               </div>
                             </td>
                           </tr>
@@ -725,6 +740,20 @@ export default function AdminPartners() {
           </div>
         </div>
       )}
+      
+      {/* Notification Modal */}
+      <PartnerNotificationModal
+        isOpen={showNotificationModal}
+        onClose={() => {
+          setShowNotificationModal(false);
+          setSelectedPartnerForNotification(null);
+        }}
+        partner={selectedPartnerForNotification}
+        onSuccess={() => {
+          // Refresh partners list or show success message
+          loadPartners();
+        }}
+      />
     </div>
   );
 }
