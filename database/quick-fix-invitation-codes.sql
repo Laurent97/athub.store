@@ -59,14 +59,14 @@ SELECT
     'Parent invitation code for general use',
     'approved',
     true,
-    'PARENT2025',
-    'PARENT2025',
+    'PARENT20',
+    'PARENT20',
     true,
     NOW(),
     NOW()
 WHERE NOT EXISTS (SELECT 1 FROM partner_profiles WHERE store_id = 'PARENT');
 
--- Create additional public codes
+-- Create additional public codes with 9 characters
 INSERT INTO partner_profiles (
     id,
     user_id,
@@ -89,8 +89,8 @@ SELECT
     'Public welcome invitation code',
     'approved',
     true,
-    'WELCOME2025',
-    'WELCOME2025',
+    'WELCOME20',
+    'WELCOME20',
     true,
     NOW(),
     NOW()
