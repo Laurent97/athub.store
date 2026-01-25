@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase/client';
+import { 
   Store, Mail, Phone, MapPin, Gift, CheckCircle, AlertCircle, FileText, Globe,
   Upload, Image as ImageIcon, X, ChevronRight, ChevronLeft, Building, User,
   Shield, DollarSign, TrendingUp, Users, Award, Sparkles, Lock, Eye, EyeOff,
   Calendar, Clock, CreditCard, Package, Truck, Headphones, MessageSquare,
   FileCheck, Download, Search, Loader2, Camera, Palette, Layout, Wand2
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase/client';
-import StoreIdBadge from '@/components/ui/StoreIdBadge';
+import StoreIdBadge from '../../components/ui/StoreIdBadge';
 
 // Wizard Steps
 const WIZARD_STEPS = [
@@ -89,8 +90,29 @@ interface FormData {
 
 const PartnerRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const fileInputLogoRef = useRef<HTMLInputElement>(null);
   const fileInputBannerRef = useRef<HTMLInputElement>(null);
+  
+  // Authentication check - redirect to login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/login?redirect=partner-register');
+      return;
+    }
+  }, [user, navigate]);
+  
+  // Don't render if user is not authenticated
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p>Redirecting to login...</p>
+        </div>
+      </div>
+    );
+  }
   
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
