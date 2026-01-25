@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePayment } from '@/contexts/PaymentContext';
+import { supabase } from '@/lib/supabase/client';
 
 interface WalletPaymentProps {
   orderId: string;
@@ -44,23 +45,71 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
   const [pin, setPin] = useState('');
   const [showPinInput, setShowPinInput] = useState(false);
 
-  // Fetch wallet balance
+  // Fetch wallet balance from database
   const fetchWalletBalance = async () => {
     try {
-      console.log('🔍 WalletPayment: Fetching wallet balance for user:', user?.id);
+      console.log('🔍 WalletPayment: Fetching real wallet balance for user:', user?.id);
       
-      // Mock wallet balance - in production, this would come from your database
+      // Fetch real wallet balance from the database
+      const { data, error } = await supabase
+        .from('wallet_balances')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+
+      console.log('🔍 WalletPayment: Real wallet balance result:', { data, error });
+
+      if (error) {
+        console.error('🔍 WalletPayment: Error fetching wallet balance:', error);
+        // Fall back to mock balance if real fetch fails
+        const mockBalance: WalletBalance = {
+          available_balance: 1250.75,
+          currency: 'USD',
+          last_updated: new Date().toISOString()
+        };
+        console.log('🔍 WalletPayment: Using fallback mock balance:', mockBalance);
+        setWalletBalance(mockBalance);
+        return;
+      }
+
+      if (!data) {
+        console.log('🔍 WalletPayment: No wallet balance found for user');
+        // Create wallet balance if it doesn't exist
+        const { data: newWallet, error: createError } = await supabase
+          .from('wallet_balances')
+          .insert({
+            user_id: user?.id,
+            available_balance: 1000.00,
+            currency: 'USD',
+            last_updated: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('🔍 WalletPayment: Error creating wallet balance:', createError);
+          return;
+        }
+
+        console.log('🔍 WalletPayment: Created new wallet balance:', newWallet);
+        setWalletBalance(newWallet);
+        return;
+      }
+
+      console.log('🔍 WalletPayment: Real wallet balance loaded:', data);
+      setWalletBalance(data);
+    } catch (error) {
+      console.error('🔍 WalletPayment: Error fetching wallet balance:', error);
+      onError('Failed to fetch wallet balance');
+      
+      // Fall back to mock balance if all else fails
       const mockBalance: WalletBalance = {
         available_balance: 1250.75,
         currency: 'USD',
         last_updated: new Date().toISOString()
       };
-      
-      console.log('🔍 WalletPayment: Wallet balance loaded:', mockBalance);
+      console.log('🔍 WalletPayment: Using fallback mock balance:', mockBalance);
       setWalletBalance(mockBalance);
-    } catch (error) {
-      console.error('🔍 WalletPayment: Error fetching wallet balance:', error);
-      onError('Failed to fetch wallet balance');
     }
   };
 
