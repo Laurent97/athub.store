@@ -5,12 +5,25 @@ import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { useState, useEffect } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
+import NotificationsModal from "@/components/Notifications/NotificationsModal";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [dashboardUrl, setDashboardUrl] = useState("/");
   const { getItemCount } = useCart();
   const { user, userProfile, signOut } = useAuth();
+
+  // Make notifications modal globally accessible
+  useEffect(() => {
+    (window as any).openNotificationsModal = () => setIsNotificationsOpen(true);
+    (window as any).closeNotificationsModal = () => setIsNotificationsOpen(false);
+    
+    return () => {
+      delete (window as any).openNotificationsModal;
+      delete (window as any).closeNotificationsModal;
+    };
+  }, []);
 
   const navLinks = [
     { name: "Cars", href: "/products?category=cars" },
@@ -85,12 +98,15 @@ const Navbar = () => {
                 )}
               </Button>
             </Link>
-            <Link to="/notifications">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
-              </Button>
-            </Link>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-muted-foreground hover:text-foreground relative"
+              onClick={() => setIsNotificationsOpen(true)}
+            >
+              <Bell className="w-5 h-5" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
+            </Button>
             <Link to="/liked-items">
               <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
                 <Heart className="w-5 h-5" />
@@ -175,13 +191,15 @@ const Navbar = () => {
                     )}
                   </Button>
                 </Link>
-                <Link to="/notifications" className="flex-1">
-                  <Button variant="outline" className="w-full gap-2 relative">
-                    <Bell className="w-4 h-4" />
-                    Notifications
-                    <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-red-500"></span>
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2 relative"
+                  onClick={() => setIsNotificationsOpen(true)}
+                >
+                  <Bell className="w-4 h-4" />
+                  Notifications
+                  <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-red-500"></span>
+                </Button>
                 <Link to="/liked-items" className="flex-1">
                   <Button variant="outline" className="w-full gap-2">
                     <Heart className="w-4 h-4" />
@@ -220,6 +238,12 @@ const Navbar = () => {
           </div>
         )}
       </div>
+      
+      {/* Notifications Modal */}
+      <NotificationsModal 
+        isOpen={isNotificationsOpen} 
+        onClose={() => setIsNotificationsOpen(false)} 
+      />
     </nav>
   );
 };
