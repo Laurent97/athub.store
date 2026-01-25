@@ -59,7 +59,6 @@ interface FormData {
   // Step 3: Contact Details
   contactEmail: string;
   contactPhone: string;
-  website: string;
   socialFacebook: string;
   socialInstagram: string;
   socialLinkedIn: string;
@@ -143,7 +142,6 @@ const PartnerRegistrationForm: React.FC = () => {
     // Step 3
     contactEmail: '',
     contactPhone: '',
-    website: '',
     socialFacebook: '',
     socialInstagram: '',
     socialLinkedIn: '',
@@ -472,7 +470,6 @@ const PartnerRegistrationForm: React.FC = () => {
             // Contact info
             contact_email: formData.contactEmail,
             contact_phone: formData.contactPhone,
-            website: formData.website,
             social_facebook: formData.socialFacebook,
             social_instagram: formData.socialInstagram,
             social_linkedin: formData.socialLinkedIn,
@@ -1003,22 +1000,6 @@ const PartnerRegistrationForm: React.FC = () => {
                 onChange={(e) => setFormData({...formData, contactPhone: e.target.value})}
                 className="pl-10 w-full px-4 py-3 dark:bg-gray-800 dark:border-gray-700 dark:text-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="+1 (555) 123-4567"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold dark:text-gray-200 text-gray-900 mb-2">
-              Website
-            </label>
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 dark:text-gray-500 text-gray-400" />
-              <input
-                type="url"
-                value={formData.website}
-                onChange={(e) => setFormData({...formData, website: e.target.value})}
-                className="pl-10 w-full px-4 py-3 dark:bg-gray-800 dark:border-gray-700 dark:text-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="https://yourstore.com"
               />
             </div>
           </div>
