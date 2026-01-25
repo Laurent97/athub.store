@@ -161,12 +161,13 @@ const NotificationsModal: React.FC<NotificationsModalProps> = ({ isOpen, onClose
                   onClose();
                   window.history.back();
                 }}
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 hover:bg-muted/50 hover:text-foreground transition-all duration-200"
+                variant="outline"
+                size="sm"
+                className="h-10 px-3 hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all duration-200 flex items-center gap-2"
                 title="Go back"
               >
-                <ArrowLeft className="w-5 h-5" />
+                <ArrowLeft className="w-4 h-4" />
+                <span className="text-sm font-medium">Back</span>
               </Button>
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full animate-pulse"></div>
