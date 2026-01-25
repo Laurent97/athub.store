@@ -17,6 +17,8 @@ export default function OrderSuccess() {
   console.log('Received orderId:', orderId);
   console.log('Received paymentData:', paymentData);
   console.log('Location state:', location.state);
+  console.log('Has orderData:', !!location.state?.orderData);
+  console.log('OrderData:', location.state?.orderData);
 
   useEffect(() => {
     // Redirect if no order data
@@ -104,13 +106,15 @@ export default function OrderSuccess() {
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => navigate(`/orders/${orderId}`)}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center"
-                >
-                  <Package className="w-5 h-5 mr-2" />
-                  View Order Details
-                </button>
+                {location.state?.orderData && (
+                  <button
+                    onClick={() => navigate(`/orders/${orderId}`)}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold flex items-center justify-center"
+                  >
+                    <Package className="w-5 h-5 mr-2" />
+                    View Order Details
+                  </button>
+                )}
                 <button
                   onClick={() => navigate('/')}
                   className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-300 font-semibold flex items-center justify-center"
