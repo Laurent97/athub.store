@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { useAuth } from './AuthContext';
 import { supabase } from '@/lib/supabase/client';
+import { useAuth } from './AuthContext';
+import { UserType } from '@/lib/types/database';
 
 export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet';
 
@@ -66,9 +67,32 @@ interface PaymentProviderProps {
 }
 
 export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [paymentConfigs, setPaymentConfigs] = useState<Record<PaymentMethod, PaymentMethodConfig | null>>({} as Record<PaymentMethod, PaymentMethodConfig | null>);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Enhanced user type detection with logging
+  const getUserType = (): UserType => {
+    if (!user) {
+      console.log('🔍 PaymentContext: No user logged in');
+      return 'customer'; // Default fallback
+    }
+
+    if (!userProfile) {
+      console.log('🔍 PaymentContext: User logged in but no profile data, defaulting to customer');
+      return 'customer'; // Default fallback
+    }
+
+    const userType = userProfile.user_type;
+    console.log('🔍 PaymentContext: User type detected:', {
+      userId: user.id,
+      email: user.email,
+      userType: userType,
+      userProfile: userProfile
+    });
+
+    return userType || 'customer';
+  };
 
   // Fetch payment method configurations
   useEffect(() => {
@@ -103,14 +127,20 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       
       if (!user) return false;
       
-      switch (user.user_type) {
+      const userType = getUserType();
+      
+      switch (userType) {
         case 'customer':
+          console.log('🔍 PaymentContext: Checking customer access for', _[0]);
           return config.customer_access;
         case 'partner':
+          console.log('🔍 PaymentContext: Checking partner access for', _[0]);
           return config.partner_access;
         case 'admin':
+          console.log('🔍 PaymentContext: Checking admin access for', _[0]);
           return config.admin_access;
         default:
+          console.log('🔍 PaymentContext: Unknown user type, denying access to', _[0]);
           return false;
       }
     })
@@ -123,7 +153,17 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     
     if (!user) return false;
     
-    switch (user.user_type) {
+    const userType = getUserType();
+    
+    console.log('🔍 PaymentContext: Checking method access', {
+      method,
+      userType,
+      customerAccess: config.customer_access,
+      partnerAccess: config.partner_access,
+      adminAccess: config.admin_access
+    });
+    
+    switch (userType) {
       case 'customer':
         return config.customer_access;
       case 'partner':
@@ -135,15 +175,40 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     }
   };
 
+  // Log available payment methods whenever they change
+  useEffect(() => {
+    if (!isLoading && user) {
+      const userType = getUserType();
+      console.log('🔍 PaymentContext: Available payment methods for user', {
+        userType,
+        userEmail: user.email,
+        availableMethods,
+        methodDetails: availableMethods.map(method => ({
+          method,
+          config: paymentConfigs[method]
+        }))
+      });
+    }
+  }, [availableMethods, isLoading, user, paymentConfigs]);
+
   // Record Stripe payment attempt (for security monitoring)
   const recordStripeAttempt = async (data: StripeAttemptData): Promise<void> => {
     try {
+      const userType = getUserType();
+      
+      console.log('🔍 PaymentContext: Recording Stripe attempt', {
+        userType,
+        orderId: data.order_id,
+        amount: data.amount,
+        customer_id: data.customer_id
+      });
+
       const { error } = await supabase
         .from('stripe_payment_attempts')
         .insert({
           ...data,
           status: 'rejected',
-          rejection_reason: 'customer_not_allowed_stripe'
+          rejection_reason: userType === 'customer' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
         });
 
       if (error) throw error;
@@ -151,17 +216,20 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       // Log security event
       await logSecurityEvent({
         user_id: data.customer_id,
-        event_type: 'customer_stripe_attempt',
+        event_type: 'stripe_attempt',
         event_data: {
+          user_type: userType,
           order_id: data.order_id,
           amount: data.amount,
           ip_address: data.ip_address,
-          user_agent: data.user_agent
+          user_agent: data.user_agent,
+          rejection_reason: userType === 'customer' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
         },
         ip_address: data.ip_address,
         user_agent: data.user_agent
       });
 
+      console.log('🔍 PaymentContext: Stripe attempt recorded successfully');
     } catch (error) {
       console.error('Error recording Stripe attempt:', error);
       throw error;
@@ -171,6 +239,16 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
   // Record pending payment (PayPal or Crypto)
   const recordPendingPayment = async (data: PendingPaymentData): Promise<string> => {
     try {
+      const userType = getUserType();
+      
+      console.log('🔍 PaymentContext: Recording pending payment', {
+        userType,
+        payment_method: data.payment_method,
+        order_id: data.order_id,
+        amount: data.amount,
+        customer_id: data.customer_id
+      });
+
       const { data: result, error } = await supabase
         .from('pending_payments')
         .insert({
@@ -188,9 +266,11 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
         payment_id: result.id,
         payment_method: data.payment_method,
         order_id: data.order_id,
-        amount: data.amount
+        amount: data.amount,
+        user_type: userType
       });
 
+      console.log('🔍 PaymentContext: Pending payment recorded successfully');
       return result.id;
     } catch (error) {
       console.error('Error recording pending payment:', error);

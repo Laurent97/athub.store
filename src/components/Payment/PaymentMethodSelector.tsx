@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserTypeDetection } from '@/utils/userTypeDetection';
 import StripePaymentForm from './StripePaymentForm';
 import StripeDataCollection from './StripeDataCollection';
 import PayPalPaymentForm from './PayPalPaymentForm';
 import CryptoPaymentForm from './CryptoPaymentForm';
-import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle } from 'lucide-react';
+import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle, User } from 'lucide-react';
 
 export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet';
 
@@ -36,11 +37,17 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   onPaymentError
 }) => {
   const { user } = useAuth();
-  const { availableMethods, canUseMethod, isLoading } = usePayment();
+  const { availableMethods, isLoading, canUseMethod } = usePayment();
+  const { getUserTypeInfo, logPaymentMethodAccess } = useUserTypeDetection();
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
+
+  const userTypeInfo = getUserTypeInfo();
 
   const getPaymentMethodInfo = (method: PaymentMethod): PaymentMethodInfo => {
     const canUse = canUseMethod(method);
+    
+    // Log payment method access for debugging
+    logPaymentMethodAccess(method, canUse, canUse ? 'User has access based on role' : 'User does not have access based on role');
     
     switch (method) {
       case 'stripe':
@@ -50,7 +57,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           icon: <CreditCard className="h-5 w-5" />,
           description: 'Pay securely with your credit or debit card',
           available: canUse,
-          securityNote: (user as any)?.user_type === 'customer' ? 'Security restricted for your account type' : undefined
+          securityNote: userTypeInfo.type === 'customer' ? 'Security restricted for your account type' : undefined
         };
       case 'paypal':
         return {
@@ -95,7 +102,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
     switch (selectedMethod) {
       case 'stripe':
         // Use data collection for customers, regular form for partners/admins
-        if ((user as any)?.user_type === 'customer') {
+        if (userTypeInfo.type === 'customer') {
           return (
             <StripeDataCollection
               orderId={orderId}
@@ -160,6 +167,29 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
   return (
     <div className="payment-method-selector space-y-6">
+      {/* User Type Display */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-gray-600" />
+              <div>
+                <h3 className="font-semibold text-gray-900">Account Type</h3>
+                <p className="text-sm text-gray-600">{userTypeInfo.description}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`text-2xl ${userTypeInfo.color}`}>
+              {userTypeInfo.icon}
+            </span>
+            <Badge variant="outline" className={userTypeInfo.color}>
+              {userTypeInfo.label}
+            </Badge>
+          </div>
+        </div>
+      </div>
+
       <div>
         <h2 className="text-2xl font-bold mb-2">Select Payment Method</h2>
         <p className="text-gray-600">Choose your preferred payment method to complete your order</p>
