@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, MessageSquare, Gift, Package, CreditCard, Settings, AlertTriangle, CheckCircle, X } from 'lucide-react';
+import { Bell, MessageSquare, Gift, Package, CreditCard, Settings, AlertTriangle, CheckCircle, X, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,7 +33,7 @@ const notificationTypes = [
   { value: 'order', label: 'Order Update', icon: Package, color: 'bg-blue-100 text-blue-800' },
   { value: 'promotion', label: 'Promotion', icon: Gift, color: 'bg-yellow-100 text-yellow-800' },
   { value: 'system', label: 'System', icon: Settings, color: 'bg-gray-100 text-gray-800' },
-  { value: 'urgent', label: 'Urgent', icon: AlertTriangle, color: 'bg-red-100 text-red-800' }
+  { value: 'shipping', label: 'Shipping', icon: Truck, color: 'bg-indigo-100 text-indigo-800' }
 ];
 
 const priorityLevels = [
