@@ -9,6 +9,7 @@ import StripePaymentForm from './StripePaymentForm';
 import StripeDataCollection from './StripeDataCollection';
 import PayPalPaymentForm from './PayPalPaymentForm';
 import CryptoPaymentForm from './CryptoPaymentForm';
+import WalletPayment from './WalletPayment';
 import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle, User } from 'lucide-react';
 
 export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet';
@@ -142,13 +143,12 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
         );
       case 'wallet':
         return (
-          <div className="wallet-payment">
-            <div className="text-center py-8">
-              <Wallet className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold mb-2">Wallet Payment</h3>
-              <p className="text-gray-600 mb-4">Wallet payment functionality coming soon</p>
-            </div>
-          </div>
+          <WalletPayment
+            orderId={orderId}
+            amount={amount}
+            onSuccess={onPaymentSuccess}
+            onError={onPaymentError}
+          />
         );
       default:
         return null;
