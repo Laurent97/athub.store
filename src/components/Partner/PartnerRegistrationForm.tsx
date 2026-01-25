@@ -345,32 +345,75 @@ const PartnerRegistrationForm: React.FC = () => {
     setError('');
 
     try {
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Authentication required');
+      // Retry mechanism for network issues
+      const retryOperation = async <T,>(
+        operation: () => Promise<T>,
+        maxRetries: number = 3,
+        delay: number = 1000
+      ): Promise<T> => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          try {
+            return await operation();
+          } catch (error: any) {
+            console.warn(`Attempt ${attempt} failed:`, error);
+            
+            // Check if it's a network error
+            if (error.message?.includes('Failed to fetch') || 
+                error.message?.includes('ERR_NETWORK_CHANGED') ||
+                error.message?.includes('Network request failed')) {
+              
+              if (attempt === maxRetries) {
+                throw new Error('Network connection unstable. Please check your internet connection and try again.');
+              }
+              
+              // Wait before retrying
+              await new Promise(resolve => setTimeout(resolve, delay * attempt));
+              continue;
+            }
+            
+            // For non-network errors, throw immediately
+            throw error;
+          }
+        }
+        throw new Error('Operation failed after retries');
+      };
 
-      // Check for existing partner
-      const { data: existingPartner } = await supabase
-        .from('partner_profiles')
-        .select('id')
-        .eq('user_id', user.id)
-        .single();
+      // Get current user with retry
+      const { data: { user } } = await retryOperation(async () => {
+        const result = await supabase.auth.getUser();
+        if (result.error) throw result.error;
+        return result;
+      });
+      
+      if (!user) throw new Error('Authentication required. Please log in and try again.');
+
+      // Check for existing partner with retry
+      const { data: existingPartner } = await retryOperation(async () => {
+        const result = await supabase
+          .from('partner_profiles')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        return result;
+      });
 
       if (existingPartner) throw new Error('Partner account already exists');
 
-      // Upload files to Supabase Storage
+      // Upload files to Supabase Storage with retry
       const uploadFile = async (file: File, path: string): Promise<string> => {
-        const { data, error } = await supabase.storage
-          .from('partner-assets')
-          .upload(`${path}/${Date.now()}-${file.name}`, file);
+        return await retryOperation(async () => {
+          const { data, error } = await supabase.storage
+            .from('partner-assets')
+            .upload(`${path}/${Date.now()}-${file.name}`, file);
 
-        if (error) throw error;
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('partner-assets')
-          .getPublicUrl(data.path);
+          if (error) throw error;
+          
+          const { data: { publicUrl } } = supabase.storage
+            .from('partner-assets')
+            .getPublicUrl(data.path);
 
-        return publicUrl;
+          return publicUrl;
+        });
       };
 
       let logoUrl = '', bannerUrl = '';
@@ -382,68 +425,72 @@ const PartnerRegistrationForm: React.FC = () => {
         bannerUrl = await uploadFile(formData.storeBanner, 'banners');
       }
 
-      // Create partner profile
-      const { data: partner, error: partnerError } = await supabase
-        .from('partner_profiles')
-        .insert({
-          user_id: user.id,
-          store_name: formData.storeName,
-          store_slug: formData.storeName.toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, ''),
-          store_tagline: formData.storeTagline,
-          store_description: formData.storeDescription,
-          business_type: formData.businessType,
-          store_category: formData.storeCategory,
-          year_established: parseInt(formData.yearEstablished),
-          
-          // Design assets
-          store_logo: logoUrl,
-          store_banner: bannerUrl,
-          brand_color: formData.brandColor,
-          accent_color: formData.accentColor,
-          
-          // Contact info
-          contact_email: formData.contactEmail,
-          contact_phone: formData.contactPhone,
-          website: formData.website,
-          social_facebook: formData.socialFacebook,
-          social_instagram: formData.socialInstagram,
-          social_linkedin: formData.socialLinkedIn,
-          
-          // Location
-          country: formData.country,
-          city: formData.city,
-          timezone: formData.timezone,
-          business_hours: formData.businessHours,
-          
-          // Invitation
-          referred_by: invitationValidation?.referrerId,
-          invitation_code_used: formData.invitationCode,
-          
-          // Status
-          status: 'pending_review',
-          is_active: false,
-          partner_status: 'pending',
-          
-          // Default values
-          commission_rate: 15,
-          rating: 0,
-          total_sales: 0,
-          total_earnings: 0,
-          customer_count: 0,
-          product_count: 0,
-          
-          // Settings
-          settings: {
-            notifications: true,
-            auto_relist: true,
-            low_stock_alerts: true,
-            email_notifications: formData.receiveUpdates
-          }
-        })
-        .select()
-        .single();
+      // Create partner profile with retry
+      const { data: partner, error: partnerError } = await retryOperation(async () => {
+        const result = await supabase
+          .from('partner_profiles')
+          .insert({
+            user_id: user.id,
+            store_name: formData.storeName,
+            store_slug: formData.storeName.toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-|-$/g, ''),
+            store_tagline: formData.storeTagline,
+            store_description: formData.storeDescription,
+            business_type: formData.businessType,
+            store_category: formData.storeCategory,
+            year_established: parseInt(formData.yearEstablished),
+            
+            // Design assets
+            store_logo: logoUrl,
+            store_banner: bannerUrl,
+            brand_color: formData.brandColor,
+            accent_color: formData.accentColor,
+            
+            // Contact info
+            contact_email: formData.contactEmail,
+            contact_phone: formData.contactPhone,
+            website: formData.website,
+            social_facebook: formData.socialFacebook,
+            social_instagram: formData.socialInstagram,
+            social_linkedin: formData.socialLinkedIn,
+            
+            // Location
+            country: formData.country,
+            city: formData.city,
+            timezone: formData.timezone,
+            business_hours: formData.businessHours,
+            
+            // Invitation
+            referred_by: invitationValidation?.referrerId,
+            invitation_code_used: formData.invitationCode,
+            
+            // Status
+            status: 'pending_review',
+            is_active: false,
+            partner_status: 'pending',
+            
+            // Default values
+            commission_rate: 15,
+            rating: 0,
+            total_sales: 0,
+            total_earnings: 0,
+            customer_count: 0,
+            product_count: 0,
+            
+            // Settings
+            settings: {
+              notifications: true,
+              auto_relist: true,
+              low_stock_alerts: true,
+              email_notifications: formData.receiveUpdates
+            }
+          })
+          .select()
+          .single();
+
+        return result;
+      });
 
       if (partnerError) throw partnerError;
 
