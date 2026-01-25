@@ -27,9 +27,10 @@ interface WalletPaymentProps {
 }
 
 interface WalletBalance {
-  available_balance: number;
+  balance: number; // Changed from available_balance to balance to match database
   currency: string;
-  last_updated: string;
+  last_updated?: string;
+  created_at?: string;
 }
 
 const WalletPayment: React.FC<WalletPaymentProps> = ({
@@ -63,7 +64,7 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
         console.error('🔍 WalletPayment: Error fetching wallet balance:', error);
         // Fall back to mock balance if real fetch fails
         const mockBalance: WalletBalance = {
-          available_balance: 1250.75,
+          balance: 1250.75,
           currency: 'USD',
           last_updated: new Date().toISOString()
         };
@@ -79,9 +80,9 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
           .from('wallet_balances')
           .insert({
             user_id: user?.id,
-            available_balance: 1000.00,
+            balance: 1000.00,
             currency: 'USD',
-            last_updated: new Date().toISOString()
+            created_at: new Date().toISOString()
           })
           .select()
           .single();
@@ -99,12 +100,12 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
       console.log('🔍 WalletPayment: Real wallet balance loaded:', data);
       
       // Validate the balance data
-      if (typeof data.available_balance !== 'number' || isNaN(data.available_balance)) {
-        console.warn('🔍 WalletPayment: Invalid balance data:', data.available_balance);
+      if (typeof data.balance !== 'number' || isNaN(data.balance)) {
+        console.warn('🔍 WalletPayment: Invalid balance data:', data.balance);
         // Set a default balance if the data is invalid
         setWalletBalance({
           ...data,
-          available_balance: 0.00,
+          balance: 0.00,
           currency: 'USD',
           last_updated: new Date().toISOString()
         });
@@ -117,7 +118,7 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
       
       // Fall back to mock balance if all else fails
       const mockBalance: WalletBalance = {
-        available_balance: 1250.75,
+        balance: 1250.75,
         currency: 'USD',
         last_updated: new Date().toISOString()
       };
@@ -137,8 +138,8 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
       return;
     }
 
-    if (walletBalance.available_balance < amount) {
-      onError(`Insufficient balance. Available: $${walletBalance.available_balance.toFixed(2)}, Required: $${amount.toFixed(2)}`);
+    if (walletBalance.balance < amount) {
+      onError(`Insufficient balance. Available: $${walletBalance.balance.toFixed(2)}, Required: $${amount.toFixed(2)}`);
       return;
     }
 
@@ -149,14 +150,14 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
         orderId,
         amount,
         userId: user?.id,
-        currentBalance: walletBalance.available_balance
+        currentBalance: walletBalance.balance
       });
 
       // Simulate processing time
       await new Promise(resolve => setTimeout(resolve, 2000));
 
       // Simulate successful payment (in production, this would be a real database transaction)
-      const newBalance = walletBalance.available_balance - amount;
+      const newBalance = walletBalance.balance - amount;
       
       console.log('🔍 WalletPayment: Wallet payment completed successfully', {
         orderId,
@@ -168,7 +169,7 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
       // Update local balance state
       setWalletBalance({
         ...walletBalance,
-        available_balance: newBalance,
+        balance: newBalance,
         last_updated: new Date().toISOString()
       });
 
@@ -248,7 +249,7 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
                 <span className="text-sm text-gray-600">Available Balance:</span>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-green-600">
-                    {formatCurrency(walletBalance.available_balance)}
+                    {formatCurrency(walletBalance.balance)}
                   </div>
                   <div className="text-xs text-gray-500">
                     {walletBalance.currency}
@@ -294,11 +295,11 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Remaining Balance:</span>
                 <span className={`font-semibold ${
-                  walletBalance.available_balance >= amount 
+                  walletBalance.balance >= amount 
                     ? 'text-green-600' 
                     : 'text-red-600'
                 }`}>
-                  {formatCurrency(walletBalance.available_balance - amount)}
+                  {formatCurrency(walletBalance.balance - amount)}
                 </span>
               </div>
             )}
@@ -324,18 +325,18 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
 
       {/* Payment Button */}
       <div className="space-y-4">
-        {walletBalance && walletBalance.available_balance < amount && (
+        {walletBalance && walletBalance.balance < amount && (
           <Alert className="border-red-200 bg-red-50">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertDescription className="text-red-800">
-              <strong>Insufficient Balance:</strong> You need {formatCurrency(amount - walletBalance.available_balance)} more to complete this payment.
+              <strong>Insufficient Balance:</strong> You need {formatCurrency(amount - walletBalance.balance)} more to complete this payment.
             </AlertDescription>
           </Alert>
         )}
 
         <Button
           onClick={handleWalletPayment}
-          disabled={isProcessing || !walletBalance || walletBalance.available_balance < amount}
+          disabled={isProcessing || !walletBalance || walletBalance.balance < amount}
           className="w-full"
           size="lg"
         >
