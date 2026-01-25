@@ -22,6 +22,7 @@ export interface User {
 export interface PartnerProfile {
   id: string;
   user_id: string;
+  store_id?: string; // Unique store identifier
   store_name: string;
   store_slug: string;
   logo_url?: string;

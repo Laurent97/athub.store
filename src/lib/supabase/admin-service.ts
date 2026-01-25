@@ -49,13 +49,144 @@ export const adminService = {
         user_id: userId,
         balance: newBalance,
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id'
       });
 
     if (balanceError) throw balanceError;
 
     return { success: true, newBalance };
+  },
+
+  // Generate new Store ID
+  async generateStoreId() {
+    const { data, error } = await supabase.rpc('generate_store_id');
+    return { data, error };
+  },
+
+  // Validate Store ID
+  async validateStoreId(storeId: string) {
+    const { data, error } = await supabase.rpc('validate_store_id', { store_id: storeId });
+    return { data, error };
+  },
+
+  // Update partner Store ID
+  async updatePartnerStoreId(partnerId: string, storeId: string) {
+    const { data, error } = await supabase
+      .from('partner_profiles')
+      .update({ store_id: storeId })
+      .eq('id', partnerId)
+      .select()
+      .single();
+
+    return { data, error };
+  },
+
+  // Get partners with Store ID search
+  async getPartnersWithStoreId(search?: string) {
+    let query = supabase
+      .from('partner_profiles')
+      .select(`
+        *,
+        users!partner_profiles_user_id_fkey (
+          email,
+          full_name,
+          phone
+        )
+      `);
+
+    if (search) {
+      query = query.or(`store_id.ilike.%${search}%,store_name.ilike.%${search}%`);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    return { data, error };
+  },
+
+  // Get partner statistics by Store ID
+  async getPartnerStatsByStoreId(storeId: string, period: 'week' | 'month' | 'year' = 'month') {
+    // Get partner info
+    const { data: partner, error: partnerError } = await supabase
+      .from('partner_profiles')
+      .select('*')
+      .eq('store_id', storeId)
+      .single();
+
+    if (partnerError) throw partnerError;
+
+    // Calculate period start date
+    const now = new Date();
+    let startDate: Date;
+    
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case 'year':
+        startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default: // month
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    }
+
+    // Get orders for this partner in the period
+    const { data: orders, error: ordersError } = await supabase
+      .from('orders')
+      .select('total_amount, status, created_at')
+      .eq('partner_id', partner.user_id)
+      .gte('created_at', startDate.toISOString());
+
+    if (ordersError) throw ordersError;
+
+    // Get products count for this partner
+    const { count: productCount, error: productError } = await supabase
+      .from('partner_products')
+      .select('*', { count: 'exact', head: true })
+      .eq('partner_id', partner.user_id);
+
+    if (productError) throw productError;
+
+    // Calculate period revenue
+    const periodRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+    const periodOrders = orders?.length || 0;
+
+    return {
+      storeId,
+      storeName: partner.store_name,
+      period,
+      stats: {
+        totalRevenue: partner.total_earnings || 0,
+        totalOrders: partner.store_visits || 0,
+        totalProducts: productCount || 0,
+        rating: partner.conversion_rate || 0,
+        periodRevenue,
+        periodOrders,
+        pendingOrders: orders?.filter(o => o.status === 'pending').length || 0,
+        conversionRate: productCount > 0 ? ((periodOrders / productCount) * 100).toFixed(2) : '0'
+      }
+    };
+  },
+
+  // Search partners by Store ID or name
+  async searchPartners(query: string) {
+    const { data, error } = await supabase
+      .from('partner_profiles')
+      .select(`
+        store_id,
+        store_name,
+        store_slug,
+        is_active,
+        partner_status,
+        created_at,
+        users!partner_profiles_user_id_fkey (
+          email,
+          full_name
+        )
+      `)
+      .or(`store_id.ilike.%${query}%,store_name.ilike.%${query}%,store_slug.ilike.%${query}%`)
+      .eq('is_active', true)
+      .limit(10);
+
+    return { data, error };
   },
 
   // Get all orders with details

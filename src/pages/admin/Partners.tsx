@@ -5,11 +5,14 @@ import { supabase } from '../../lib/supabase/client';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
+import StoreIdBadge from '../../components/ui/StoreIdBadge';
 import { Search, Store, MapPin, DollarSign, CheckCircle, AlertCircle, XCircle, Filter, RefreshCw, Eye, Check, X, Clock, Power, PowerOff, Star, Edit, Save } from 'lucide-react';
 
 interface Partner {
   id: string;
   user_id: string;
+  store_id?: string;
+  invitation_code?: string;
   store_name: string;
   store_slug: string;
   contact_email: string;
@@ -21,6 +24,10 @@ interface Partner {
   total_earnings: number;
   store_visits: number;
   rating: number;
+  referral_count: number;
+  referral_earnings: number;
+  referral_tier: string;
+  referred_by?: string;
   created_at: string;
   users: {
     email: string;
@@ -333,9 +340,13 @@ export default function AdminPartners() {
                       <thead>
                         <tr className="bg-gradient-to-r from-card to-card border-b border-border">
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Store</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Store ID</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Invitation Code</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Contact</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Location</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Referrals</th>
+                          <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Tier</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Visits</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Rating</th>
                           <th className="px-6 py-4 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">Earnings</th>
@@ -359,6 +370,33 @@ export default function AdminPartners() {
                                   <p className="text-xs text-muted-foreground">{partner.users?.email}</p>
                                 </div>
                               </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              {partner.store_id ? (
+                                <StoreIdBadge storeId={partner.store_id} size="sm" />
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Not assigned</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {partner.invitation_code ? (
+                                <div className="flex items-center gap-2">
+                                  <code className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded font-mono">
+                                    {partner.invitation_code}
+                                  </code>
+                                  <button
+                                    onClick={() => navigator.clipboard.writeText(partner.invitation_code!)}
+                                    className="text-purple-600 hover:text-purple-800"
+                                    title="Copy invitation code"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Not generated</span>
+                              )}
                             </td>
                             <td className="px-6 py-4">
                               <div className="text-sm">
@@ -398,6 +436,28 @@ export default function AdminPartners() {
                             </td>
                             <td className="px-6 py-4">
                               <p className="text-sm font-bold text-primary">${(partner.total_earnings || 0).toLocaleString()}</p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm font-medium text-purple-600">{partner.referral_count || 0}</span>
+                                {partner.referral_count > 0 && (
+                                  <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full capitalize">
+                                    {partner.referral_tier || 'bronze'}
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-1">
+                                <span className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full capitalize">
+                                  {partner.referral_tier || 'bronze'}
+                                </span>
+                                {partner.referral_earnings > 0 && (
+                                  <span className="text-xs text-green-600">
+                                    +${partner.referral_earnings.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">

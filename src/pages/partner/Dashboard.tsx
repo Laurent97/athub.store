@@ -3,6 +3,7 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { partnerService } from '../../lib/supabase/partner-service';
+import StoreIdBadge from '../../components/ui/StoreIdBadge';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -155,9 +156,14 @@ export default function PartnerDashboard() {
                 <p className="text-amber-100/90 text-lg">
                   Welcome back, {partner?.store_name || userProfile?.email || 'Partner'}!
                 </p>
-                <p className="text-amber-100/70 text-sm mt-1">
-                  Manage your store, products, and orders all in one place
-                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  {partner?.store_id && (
+                    <StoreIdBadge storeId={partner.store_id} size="sm" variant="outline" />
+                  )}
+                  <p className="text-amber-100/70 text-sm">
+                    Manage your store, products, and orders all in one place
+                  </p>
+                </div>
               </div>
               <div className="flex flex-col items-end">
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
