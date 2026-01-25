@@ -165,7 +165,7 @@ const PartnerRegistrationForm: React.FC = () => {
           .from('partner_profiles')
           .select('store_id, store_name, store_logo, referral_bonus_active')
           .or(`store_id.eq.${formData.invitationCode},referral_code.eq.${formData.invitationCode}`)
-          .eq('is_approved', true)
+          .eq('partner_status', 'approved')
           .eq('is_active', true)
           .single();
 
