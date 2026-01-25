@@ -73,12 +73,17 @@ export default function Payment() {
       }
 
       // Prepare order items
-      const orderItems = items.map(item => ({
-        product_id: item.product.id,
-        partner_product_id: item.partner_product?.id || null,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-      }));
+      const orderItems = items.map(item => {
+        const partnerProductId = item.partner_product?.id;
+        const isValidUUID = partnerProductId && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(partnerProductId);
+        
+        return {
+          product_id: item.product.id,
+          partner_product_id: isValidUUID ? partnerProductId : null,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        };
+      });
 
       // Create order data
       const orderData = {
