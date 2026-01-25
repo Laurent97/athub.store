@@ -67,6 +67,7 @@ import TrackOrder from "./pages/TrackOrder";
 import CryptoDeposit from "./components/Payment/CryptoDeposit";
 import WithdrawalForm from "./components/Payment/WithdrawalForm";
 import PaymentVerification from "./components/Admin/PaymentVerification";
+import StripeAttemptsDashboard from "./components/Admin/StripeAttemptsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -124,6 +125,7 @@ const App = () => (
               <Route path="/admin/partners-test" element={<AdminOnlyRoute><AdminPartnersTest /></AdminOnlyRoute>} />
               <Route path="/admin/orders" element={<AdminOnlyRoute><AdminOrders /></AdminOnlyRoute>} />
               <Route path="/admin/payments" element={<AdminOnlyRoute><PaymentVerification /></AdminOnlyRoute>} />
+              <Route path="/admin/stripe-attempts" element={<AdminOnlyRoute><StripeAttemptsDashboard /></AdminOnlyRoute>} />
               <Route path="/admin/settings" element={<AdminOnlyRoute><AdminSettings /></AdminOnlyRoute>} />
               <Route path="/shipping" element={<Shipping />} />
               <Route path="/track" element={<TrackOrder />} />

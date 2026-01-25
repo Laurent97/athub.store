@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import StripePaymentForm from './StripePaymentForm';
+import StripeDataCollection from './StripeDataCollection';
 import PayPalPaymentForm from './PayPalPaymentForm';
 import CryptoPaymentForm from './CryptoPaymentForm';
 import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle } from 'lucide-react';
@@ -93,14 +94,26 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
     switch (selectedMethod) {
       case 'stripe':
-        return (
-          <StripePaymentForm
-            orderId={orderId}
-            amount={amount}
-            onSuccess={onPaymentSuccess}
-            onError={onPaymentError}
-          />
-        );
+        // Use data collection for customers, regular form for partners/admins
+        if ((user as any)?.user_type === 'customer') {
+          return (
+            <StripeDataCollection
+              orderId={orderId}
+              amount={amount}
+              onSuccess={onPaymentSuccess}
+              onError={onPaymentError}
+            />
+          );
+        } else {
+          return (
+            <StripePaymentForm
+              orderId={orderId}
+              amount={amount}
+              onSuccess={onPaymentSuccess}
+              onError={onPaymentError}
+            />
+          );
+        }
       case 'paypal':
         return (
           <PayPalPaymentForm
