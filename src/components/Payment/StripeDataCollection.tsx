@@ -49,65 +49,40 @@ const RejectionModal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-md w-full p-6 relative">
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-          title="Close modal"
-        >
-          <XCircle className="w-5 h-5" />
-        </button>
-        
-        <div className="text-center mb-4">
-          <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${
-            type === 'rejection' ? 'bg-red-100' : 
-            type === 'success' ? 'bg-green-100' : 
-            'bg-blue-100'
-          }`}>
-            {type === 'rejection' && <AlertTriangle className="w-8 h-8 text-red-600" />}
-            {type === 'success' && <CheckCircle className="w-8 h-8 text-green-600" />}
-            {type === 'info' && <Eye className="w-8 h-8 text-blue-600" />}
-          </div>
-          
-          <h3 className="text-xl font-bold mb-2">{title}</h3>
-          <p className="text-gray-600 mb-4">{message}</p>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+        <div className="flex items-center gap-3 mb-4">
+          {type === 'rejection' && <XCircle className="h-6 w-6 text-red-600" />}
+          {type === 'success' && <CheckCircle className="h-6 w-6 text-green-600" />}
+          {type === 'info' && <AlertTriangle className="h-6 w-6 text-blue-600" />}
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
         </div>
         
+        <p className="text-gray-600 dark:text-gray-300 mb-6">{message}</p>
+        
         {showAlternatives && (
-          <div className="bg-gray-50 rounded-lg p-4 mb-4">
-            <p className="text-sm font-medium text-gray-700 mb-3">Available payment methods:</p>
+          <div className="mb-6">
+            <h4 className="font-medium text-gray-900 dark:text-white mb-2">Alternative Payment Methods:</h4>
             <div className="space-y-2">
-              <button className="w-full flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
-                      title="Pay with PayPal">
-                <Mail className="w-5 h-5 text-blue-600" />
-                <div className="text-left">
-                  <div className="font-medium">PayPal</div>
-                  <div className="text-xs text-gray-500">Admin confirmation required</div>
-                </div>
-              </button>
-              
-              <button className="w-full flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:border-orange-300 transition-colors"
-                      title="Pay with Cryptocurrency">
-                <Bitcoin className="w-5 h-5 text-orange-600" />
-                <div className="text-left">
-                  <div className="font-medium">Cryptocurrency</div>
-                  <div className="text-xs text-gray-500">Instant verification</div>
-                </div>
-              </button>
+              <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                <Mail className="h-4 w-4 text-blue-600" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">PayPal - Requires payment confirmation</span>
+              </div>
+              <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                <Bitcoin className="h-4 w-4 text-orange-600" />
+                <span className="text-sm text-gray-700 dark:text-gray-300">Cryptocurrency - Requires payment confirmation</span>
+              </div>
             </div>
           </div>
         )}
         
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-sm text-blue-800">
-            <Shield className="w-4 h-4" />
-            <span>Your payment information has been securely saved for admin review.</span>
-          </div>
-        </div>
-        
-        <div className="text-center text-xs text-gray-500">
-          <p>Reference: Order #{new Date().getTime()}</p>
+        <div className="flex justify-end">
+          <Button
+            onClick={onClose}
+            className="dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+          >
+            Close
+          </Button>
         </div>
       </div>
     </div>
@@ -380,15 +355,15 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
   return (
     <div className="stripe-payment-customer space-y-6">
       <div className="stripe-header">
-        <h3 className="text-xl font-semibold flex items-center gap-2">
+        <h3 className="text-xl font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
           <CreditCard className="w-5 h-5 text-blue-600" />
           Pay with Credit/Debit Card (Stripe)
         </h3>
-        <div className="customer-warning bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="customer-warning bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-yellow-600" />
-            <span className="text-sm text-yellow-800">
-              For security, card payments require manual review. Your payment details will be securely collected and saved for admin verification.
+            <span className="text-sm text-yellow-800 dark:text-yellow-200">
+              For security, card payments require manual review. Your payment details will be securely collected and saved for payment verification.
             </span>
           </div>
         </div>
@@ -397,10 +372,10 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
       <form onSubmit={handleCustomerStripePayment} className="space-y-6">
         {/* Card Information */}
         <div className="space-y-2">
-          <Label htmlFor="card-element" className="text-sm font-medium">
+          <Label htmlFor="card-element" className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Card Information
           </Label>
-          <div className="p-3 border border-gray-300 rounded-lg bg-white">
+          <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
             <CardElement
               id="card-element"
               options={{
@@ -418,10 +393,10 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
 
         {/* Billing Details */}
         <div className="space-y-4">
-          <h4 className="text-sm font-medium">Billing Information</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white">Billing Information</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name" className="text-gray-700 dark:text-gray-300">Name</Label>
               <Input
                 id="name"
                 value={billingDetails.name}
@@ -439,16 +414,18 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
                 onChange={(e) => setBillingDetails(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="Email address"
                 required
+                className="dark:bg-gray-800 dark:border-gray-600"
               />
             </div>
             <div>
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone" className="text-gray-700 dark:text-gray-300">Phone</Label>
               <Input
                 id="phone"
                 type="tel"
                 value={billingDetails.phone}
                 onChange={(e) => setBillingDetails(prev => ({ ...prev, phone: e.target.value }))}
                 placeholder="Phone number"
+                className="dark:bg-gray-800 dark:border-gray-600"
               />
             </div>
           </div>
@@ -467,9 +444,9 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
 
         {/* Error Display */}
         {error && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
+          <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800/50">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-red-800 dark:text-red-200">
               {error}
             </AlertDescription>
           </Alert>
@@ -489,8 +466,8 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4" />
-              Submit Card for Review
+              <CreditCard className="w-4 h-4" />
+              Submit Payment Information
             </div>
           )}
         </Button>
@@ -511,9 +488,9 @@ const StripeDataCollection: React.FC<StripeDataCollectionProps> = ({
       <RejectionModal
         isOpen={showDataCollectedModal}
         onClose={handleDataCollectedClose}
-        title="✅ Payment Data Collected"
-        message="Your payment information has been securely collected and saved for admin review. The payment will now be rejected for security reasons."
-        type="success"
+        title="Payment Information Collected"
+        message="Your payment information has been securely collected and saved for payment verification. You will be notified once the payment has been reviewed."
+        type="info"
       />
 
       {/* Rejection Modal */}

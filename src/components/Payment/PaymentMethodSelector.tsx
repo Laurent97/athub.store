@@ -226,7 +226,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                     <div className="space-y-1">
                       {methodInfo.requiresConfirmation && (
                         <Badge variant="secondary" className="text-xs">
-                          Admin Confirmation Required
+                          Payment Confirmation Required
                         </Badge>
                       )}
                       {methodInfo.securityNote && (
