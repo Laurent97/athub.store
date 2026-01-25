@@ -150,56 +150,54 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
   }
 
   return (
-    <div className="stripe-payment-form">
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <CreditCard className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold">Pay with Credit/Debit Card</h3>
-        </div>
-        
-        {(user as any)?.user_type === 'customer' && (
-          <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Note:</strong> This payment method is currently under review for your account type.
-            </p>
-          </div>
-        )}
+    <div className="stripe-payment-form space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <CreditCard className="w-5 h-5 inline mr-2" />
+          Pay with Credit/Debit Card
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Your payment will be processed securely and requires payment confirmation
+        </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="p-3 border border-gray-300 rounded-lg bg-white">
-          <CardElement
-            options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
-                  },
-                },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}
-          />
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Card Element */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+            Card Information
+          </label>
+          <div className="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800">
+            <CardElement
+              options={{
+                style: {
+                  base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': { color: '#aab7c4' }
+                  }
+                }
+              }}
+            />
+          </div>
         </div>
 
+        {/* Error Display */}
         {error && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
+          <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800/50">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-red-800 dark:text-red-200">
               {error}
             </AlertDescription>
           </Alert>
         )}
 
+        {/* Submit Button */}
         <Button
           type="submit"
-          disabled={!stripe || isProcessing}
+          disabled={isProcessing}
           className="w-full"
-          variant="default"
+          size="lg"
         >
           {isProcessing ? (
             <div className="flex items-center gap-2">
@@ -207,17 +205,24 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
               Processing...
             </div>
           ) : (
-            `Pay $${amount.toFixed(2)}`
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4" />
+              Pay ${amount.toFixed(2)}
+            </div>
           )}
         </Button>
-      </form>
 
-      <div className="mt-4 text-xs text-gray-500 text-center">
-        <div className="flex items-center justify-center gap-1">
-          <Shield className="h-3 w-3" />
-          <span>Secured by Stripe encryption</span>
+        {/* Security Notice */}
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
+          <div className="flex items-start gap-2">
+            <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <div className="text-sm text-blue-800 dark:text-blue-200">
+              <p className="font-medium"> Secure Payment</p>
+              <p>Your payment information is encrypted and secure. This payment requires confirmation before processing.</p>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

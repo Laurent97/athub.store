@@ -81,26 +81,26 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
 
   const renderInstructions = () => (
     <div className="paypal-instructions space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
         <div className="flex items-center gap-2 mb-3">
           <Mail className="h-5 w-5 text-blue-600" />
-          <h3 className="font-semibold text-blue-900">Send Payment via PayPal</h3>
+          <h3 className="font-semibold text-blue-900 dark:text-blue-100">Send Payment via PayPal</h3>
         </div>
         
         <div className="space-y-3">
           <div>
-            <Label className="text-sm font-medium text-gray-700">PayPal Email:</Label>
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">PayPal Email:</Label>
             <div className="flex items-center gap-2 mt-1">
               <Input 
                 value={paypalDetails.email} 
                 readOnly 
-                className="font-mono bg-white"
+                className="font-mono bg-white dark:bg-gray-800 dark:border-gray-600"
               />
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleCopyEmail}
-                className="shrink-0"
+                className="shrink-0 dark:border-gray-600 dark:text-gray-300"
               >
                 {copied ? <CheckCircle className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -108,159 +108,25 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-700">Amount:</Label>
-            <div className="text-lg font-bold text-gray-900 mt-1">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Amount:</Label>
+            <div className="text-lg font-bold text-gray-900 dark:text-white mt-1">
               ${amount.toFixed(2)} USD
             </div>
           </div>
 
           <div>
-            <Label className="text-sm font-medium text-gray-700">Reference:</Label>
-            <div className="font-mono text-sm bg-gray-100 p-2 rounded mt-1">
+            <Label className="text-sm font-medium text-gray-700 dark:text-gray-300">Reference:</Label>
+            <div className="font-mono text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1">
               Order #{orderId}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
-          <div className="text-sm text-yellow-800">
-            <p className="font-medium">Important:</p>
-            <ul className="mt-1 space-y-1">
-              <li>• Include the Order ID in the PayPal notes</li>
-              <li>• Send the exact amount (${amount.toFixed(2)} USD)</li>
-              <li>• Keep your transaction ID for confirmation</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <Clock className="h-4 w-4" />
-          <span>Processing time: 1-24 hours after confirmation</span>
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <Label htmlFor="transactionId" className="text-sm font-medium text-gray-700">
-          PayPal Transaction ID:
-        </Label>
-        <Input
-          id="transactionId"
-          type="text"
-          value={transactionId}
-          onChange={(e) => setTransactionId(e.target.value)}
-          placeholder="Enter the transaction ID from your PayPal receipt"
-          className="font-mono"
-        />
-        
-        <Button 
-          onClick={() => setStep('confirming')}
-          className="w-full"
-          variant="outline"
-        >
-          I've Sent the Payment
-        </Button>
-      </div>
-    </div>
-  );
-
-  const renderConfirming = () => (
-    <div className="paypal-confirming space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">Confirm Payment Details</h3>
-        
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span>Order ID:</span>
-            <span className="font-mono">#{orderId}</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Amount:</span>
-            <span className="font-bold">${amount.toFixed(2)} USD</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Transaction ID:</span>
-            <span className="font-mono text-xs">{transactionId}</span>
-          </div>
-        </div>
-      </div>
-
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          By confirming, you verify that you have sent the payment via PayPal. 
-          An admin will verify your transaction and process your order within 1-24 hours.
-        </AlertDescription>
-      </Alert>
-
-      <div className="flex gap-3">
-        <Button 
-          onClick={() => setStep('instructions')}
-          variant="outline"
-          className="flex-1"
-        >
-          Back
-        </Button>
-        <Button 
-          onClick={handlePaymentSent}
-          disabled={isSubmitting}
-          className="flex-1"
-        >
-          {isSubmitting ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Submitting...
-            </div>
-          ) : (
-            'Confirm Payment Sent'
-          )}
-        </Button>
-      </div>
-
-      {error && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertCircle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
-            {error}
-          </AlertDescription>
-        </Alert>
-      )}
-    </div>
-  );
-
-  const renderSubmitted = () => (
-    <div className="paypal-submitted space-y-4">
-      <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
-        <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-        <h3 className="text-lg font-semibold text-green-900 mb-2">Payment Submitted for Verification</h3>
-        
-        <div className="space-y-2 text-sm text-green-800">
-          <p>Your payment details have been recorded successfully.</p>
-          <p>An admin will verify your PayPal transaction within 24 hours.</p>
-        </div>
-
-        <div className="mt-4 p-3 bg-white rounded border border-green-200">
-          <div className="text-sm space-y-1">
-            <div className="flex justify-between">
-              <span>Order Status:</span>
-              <span className="font-semibold text-yellow-600">Pending Confirmation</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Transaction ID:</span>
-              <span className="font-mono text-xs">{transactionId}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-2">What happens next?</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Admin will verify your PayPal transaction</li>
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
+        <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">What happens next?</h4>
+        <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+          <li>• Payment will be verified for confirmation</li>
           <li>• You'll receive a confirmation email once verified</li>
           <li>• Your order will be processed immediately after verification</li>
           <li>• You can check your order status in your account</li>
@@ -269,13 +135,50 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
     </div>
   );
 
-  return (
-    <div className="paypal-payment-form">
-      <div className="mb-4">
-        <div className="flex items-center gap-2 mb-2">
-          <Mail className="h-5 w-5 text-blue-600" />
-          <h3 className="text-lg font-semibold">Pay with PayPal</h3>
+  const renderConfirming = () => (
+    <div className="text-center py-8">
+      <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        Confirming Payment
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400">
+        Please wait while we verify your PayPal transaction...
+      </p>
+    </div>
+  );
+
+  const renderSubmitted = () => (
+    <div className="text-center py-8">
+      <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
+        <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+      </div>
+      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+        Payment Submitted Successfully
+      </h3>
+      <p className="text-gray-600 dark:text-gray-400 mb-4">
+        Your PayPal payment has been submitted and is awaiting confirmation.
+      </p>
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4">
+        <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+          <Clock className="w-4 h-4" />
+          <span className="text-sm">
+            <strong>Transaction ID:</strong> {transactionId}
+          </span>
         </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="paypal-payment-form space-y-6">
+      <div className="text-center mb-6">
+        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+          <Mail className="w-5 h-5 inline mr-2" />
+          Pay with PayPal
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Send payment via PayPal and enter the transaction ID for confirmation
+        </p>
       </div>
 
       {step === 'instructions' && renderInstructions()}
