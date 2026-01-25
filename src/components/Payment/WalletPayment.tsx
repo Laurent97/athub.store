@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -97,7 +97,20 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
       }
 
       console.log('🔍 WalletPayment: Real wallet balance loaded:', data);
-      setWalletBalance(data);
+      
+      // Validate the balance data
+      if (typeof data.available_balance !== 'number' || isNaN(data.available_balance)) {
+        console.warn('🔍 WalletPayment: Invalid balance data:', data.available_balance);
+        // Set a default balance if the data is invalid
+        setWalletBalance({
+          ...data,
+          available_balance: 0.00,
+          currency: 'USD',
+          last_updated: new Date().toISOString()
+        });
+      } else {
+        setWalletBalance(data);
+      }
     } catch (error) {
       console.error('🔍 WalletPayment: Error fetching wallet balance:', error);
       onError('Failed to fetch wallet balance');
@@ -114,9 +127,9 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
   };
 
   // Load wallet balance on component mount
-  useState(() => {
+  useEffect(() => {
     fetchWalletBalance();
-  });
+  }, []);
 
   const handleWalletPayment = async () => {
     if (!walletBalance) {
@@ -191,6 +204,11 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
   };
 
   const formatCurrency = (amount: number) => {
+    // Handle NaN, undefined, null values
+    if (isNaN(amount) || amount === undefined || amount === null) {
+      return '$0.00 USD';
+    }
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
