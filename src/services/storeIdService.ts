@@ -166,9 +166,34 @@ export class StoreIdService {
   static formatStoreId(storeId: string): string {
     if (!storeId) return 'N/A';
     
+    // If already properly formatted, return as is
+    if (storeId.includes('-')) {
+      return storeId;
+    }
+    
+    // Handle case where store ID has AUTO prefix with masked characters
+    if (storeId.startsWith('AUTO') && storeId.includes('#')) {
+      // Extract the actual numbers from the end
+      const numbers = storeId.replace(/[^0-9]/g, '');
+      if (numbers.length >= 4) {
+        // Format as AUTO-XXXX-XXXX-XXXX using the available numbers
+        const padded = numbers.padEnd(11, '0'); // Ensure we have 11 digits
+        return `AUTO-${padded.slice(0, 4)}-${padded.slice(4, 8)}-${padded.slice(8, 11)}`;
+      }
+    }
+    
     // Format as AUTO-XXXX-XXXX-XXXX for better readability
     if (storeId.length === 15) {
       return `${storeId.slice(0, 4)}-${storeId.slice(4, 8)}-${storeId.slice(8, 12)}-${storeId.slice(12)}`;
+    }
+    
+    // Handle case where store ID starts with AUTO and has numbers
+    if (storeId.startsWith('AUTO') && storeId.length > 4) {
+      const numbers = storeId.slice(4).replace(/[^0-9]/g, '');
+      if (numbers.length >= 4) {
+        const padded = numbers.padEnd(11, '0');
+        return `AUTO-${padded.slice(0, 4)}-${padded.slice(4, 8)}-${padded.slice(8, 11)}`;
+      }
     }
     
     return storeId;
