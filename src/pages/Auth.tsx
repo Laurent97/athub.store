@@ -64,7 +64,14 @@ const Auth = () => {
   useEffect(() => {
     const redirect = searchParams.get('redirect');
     if (redirect) {
-      setRedirectPath(redirect);
+      try {
+        // Decode the redirect URL to handle special characters
+        const decodedRedirect = decodeURIComponent(redirect);
+        setRedirectPath(decodedRedirect);
+      } catch (error) {
+        console.error('Error decoding redirect URL:', error);
+        setRedirectPath('/');
+      }
     }
   }, [searchParams]);
 

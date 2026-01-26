@@ -96,7 +96,9 @@ const PartnerRegistrationForm: React.FC = () => {
   // Authentication check - redirect to login if not authenticated
   useEffect(() => {
     if (!user) {
-      navigate('/login?redirect=partner-register');
+      // Store the current path for redirect after login
+      const currentPath = window.location.pathname;
+      navigate(`/login?redirect=${encodeURIComponent(currentPath)}`);
       return;
     }
   }, [user, navigate]);
