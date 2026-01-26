@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Store, Users, TrendingUp, Shield, Star } from 'lucide-react';
+import { ArrowLeft, Store, Users, TrendingUp, Shield, Star, CheckCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import PartnerRegistrationForm from '../components/Partner/PartnerRegistrationForm';
+import PartnerRegistrationFormSimple from '../components/Partner/PartnerRegistrationFormSimple';
 
 const BecomePartner: React.FC = () => {
   const navigate = useNavigate();
@@ -42,10 +42,19 @@ const BecomePartner: React.FC = () => {
     { number: '24/7', label: 'Support' }
   ];
 
+  const features = [
+    'No inventory required',
+    'Dropshipping model',
+    'Commission-based earnings',
+    'Marketing support',
+    'Analytics dashboard',
+    'Mobile app access'
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Header */}
-      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
+      <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="container-wide py-4">
           <div className="flex items-center gap-4">
             <Button
@@ -72,7 +81,7 @@ const BecomePartner: React.FC = () => {
           
           <h2 className="text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white mb-6 leading-tight">
             Start Your Own
-            <span className="block text-gradient bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            <span className="block text-gradient-blue">
               Auto Business
             </span>
           </h2>
@@ -101,7 +110,7 @@ const BecomePartner: React.FC = () => {
         <div className="grid lg:grid-cols-2 gap-8 mb-16">
           <div className="grid sm:grid-cols-2 gap-6">
             {benefits.map((benefit, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800 dark:border-gray-700">
+              <Card key={index} className="card-hover border-0 shadow-lg dark:bg-gray-800 dark:border-gray-700">
                 <CardHeader>
                   <div className={`w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4`}>
                     <benefit.icon className={`w-6 h-6 ${benefit.color}`} />
@@ -120,7 +129,7 @@ const BecomePartner: React.FC = () => {
           </div>
 
           {/* Registration Form */}
-          <div className="lg:sticky lg:top-8">
+          <div className="lg:sticky lg:top-24" id="partner-form">
             <Card className="border-0 shadow-xl dark:bg-gray-800 dark:border-gray-700">
               <CardHeader className="text-center pb-6">
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -134,13 +143,62 @@ const BecomePartner: React.FC = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-8">
-                <PartnerRegistrationForm />
+                <PartnerRegistrationFormSimple />
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Additional Info */}
+        {/* Features Section */}
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Everything You Need to Succeed
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              We provide all the tools and support you need to build a successful auto parts business
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {features.map((feature, index) => (
+              <div key={index} className="flex items-center gap-3 p-4 b2b-card">
+                <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400 flex-shrink-0" />
+                <span className="text-gray-700 dark:text-gray-300">{feature}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <div className="b2b-card p-8 max-w-4xl mx-auto">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Ready to Get Started?
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-6">
+              Join hundreds of successful partners already earning with AutoTradeHub
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                size="lg" 
+                className="btn-primary"
+                onClick={() => document.getElementById('partner-form')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                Apply Now
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg"
+                onClick={() => navigate('/partner/info')}
+              >
+                Learn More
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Trust Badges */}
         <div className="text-center">
           <div className="inline-flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex items-center gap-2">
