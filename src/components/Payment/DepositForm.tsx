@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { cryptoService } from '@/lib/supabase/crypto-service';
+import { depositService } from '@/lib/supabase/deposit-service';
 import { 
   CreditCard, 
   Mail, 
@@ -44,20 +45,21 @@ export default function DepositForm() {
   const [step, setStep] = useState(1);
   const [cryptoAddresses, setCryptoAddresses] = useState<any[]>([]);
   const [loadingCrypto, setLoadingCrypto] = useState(false);
+  const [availablePaymentMethods, setAvailablePaymentMethods] = useState<string[]>([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
   const [formData, setFormData] = useState<DepositFormData>({
     amount: 0,
     paymentMethod: 'stripe'
   });
 
-  // Load crypto addresses from database
+  // Load crypto addresses and available payment methods from database
   useEffect(() => {
-    const loadCryptoAddresses = async () => {
-      setLoadingCrypto(true);
+    const loadData = async () => {
       try {
-        console.log('Loading crypto addresses from database...');
+        console.log('Loading deposit form data from database...');
         
-        // First test the connection
-        const connectionTest = await cryptoService.testConnection();
+        // Test database connection first
+        const connectionTest = await depositService.testConnection();
         if (!connectionTest.success) {
           console.error('Database connection failed:', connectionTest.message);
           toast({
@@ -65,50 +67,61 @@ export default function DepositForm() {
             description: connectionTest.message,
             variant: "destructive"
           });
-          setLoadingCrypto(false);
           return;
         }
         
-        // Then load the addresses
-        const { data, error } = await cryptoService.getActiveCryptoAddresses();
+        console.log('Database connection test passed:', connectionTest.message);
         
-        if (error) {
-          console.error('Database error loading crypto addresses:', error);
-          toast({
-            title: "Database Error",
-            description: "Unable to load cryptocurrency wallets. Please try again.",
-            variant: "destructive"
-          });
+        // Load crypto addresses
+        setLoadingCrypto(true);
+        const cryptoResult = await cryptoService.getActiveCryptoAddresses();
+        if (cryptoResult.error) {
+          console.error('Error loading crypto addresses:', cryptoResult.error);
         } else {
-          console.log('Crypto addresses loaded from database:', data);
-          setCryptoAddresses(data || []);
+          console.log('Crypto addresses loaded:', cryptoResult.data?.length || 0);
+          setCryptoAddresses(cryptoResult.data || []);
           
-          if (data && data.length > 0) {
+          if (cryptoResult.data && cryptoResult.data.length > 0) {
             toast({
-              title: "Crypto Wallets Loaded",
-              description: `${data.length} cryptocurrency wallets available for deposit.`,
-            });
-          } else {
-            toast({
-              title: "No Crypto Wallets",
-              description: "No active cryptocurrency wallets found in database.",
-              variant: "destructive"
+              title: "Crypto Wallets Available",
+              description: `${cryptoResult.data.length} cryptocurrency wallets loaded.`,
             });
           }
         }
+        setLoadingCrypto(false);
+
+        // Load available payment methods
+        setLoadingPaymentMethods(true);
+        const methods = ['stripe', 'paypal', 'crypto', 'bank'];
+        const availableMethods: string[] = [];
+        
+        for (const method of methods) {
+          const { available } = await depositService.isPaymentMethodAvailable(method, 'partner');
+          if (available) {
+            availableMethods.push(method);
+          }
+        }
+        
+        console.log('Available payment methods:', availableMethods);
+        setAvailablePaymentMethods(availableMethods);
+        setLoadingPaymentMethods(false);
+        
+        // Set default payment method to first available
+        if (availableMethods.length > 0 && !availableMethods.includes(formData.paymentMethod)) {
+          setFormData({ ...formData, paymentMethod: availableMethods[0] as any });
+        }
+        
       } catch (error) {
-        console.error('Error loading crypto addresses:', error);
+        console.error('Error loading deposit form data:', error);
         toast({
-          title: "Connection Error",
-          description: "Failed to connect to cryptocurrency service.",
+          title: "Loading Error",
+          description: "Failed to load payment options. Please refresh the page.",
           variant: "destructive"
         });
-      } finally {
-        setLoadingCrypto(false);
       }
     };
 
-    loadCryptoAddresses();
+    loadData();
   }, []);
 
   const paymentMethods = [
@@ -144,7 +157,7 @@ export default function DepositForm() {
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     }
-  ];
+  ].filter(method => availablePaymentMethods.includes(method.id));
 
   const handlePaymentMethodSelect = (method: string) => {
     setFormData({ ...formData, paymentMethod: method as DepositFormData['paymentMethod'] });
@@ -164,13 +177,74 @@ export default function DepositForm() {
   };
 
   const handlePaymentSubmit = async () => {
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "You must be logged in to make a deposit.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setLoading(true);
     
     try {
-      // Simulate API call for deposit request submission (not processing)
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Submitting deposit request to database:', {
+        user_id: user.id,
+        amount: formData.amount,
+        payment_method: formData.paymentMethod,
+        payment_details: formData
+      });
+
+      // Create deposit request object
+      const depositRequest = {
+        user_id: user.id,
+        amount: formData.amount,
+        payment_method: formData.paymentMethod as any,
+        payment_details: {
+          cardNumber: formData.cardNumber,
+          cardExpiry: formData.cardExpiry,
+          cardCvc: formData.cardCvc,
+          email: formData.email,
+          cryptoType: formData.cryptoType,
+          cryptoAddress: formData.cryptoType ? 
+            cryptoAddresses.find(c => c.crypto_type === formData.cryptoType)?.address : undefined,
+          cryptoTransactionId: formData.cryptoTransactionId,
+          bankName: formData.bankName,
+          bankAccount: formData.bankAccount,
+          routingNumber: formData.routingNumber
+        },
+        status: 'pending' as const,
+        description: `Deposit request via ${formData.paymentMethod}`
+      };
+
+      let result;
       
-      // Show success message for request submission
+      // Process payment based on method
+      switch (formData.paymentMethod) {
+        case 'stripe':
+          result = await depositService.processStripePayment(depositRequest);
+          break;
+        case 'paypal':
+          result = await depositService.processPayPalPayment(depositRequest);
+          break;
+        case 'crypto':
+          result = await depositService.processCryptoPayment(depositRequest);
+          break;
+        case 'bank':
+          result = await depositService.processBankTransferPayment(depositRequest);
+          break;
+        default:
+          throw new Error('Unsupported payment method');
+      }
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      console.log('Deposit request submitted successfully:', result.data);
+      
+      // Show success message
       toast({
         title: "Deposit Request Submitted!",
         description: `$${formData.amount.toFixed(2)} deposit request has been submitted for admin approval.`,
@@ -182,14 +256,16 @@ export default function DepositForm() {
           success: true,
           message: `Deposit request of $${formData.amount.toFixed(2)} has been submitted for admin approval. You will be notified once it's approved.`,
           amount: formData.amount,
-          pendingApproval: true
+          pendingApproval: true,
+          transactionId: result.data?.transaction?.id
         }
       });
       
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error submitting deposit request:', error);
       toast({
         title: "Deposit Request Failed",
-        description: "There was an error submitting your deposit request. Please try again.",
+        description: error?.message || "There was an error submitting your deposit request. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -521,27 +597,40 @@ export default function DepositForm() {
             <p className="text-muted-foreground">Select how you want to deposit {formatCurrency(formData.amount)}</p>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  onClick={() => handlePaymentMethodSelect(method.id)}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all hover:border-primary ${
-                    formData.paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-border'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${method.bgColor}`}>
-                      <span className={method.color}>{method.icon}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground">{method.name}</h3>
-                      <p className="text-sm text-muted-foreground">{method.description}</p>
+            {loadingPaymentMethods ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <span className="ml-3 text-muted-foreground">Loading available payment methods...</span>
+              </div>
+            ) : paymentMethods.length === 0 ? (
+              <div className="text-center py-8">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-foreground mb-2">No Payment Methods Available</h3>
+                <p className="text-muted-foreground">No payment methods are currently available. Please try again later.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paymentMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    onClick={() => handlePaymentMethodSelect(method.id)}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all hover:border-primary ${
+                      formData.paymentMethod === method.id ? 'border-primary bg-primary/5' : 'border-border'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-lg ${method.bgColor}`}>
+                        <span className={method.color}>{method.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground">{method.name}</h3>
+                        <p className="text-sm text-muted-foreground">{method.description}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             <div className="flex gap-4">
               <Button 
@@ -553,7 +642,7 @@ export default function DepositForm() {
               </Button>
               <Button 
                 onClick={handlePaymentSubmit}
-                disabled={loading}
+                disabled={loading || loadingPaymentMethods || paymentMethods.length === 0}
                 className="flex-1"
               >
                 {loading ? 'Processing...' : `Deposit ${formatCurrency(formData.amount)}`}
