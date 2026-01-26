@@ -197,7 +197,7 @@ export default function EnhancedCategoryNavigation({
                 "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all",
                 active
                   ? "bg-blue-600 text-white shadow-lg scale-105"
-                  : "bg-white border border-gray-200 text-slate-700 hover:border-blue-300 hover:bg-blue-50"
+                  : "bg-card border border-border text-foreground hover:border-blue-300 hover:bg-blue-50"
               )}
             >
               <Icon className="w-4 h-4" />
@@ -214,10 +214,10 @@ export default function EnhancedCategoryNavigation({
       {/* Section Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
             Shop by Category
           </h2>
-          <p className="text-slate-600">
+          <p className="text-muted-foreground">
             Browse our extensive catalog of automotive products and parts
           </p>
         </div>
@@ -239,14 +239,14 @@ export default function EnhancedCategoryNavigation({
               "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover:shadow-lg group",
               currentCategory === "all"
                 ? "border-blue-600 bg-blue-50 text-blue-600"
-                : "border-gray-200 bg-white hover:border-blue-300 text-slate-700"
+                : "border-border bg-card hover:border-blue-300 text-foreground"
             )}
           >
             <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
               <span className="text-white text-xl font-bold">✦</span>
             </div>
             <span className="text-sm font-semibold">All Products</span>
-            <span className="text-xs text-slate-500 mt-1">150K+ Items</span>
+            <span className="text-xs text-muted-foreground mt-1">150K+ Items</span>
           </button>
         )}
         
@@ -262,7 +262,7 @@ export default function EnhancedCategoryNavigation({
                 "flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all hover:shadow-lg group",
                 active
                   ? "border-blue-600 bg-blue-50 text-blue-600"
-                  : "border-gray-200 bg-white hover:border-blue-300 text-slate-700"
+                  : "border-border bg-card hover:border-blue-300 text-foreground"
               )}
             >
               <div className={cn(
@@ -272,9 +272,9 @@ export default function EnhancedCategoryNavigation({
                 <Icon className="w-6 h-6 text-white" />
               </div>
               <span className="text-sm font-semibold text-center">{category.label}</span>
-              <span className="text-xs text-slate-500 mt-1">{category.count} Products</span>
+              <span className="text-xs text-muted-foreground mt-1">{category.count} Products</span>
               {!active && (
-                <span className="text-xs text-slate-400 mt-2 text-center line-clamp-2">
+                <span className="text-xs text-muted-foreground mt-2 text-center line-clamp-2">
                   {category.description}
                 </span>
               )}
