@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { adminService } from '../../lib/supabase/admin-service';
+import { useUsers, useOrders, usePartnerProfiles } from '../../hooks/useRealtimeSubscription';
 import { Order, User } from '../../lib/types/database';
+import { Button } from '@/components/ui/button';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
 import Breadcrumbs from '../../components/Breadcrumbs';
-import { Users, Store, Package, TrendingUp, ArrowUpRight, ArrowDownRight, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Users, Store, Package, TrendingUp, ArrowUpRight, ArrowDownRight, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface DashboardStats {
   totalUsers: number;
@@ -20,6 +22,10 @@ interface DashboardStats {
 const AdminDashboard = () => {
   const { userProfile } = useAuth();
   const navigate = useNavigate();
+  const { data: users, loading: usersLoading, refresh: refreshUsers } = useUsers();
+  const { data: orders, loading: ordersLoading, refresh: refreshOrders } = useOrders();
+  const { data: partners, loading: partnersLoading, refresh: refreshPartners } = usePartnerProfiles();
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalPartners: 0,
@@ -28,8 +34,7 @@ const AdminDashboard = () => {
     pendingPartners: 0
   });
   const [loading, setLoading] = useState(true);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
-  const [recentUsers, setRecentUsers] = useState<User[]>([]);
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (userProfile?.user_type !== 'admin') {
@@ -37,26 +42,31 @@ const AdminDashboard = () => {
       return;
     }
 
-    loadDashboardData();
-  }, [userProfile, navigate]);
+    // Calculate stats from real-time data
+    if (users && orders && partners) {
+      const totalUsers = users.length;
+      const totalPartners = partners.length;
+      const totalOrders = orders.length;
+      const totalRevenue = orders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+      const pendingPartners = partners.filter(p => p.partner_status === 'pending').length;
 
-  const loadDashboardData = async () => {
-    setLoading(true);
-    
-    try {
-      const statsData = await adminService.getDashboardStats();
-      setStats(statsData);
-
-      const { data: ordersData } = await adminService.getAllOrders();
-      setRecentOrders(ordersData?.slice(0, 5) || []);
-
-      const { data: usersData } = await adminService.getAllUsers();
-      setRecentUsers(usersData?.slice(0, 5) || []);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
+      setStats({
+        totalUsers,
+        totalPartners,
+        totalOrders,
+        totalRevenue,
+        pendingPartners
+      });
+      setLastUpdate(new Date());
     }
+    
+    setLoading(false);
+  }, [users, orders, partners, userProfile, navigate]);
+
+  const refreshAllData = () => {
+    refreshUsers();
+    refreshOrders();
+    refreshPartners();
   };
 
   const getStatusColor = (status: string) => {
@@ -98,10 +108,24 @@ const AdminDashboard = () => {
               
               {/* Welcome Header */}
               <div className="mb-4 sm:mb-6 lg:mb-8 animate-fade-in">
-                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-primary-foreground shadow-lg">
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 sm:mb-2">Dashboard</h1>
-                  <p className="text-primary-foreground/90 text-sm sm:text-base lg:text-lg">Welcome back, <span className="font-semibold truncate max-w-[200px] sm:max-w-none inline-block">{userProfile?.email?.split('@')[0]}</span></p>
-                  <p className="text-primary-foreground/70 mt-1 text-xs sm:text-sm lg:text-base hidden xs:block">Here's what's happening with your business today</p>
+                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-primary-foreground shadow-lg flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-1 sm:mb-2">Dashboard</h1>
+                    <p className="text-primary-foreground/90 text-sm sm:text-base lg:text-lg">Welcome back, <span className="font-semibold truncate max-w-[200px] sm:max-w-none inline-block">{userProfile?.email?.split('@')[0]}</span></p>
+                    <p className="text-primary-foreground/70 mt-1 text-xs sm:text-sm lg:text-base hidden xs:block">Here's what's happening with your business today</p>
+                    {lastUpdate && (
+                      <p className="text-primary-foreground/50 text-xs mt-1">Last updated: {lastUpdate.toLocaleTimeString()}</p>
+                    )}
+                  </div>
+                  <Button
+                    onClick={refreshAllData}
+                    variant="outline"
+                    size="sm"
+                    className="text-primary-foreground border-primary/20 hover:bg-primary/10"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
                 </div>
               </div>
 
@@ -188,14 +212,14 @@ const AdminDashboard = () => {
                   </div>
                   
                   <div className="p-4 sm:p-6">
-                    {recentOrders.length === 0 ? (
+                    {orders && orders.length === 0 ? (
                       <div className="text-center py-8 sm:py-12">
                         <Package className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-2 sm:mb-3" />
                         <p className="text-muted-foreground text-sm sm:text-base">No orders yet</p>
                       </div>
                     ) : (
                       <div className="space-y-2 sm:space-y-3">
-                        {recentOrders.map((order, idx) => (
+                        {orders.slice(0, 5).map((order, idx) => (
                           <Link
                             key={order.id}
                             to="/admin/orders"
@@ -270,7 +294,7 @@ const AdminDashboard = () => {
                       <h3 className="font-bold text-foreground text-sm sm:text-base">Recent Users</h3>
                     </div>
                     <div className="space-y-2 sm:space-y-3">
-                      {recentUsers.slice(0, 3).map((userItem) => (
+                      {users && users.slice(0, 3).map((userItem) => (
                         <div key={userItem.id} className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <p className="text-xs sm:text-sm font-medium text-foreground truncate">{userItem.full_name || userItem.email?.split('@')[0]}</p>
