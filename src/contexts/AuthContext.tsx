@@ -159,30 +159,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (error) {
         console.error('AuthContext: Sign up error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('User already registered')) {
+          throw new Error('An account with this email already exists. Please sign in instead.');
+        }
         throw error;
       }
 
       console.log('AuthContext: User created in auth:', data.user);
 
-      // Step 2: Create user profile in database
+      // Step 2: Create user profile in database (check if it doesn't already exist)
       if (data.user) {
         console.log('AuthContext: Creating user profile in database');
         
-        const { error: profileError } = await supabase.from('users').insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          user_type: 'customer',
-        });
-
-        if (profileError) {
-          console.error('AuthContext: Error creating user profile:', profileError);
-          // Try to clean up the auth user if profile creation fails
-          await supabase.auth.admin.deleteUser(data.user.id);
-          throw new Error(`Failed to create user profile: ${profileError.message}`);
+        // First check if user profile already exists
+        const { data: existingProfile, error: checkError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', data.user.id)
+          .maybeSingle(); // Use maybeSingle to handle no results gracefully
+        
+        if (checkError) {
+          console.error('AuthContext: Error checking existing profile:', checkError);
         }
+        
+        if (existingProfile) {
+          console.log('AuthContext: User profile already exists, skipping creation');
+        } else {
+          // Create the user profile only if it doesn't exist
+          const { error: profileError } = await supabase.from('users').insert({
+            id: data.user.id,
+            email,
+            full_name: fullName,
+            user_type: 'customer',
+          });
 
-        console.log('AuthContext: User profile created successfully');
+          if (profileError) {
+            console.error('AuthContext: Error creating user profile:', profileError);
+            
+            // Handle duplicate key error specifically
+            if (profileError.message?.includes('duplicate key') || profileError.code === '23505') {
+              console.log('AuthContext: Profile already exists, continuing...');
+            } else {
+              throw new Error(`Failed to create user profile: ${profileError.message}`);
+            }
+          } else {
+            console.log('AuthContext: User profile created successfully');
+          }
+        }
 
         // Step 3: Sign in user immediately after successful registration
         console.log('AuthContext: Signing in user immediately after registration');
