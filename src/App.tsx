@@ -52,9 +52,8 @@ import AdminPartnersTest from "./pages/admin/Partners-Test";
 import AdminUsers from "./pages/admin/Users";
 import AdminOrders from "./pages/admin/Orders";
 import AdminSettings from "./pages/admin/Settings";
-import AdminPayments from "./pages/admin/Payments";
-import AdminPasswordReset from "./pages/admin/PasswordReset";
 import ProductForm from "./components/Admin/ProductForm";
+import SeedData from "./pages/admin/SeedData";
 import LikedItems from "./pages/LikedItems";
 import NotFound from "./pages/NotFound";
 import Shipping from "./pages/Shipping";
@@ -134,13 +133,8 @@ const App = () => (
               <Route path="/admin/partners" element={<AdminOnlyRoute><AdminPartners /></AdminOnlyRoute>} />
               <Route path="/admin/partners-test" element={<AdminOnlyRoute><AdminPartnersTest /></AdminOnlyRoute>} />
               <Route path="/admin/orders" element={<AdminOnlyRoute><AdminOrders /></AdminOnlyRoute>} />
-              <Route path="/admin/payments" element={<AdminOnlyRoute><AdminPayments /></AdminOnlyRoute>} />
-              <Route path="/admin/password-reset" element={<AdminOnlyRoute><AdminPasswordReset /></AdminOnlyRoute>} />
-              <Route path="/admin/stripe-attempts" element={<AdminOnlyRoute><StripeAttemptsDashboard /></AdminOnlyRoute>} />
               <Route path="/admin/settings" element={<AdminOnlyRoute><AdminSettings /></AdminOnlyRoute>} />
-              <Route path="/shipping" element={<Shipping />} />
-              <Route path="/track" element={<TrackOrder />} />
-              <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/admin/seed-data" element={<AdminOnlyRoute><SeedData /></AdminOnlyRoute>} />
               <Route path="/orders/:orderId" element={<OrderDetails />} />
               <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/about" element={<About />} />
