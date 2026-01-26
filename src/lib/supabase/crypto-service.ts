@@ -32,7 +32,7 @@ export const cryptoService = {
       
       const { data, error } = await supabase
         .from('crypto_addresses')
-        .select('*')
+        .select('id, crypto_type, address, is_active, network, xrp_tag, created_at, updated_at')
         .eq('is_active', true)
         .order('crypto_type', { ascending: true });
 
