@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Search, ShoppingCart, User, Menu, X, ChevronDown, Heart, Package, Bell } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, ChevronDown, Heart, Package, Bell, Building2, Globe, Shield, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { useState, useEffect } from "react";
@@ -26,11 +26,29 @@ const Navbar = () => {
   }, []);
 
   const navLinks = [
-    { name: "Cars", href: "/products?category=cars" },
-    { name: "Parts", href: "/products?category=parts" },
-    { name: "Accessories", href: "/products?category=accessories" },
-    { name: "Partner Shops", href: "/manufacturers" },
-    { name: "Become a Partner", href: "#partner", action: "openModal" },
+    { name: "Products", href: "/products", dropdown: [
+      { name: "All Products", href: "/products" },
+      { name: "Vehicles", href: "/products?category=cars" },
+      { name: "Engine Parts", href: "/products?category=engine" },
+      { name: "Accessories", href: "/products?category=accessories" },
+    ]},
+    { name: "Suppliers", href: "/manufacturers", dropdown: [
+      { name: "All Suppliers", href: "/manufacturers" },
+      { name: "Verified Suppliers", href: "/manufacturers?verified=true" },
+      { name: "Top Rated", href: "/manufacturers?rating=5" },
+    ]},
+    { name: "Services", href: "#", dropdown: [
+      { name: "Trade Assurance", href: "/trade-assurance" },
+      { name: "Logistics", href: "/shipping" },
+      { name: "Inspection Service", href: "/inspection" },
+      { name: "Financing", href: "/financing" },
+    ]},
+    { name: "Resources", href: "#", dropdown: [
+      { name: "Buyer Guide", href: "/help" },
+      { name: "Supplier Guide", href: "/partner/info" },
+      { name: "FAQ", href: "/faq" },
+      { name: "Support", href: "/contact" },
+    ]},
   ];
 
   // Update dashboard URL when user profile changes
@@ -54,203 +72,270 @@ const Navbar = () => {
   }, [user, userProfile]);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
-      <div className="container-wide">
-        <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="AutoTradeHub" className="w-8 h-8 sm:w-10 sm:h-10" />
-            <span className="font-bold text-lg sm:text-xl text-foreground hidden xs:block">AutoTradeHub</span>
-            <span className="font-bold text-base text-foreground xs:hidden">ATH</span>
-          </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-1">
-            {navLinks.map((link) => (
-              link.action === "openModal" ? (
-                <Button 
-                  key={link.name} 
-                  variant="nav" 
-                  size="sm" 
-                  className="text-sm"
-                  onClick={() => (window as any).openPartnerModal?.()}
-                >
-                  {link.name}
-                </Button>
-              ) : (
-                <Link key={link.name} to={link.href}>
-                  <Button variant="nav" size="sm" className="text-sm">
-                    {link.name}
-                  </Button>
-                </Link>
-              )
-            ))}
+    <>
+      {/* Top Business Bar */}
+      <div className="bg-slate-900 text-white py-2 px-4 text-sm">
+        <div className="container-wide flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-green-400" />
+              Trade Assurance
+            </span>
+            <span className="flex items-center gap-2">
+              <Globe className="w-4 h-4 text-blue-400" />
+              Worldwide Shipping
+            </span>
+            <span className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-orange-400" />
+              10,000+ Suppliers
+            </span>
           </div>
-
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-2 sm:gap-3">
-            <Link to="/cart">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground relative">
-                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5" />
-                {getItemCount() > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-semibold animate-bounce-subtle">
-                    {getItemCount()}
-                  </span>
-                )}
-              </Button>
-            </Link>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-foreground relative"
-              onClick={() => setIsNotificationsOpen(true)}
-            >
-              <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline">Mon-Fri: 9AM-6PM EST</span>
+            <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-0">
+              <Headphones className="w-4 h-4 mr-1" />
+              Support
             </Button>
-            <Link to="/liked-items">
-              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
-                <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-            </Link>
-            {user && (
-              <Link to="/my-orders">
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" title="My Orders">
-                  <Package className="w-4 h-4 sm:w-5 sm:h-5" />
-                </Button>
-              </Link>
-            )}
-            <ThemeSwitcher />
-            {user ? (
-              <div className="flex items-center gap-2">
-                <Link to={dashboardUrl}>
-                  <Button variant="outline" size="sm">
-                    <User className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                    <span className="hidden sm:inline">Dashboard</span>
-                    <span className="sm:hidden">👤</span>
-                  </Button>
-                </Link>
-                <Button variant="ghost" size="sm" onClick={signOut} className="hidden sm:inline">
-                  Sign Out
-                </Button>
-              </div>
-            ) : (
-              <Link to="/auth">
-                <Button variant="accent" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-            )}
           </div>
-
-          {/* Mobile Menu Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
-          </Button>
         </div>
+      </div>
 
-        {/* Mobile Menu */}
-        {isOpen && (
-          <div className="lg:hidden py-3 sm:py-4 border-t border-border animate-slide-up">
-            <div className="flex flex-col gap-2">
+      {/* Main Navigation */}
+      <nav className="sticky top-0 z-40 bg-white border-b border-gray-200 shadow-sm">
+        <div className="container-wide">
+          <div className="flex items-center justify-between h-16">
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/logo.svg" alt="AutoTradeHub" className="w-10 h-10" />
+              <div>
+                <span className="font-bold text-xl text-slate-900">AutoTradeHub</span>
+                <div className="text-xs text-slate-500">B2B Automotive Marketplace</div>
+              </div>
+            </Link>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
-                link.action === "openModal" ? (
-                  <button
-                    key={link.name}
-                    onClick={() => {
-                      (window as any).openPartnerModal?.();
-                      setIsOpen(false);
-                    }}
-                    className="w-full text-left px-3 sm:px-4 py-2 sm:py-3 text-foreground hover:bg-secondary rounded-lg transition-colors text-sm sm:text-base"
-                  >
-                    {link.name}
-                  </button>
-                ) : (
-                  <Link
-                    key={link.name}
+                <div key={link.name} className="relative group">
+                  <Link 
                     to={link.href}
-                    onClick={() => setIsOpen(false)}
-                    className="px-3 sm:px-4 py-2 sm:py-3 text-foreground hover:bg-secondary rounded-lg transition-colors text-sm sm:text-base"
+                    className="flex items-center gap-1 px-4 py-2 text-slate-700 hover:text-blue-600 font-medium text-sm transition-colors"
                   >
                     {link.name}
+                    {link.dropdown && <ChevronDown className="w-4 h-4" />}
                   </Link>
-                )
-              ))}
-              <div className="flex flex-col gap-2 px-3 sm:px-4 pt-3 sm:pt-4 border-t border-border mt-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <Link to="/cart" className="flex-1">
-                    <Button variant="outline" className="w-full gap-2 relative text-xs sm:text-sm">
-                      <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Cart
-                      {getItemCount() > 0 && (
-                        <span className="absolute top-0 right-2 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-accent text-accent-foreground text-xs flex items-center justify-center font-semibold">
-                          {getItemCount()}
-                        </span>
-                      )}
-                    </Button>
-                  </Link>
-                  <Button 
-                    variant="outline" 
-                    className="w-full gap-2 relative text-xs sm:text-sm"
-                    onClick={() => setIsNotificationsOpen(true)}
-                  >
-                    <Bell className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Notif
-                    <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-red-500"></span>
-                  </Button>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Link to="/liked-items" className="flex-1">
-                    <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm">
-                      <Heart className="w-3 h-3 sm:w-4 sm:h-4" />
-                      Liked
-                    </Button>
-                  </Link>
-                  {user && (
-                    <Link to="/my-orders" className="flex-1">
-                      <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm">
-                        <Package className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Orders
-                      </Button>
-                    </Link>
+                  
+                  {/* Dropdown Menu */}
+                  {link.dropdown && (
+                    <div className="absolute top-full left-0 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      {link.dropdown.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          className="block px-4 py-3 text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
                   )}
                 </div>
-                {user ? (
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link to={dashboardUrl} className="flex-1">
-                      <Button variant="outline" className="w-full gap-2 text-xs sm:text-sm">
-                        <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Dashboard
-                      </Button>
-                    </Link>
-                    <Button variant="ghost" className="flex-1 text-xs sm:text-sm" onClick={signOut}>
-                      Sign Out
+              ))}
+            </div>
+
+            {/* Desktop Actions */}
+            <div className="hidden lg:flex items-center gap-3">
+              {/* Search Button */}
+              <Link to="/products">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
+                  <Search className="w-4 h-4" />
+                </Button>
+              </Link>
+              
+              <Link to="/cart">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600 relative">
+                  <ShoppingCart className="w-4 h-4" />
+                  {getItemCount() > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+                      {getItemCount()}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-slate-600 hover:text-blue-600 relative"
+                onClick={() => setIsNotificationsOpen(true)}
+              >
+                <Bell className="w-4 h-4" />
+                <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
+              </Button>
+              
+              <Link to="/liked-items">
+                <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
+                  <Heart className="w-4 h-4" />
+                </Button>
+              </Link>
+              
+              {user && (
+                <Link to="/my-orders">
+                  <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600" title="My Orders">
+                    <Package className="w-4 h-4" />
+                  </Button>
+                </Link>
+              )}
+              
+              <ThemeSwitcher />
+              
+              {user ? (
+                <div className="flex items-center gap-2 pl-3 border-l border-gray-200">
+                  <Link to={dashboardUrl}>
+                    <Button variant="outline" size="sm" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
+                      <User className="w-3 h-3 mr-2" />
+                      Dashboard
                     </Button>
-                  </div>
-                ) : (
-                  <Link to="/auth" className="flex-1">
-                    <Button variant="accent" className="w-full text-xs sm:text-sm">
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Link to="/auth">
+                    <Button variant="ghost" size="sm" className="text-slate-600 hover:text-blue-600">
                       Sign In
                     </Button>
                   </Link>
-                )}
+                  <Link to="/become-partner">
+                    <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                      Become Supplier
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="lg:hidden"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
+
+          {/* Mobile Menu */}
+          {isOpen && (
+            <div className="lg:hidden py-4 border-t border-gray-200">
+              <div className="flex flex-col gap-2">
+                {navLinks.map((link) => (
+                  <div key={link.name}>
+                    <Link
+                      to={link.href}
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center justify-between px-4 py-3 text-slate-700 hover:bg-blue-50 rounded-lg transition-colors"
+                    >
+                      <span className="font-medium">{link.name}</span>
+                      {link.dropdown && <ChevronDown className="w-4 h-4" />}
+                    </Link>
+                    
+                    {/* Mobile Dropdown */}
+                    {link.dropdown && (
+                      <div className="pl-4 pr-4 pb-2">
+                        {link.dropdown.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.href}
+                            onClick={() => setIsOpen(false)}
+                            className="block px-4 py-2 text-sm text-slate-600 hover:text-blue-600 transition-colors"
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="flex flex-col gap-2 px-4 pt-4 border-t border-gray-200 mt-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/cart" className="flex-1">
+                      <Button variant="outline" className="w-full gap-2 relative text-xs">
+                        <ShoppingCart className="w-3 h-3" />
+                        Cart
+                        {getItemCount() > 0 && (
+                          <span className="absolute top-0 right-2 w-4 h-4 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+                            {getItemCount()}
+                          </span>
+                        )}
+                      </Button>
+                    </Link>
+                    <Button 
+                      variant="outline" 
+                      className="w-full gap-2 relative text-xs"
+                      onClick={() => setIsNotificationsOpen(true)}
+                    >
+                      <Bell className="w-3 h-3" />
+                      Notif
+                      <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-red-500"></span>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link to="/liked-items" className="flex-1">
+                      <Button variant="outline" className="w-full gap-2 text-xs">
+                        <Heart className="w-3 h-3" />
+                        Liked
+                      </Button>
+                    </Link>
+                    {user && (
+                      <Link to="/my-orders" className="flex-1">
+                        <Button variant="outline" className="w-full gap-2 text-xs">
+                          <Package className="w-3 h-3" />
+                          Orders
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                  {user ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link to={dashboardUrl} className="flex-1">
+                        <Button variant="outline" className="w-full gap-2 text-xs">
+                          <User className="w-3 h-3" />
+                          Dashboard
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" className="flex-1 text-xs" onClick={signOut}>
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link to="/auth" className="flex-1">
+                        <Button variant="outline" className="w-full text-xs">
+                          Sign In
+                        </Button>
+                      </Link>
+                      <Link to="/become-partner" className="flex-1">
+                        <Button className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white">
+                          Supplier
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </nav>
       
       {/* Notifications Modal */}
       <NotificationsModal 
         isOpen={isNotificationsOpen} 
         onClose={() => setIsNotificationsOpen(false)} 
       />
-    </nav>
+    </>
   );
 };
 

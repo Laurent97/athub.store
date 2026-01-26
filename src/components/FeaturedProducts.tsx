@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Heart, Star, MapPin, Loader2 } from "lucide-react";
+import { ArrowRight, Heart, Star, MapPin, Loader2, Building2, Shield, Truck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { productService } from "@/lib/supabase/product-service";
@@ -25,23 +25,26 @@ const ProductCard = ({ product }: { product: any }) => {
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group bg-card rounded-2xl overflow-hidden border border-border card-hover"
+      className="group bg-white rounded-xl overflow-hidden border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300"
     >
       {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gray-50">
         <img
           src={imageUrl}
           alt={product.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
         
-        {/* Badges */}
+        {/* Top Badges */}
         <div className="absolute top-3 left-3 flex gap-2">
           {product.featured && (
-            <Badge className="bg-accent text-accent-foreground">Featured</Badge>
+            <Badge className="bg-blue-600 text-white text-xs font-semibold">Featured</Badge>
+          )}
+          {product.verified && (
+            <Badge className="bg-green-600 text-white text-xs font-semibold">Verified</Badge>
           )}
           {product.original_price && product.price < product.original_price && (
-            <Badge variant="secondary" className="bg-success text-success-foreground">
+            <Badge variant="secondary" className="bg-red-500 text-white text-xs font-semibold">
               {Math.round((1 - product.price / product.original_price) * 100)}% OFF
             </Badge>
           )}
@@ -67,39 +70,44 @@ const ProductCard = ({ product }: { product: any }) => {
           className="absolute top-3 right-3"
         />
         
-        {/* Condition Badge */}
-        <div className="absolute bottom-3 left-3">
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-            product.condition === "New" 
-              ? "bg-success/20 text-success" 
-              : "bg-info/20 text-info"
-          }`}>
-            {product.condition}
-          </span>
+        {/* Supplier Info */}
+        <div className="absolute bottom-3 left-3 right-3">
+          <div className="bg-white/95 backdrop-blur-sm rounded-lg px-3 py-2 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-3 h-3 text-blue-600" />
+              <span className="text-xs font-medium text-slate-700 truncate">
+                {product.supplier || 'Verified Supplier'}
+              </span>
+            </div>
+            {product.min_order && (
+              <span className="text-xs text-slate-500">Min: {product.min_order}</span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Content */}
-      <div className="p-5">
+      <div className="p-4">
         {/* Category & Rating */}
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <span className="text-xs font-medium text-blue-600 uppercase tracking-wide">
             {product.category_path?.category_name || product.category}
           </span>
           <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 fill-accent text-accent" />
-            <span className="text-sm font-medium">{product.rating}</span>
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm font-medium text-slate-700">{product.rating || '4.5'}</span>
+            <span className="text-xs text-slate-500">({product.reviews || '128'})</span>
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-foreground mb-2 group-hover:text-accent transition-colors line-clamp-2">
+        <h3 className="font-semibold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 text-sm">
           {product.title}
         </h3>
 
         {/* Details for cars */}
         {product.category === "car" && (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
+          <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
             {product.year && <span>{product.year}</span>}
             {product.mileage && <span>{product.mileage.toLocaleString()} km</span>}
             {product.location && (
@@ -111,16 +119,35 @@ const ProductCard = ({ product }: { product: any }) => {
           </div>
         )}
 
-        {/* Price */}
-        <div className="flex items-center gap-3">
-          <span className="text-xl font-bold text-foreground">
-            {formatPrice(Number(product.original_price || product.price))}
-          </span>
-          {product.original_price && product.price < product.original_price && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatPrice(Number(product.price))}
+        {/* B2B Specific Info */}
+        <div className="flex items-center gap-2 text-xs text-slate-500 mb-3">
+          {product.moq && (
+            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded">
+              MOQ: {product.moq}
             </span>
           )}
+          {product.lead_time && (
+            <span className="bg-green-50 text-green-700 px-2 py-1 rounded">
+              {product.lead_time} days
+            </span>
+          )}
+        </div>
+
+        {/* Price */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-slate-900">
+              {formatPrice(Number(product.original_price || product.price))}
+            </span>
+            {product.original_price && product.price < product.original_price && (
+              <span className="text-sm text-slate-500 line-through">
+                {formatPrice(Number(product.price))}
+              </span>
+            )}
+          </div>
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
+            Get Quote
+          </Button>
         </div>
       </div>
     </Link>
@@ -130,7 +157,7 @@ const ProductCard = ({ product }: { product: any }) => {
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'featured' | 'liked' | 'recent'>('featured');
+  const [activeTab, setActiveTab] = useState<'featured' | 'liked' | 'recent' | 'suppliers'>('featured');
   const { user } = useAuth();
 
   useEffect(() => {
@@ -194,6 +221,17 @@ const FeaturedProducts = () => {
             setProducts(recent);
           }
           break;
+
+        case 'suppliers':
+          // Get products from top suppliers
+          result = await productService.getProducts(1);
+          if (result.data) {
+            const supplierProducts = result.data
+              .filter((p: any) => p.verified || p.supplier_rating >= 4)
+              .slice(0, 6);
+            setProducts(supplierProducts);
+          }
+          break;
       }
     } catch (error) {
       console.error('Error loading products:', error);
@@ -204,64 +242,108 @@ const FeaturedProducts = () => {
   };
 
   return (
-    <section className="section-padding bg-secondary/30">
+    <section className="section-padding bg-white">
       <div className="container-wide">
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-3">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-3">
               {activeTab === 'featured' && 'Featured Products'}
-              {activeTab === 'liked' && 'Liked Products'}
-              {activeTab === 'recent' && 'Recent Products'}
+              {activeTab === 'liked' && 'Your Saved Products'}
+              {activeTab === 'recent' && 'New Arrivals'}
+              {activeTab === 'suppliers' && 'Top Supplier Products'}
             </h2>
-            <p className="text-muted-foreground text-lg">
-              {activeTab === 'featured' && 'Handpicked vehicles and parts for you'}
-              {activeTab === 'liked' && 'Products you\'ve saved to your collection'}
-              {activeTab === 'recent' && 'Latest additions to our inventory'}
+            <p className="text-slate-600 text-lg">
+              {activeTab === 'featured' && 'Premium quality products from verified suppliers'}
+              {activeTab === 'liked' && 'Products you\'ve saved for future reference'}
+              {activeTab === 'recent' && 'Latest additions to our extensive catalog'}
+              {activeTab === 'suppliers' && 'Products from our highest-rated suppliers'}
             </p>
           </div>
           
           <div className="flex items-center gap-4">
             {/* Tab Navigation */}
-            <div className="flex bg-card rounded-lg p-1 border border-border">
+            <div className="flex bg-gray-100 rounded-lg p-1 border border-gray-200">
               <button
                 onClick={() => setActiveTab('featured')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'featured'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Featured
               </button>
               <button
-                onClick={() => setActiveTab('liked')}
+                onClick={() => setActiveTab('suppliers')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === 'liked'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                  activeTab === 'suppliers'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Liked
+                Top Suppliers
               </button>
               <button
                 onClick={() => setActiveTab('recent')}
                 className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
                   activeTab === 'recent'
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Recent
+                New
+              </button>
+              <button
+                onClick={() => setActiveTab('liked')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  activeTab === 'liked'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Saved
               </button>
             </div>
             
             <Link to="/products">
-              <Button variant="ghost" className="gap-2 text-accent hover:text-accent">
-                View All
+              <Button variant="outline" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white gap-2">
+                View All Products
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
+          </div>
+        </div>
+
+        {/* B2B Features Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <div>
+              <div className="text-sm font-semibold text-blue-900">Trade Assurance</div>
+              <div className="text-xs text-blue-700">Protected orders</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
+            <Truck className="w-5 h-5 text-green-600" />
+            <div>
+              <div className="text-sm font-semibold text-green-900">Fast Shipping</div>
+              <div className="text-xs text-green-700">Global delivery</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+            <Building2 className="w-5 h-5 text-purple-600" />
+            <div>
+              <div className="text-sm font-semibold text-purple-900">Verified Suppliers</div>
+              <div className="text-xs text-purple-700">Quality checked</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <Users className="w-5 h-5 text-orange-600" />
+            <div>
+              <div className="text-sm font-semibold text-orange-900">Bulk Pricing</div>
+              <div className="text-xs text-orange-700">Volume discounts</div>
+            </div>
           </div>
         </div>
 
@@ -270,12 +352,12 @@ const FeaturedProducts = () => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, index) => (
               <div key={index} className="animate-pulse">
-                <div className="bg-card rounded-2xl overflow-hidden border border-border">
-                  <div className="aspect-[4/3] bg-muted"></div>
-                  <div className="p-5 space-y-3">
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                    <div className="h-4 bg-muted rounded w-1/3"></div>
+                <div className="bg-white rounded-xl overflow-hidden border border-gray-200">
+                  <div className="aspect-[4/3] bg-gray-200"></div>
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/3"></div>
                   </div>
                 </div>
               </div>
@@ -295,18 +377,41 @@ const FeaturedProducts = () => {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="text-muted-foreground mb-4">
-              {activeTab === 'liked' && 'You haven\'t liked any products yet'}
+            <div className="text-slate-500 mb-4">
+              {activeTab === 'liked' && 'You haven\'t saved any products yet'}
               {activeTab === 'featured' && 'No featured products available'}
               {activeTab === 'recent' && 'No recent products available'}
+              {activeTab === 'suppliers' && 'No supplier products available'}
             </div>
             {activeTab === 'liked' && (
               <Link to="/products">
-                <Button>Browse Products</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                  Browse Products
+                </Button>
               </Link>
             )}
           </div>
         )}
+
+        {/* Bottom CTA */}
+        <div className="mt-12 text-center bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-8 text-white">
+          <h3 className="text-2xl font-bold mb-4">Ready to Source Automotive Parts?</h3>
+          <p className="text-blue-100 mb-6 max-w-2xl mx-auto">
+            Connect with verified suppliers and get competitive pricing on quality automotive parts and accessories.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/products">
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-semibold">
+                Start Sourcing
+              </Button>
+            </Link>
+            <Link to="/become-partner">
+              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-blue-600">
+                Become a Supplier
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
     </section>
   );
