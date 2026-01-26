@@ -107,39 +107,57 @@ const BecomePartner: React.FC = () => {
         </div>
 
         {/* Benefits Grid */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-16">
-          <div className="grid sm:grid-cols-2 gap-6">
+        <div className="mb-16">
+          <div className="text-center mb-12">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Why Partner with AutoTradeHub?
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Join thousands of successful partners who are already growing their automotive businesses
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {benefits.map((benefit, index) => (
               <Card key={index} className="card-hover border-0 shadow-lg dark:bg-gray-800 dark:border-gray-700">
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4`}>
+                <CardHeader className="text-center pb-4">
+                  <div className={`w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-4 mx-auto`}>
                     <benefit.icon className={`w-6 h-6 ${benefit.color}`} />
                   </div>
                   <CardTitle className="text-lg text-gray-900 dark:text-white">
                     {benefit.title}
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 dark:text-gray-400">
+                <CardContent className="text-center">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">
                     {benefit.description}
                   </p>
                 </CardContent>
               </Card>
             ))}
           </div>
+        </div>
 
-          {/* Registration Form */}
-          <div className="lg:sticky lg:top-24" id="partner-form">
+        {/* Registration Form Section */}
+        <div className="mb-16" id="partner-form">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+              Start Your Partner Journey
+            </h3>
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Complete our comprehensive partner application form to get started
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
             <Card className="border-0 shadow-xl dark:bg-gray-800 dark:border-gray-700">
               <CardHeader className="text-center pb-6">
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Store className="w-8 h-8 text-white" />
                 </div>
                 <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Start Your Journey
+                  Partner Application Form
                 </CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">
-                  Fill out the form below to apply for our partner program
+                  Fill out the multi-step form below to apply for our partner program
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-6 pb-8">
