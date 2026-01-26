@@ -1,11 +1,29 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import Navbar from '../../components/Navbar';
-import Footer from '../../components/Footer';
-import PaymentOptions from '../../components/Payment/PaymentOptions';
+import { useRealtimeSubscription } from '../../hooks/useRealtimeSubscription';
 import { walletService } from '../../lib/supabase/wallet-service';
-import { ArrowLeft, Shield, Zap, CreditCard, HelpCircle, Wallet } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { PaymentMethodSelector } from '../../components/Payment/PaymentMethodSelector';
+import { 
+  ArrowLeft, 
+  Shield, 
+  Zap, 
+  CreditCard, 
+  HelpCircle, 
+  Wallet,
+  Upload,
+  DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Bitcoin,
+  Mail,
+  TrendingUp
+} from 'lucide-react';
 
 export default function WalletDeposit() {
   const navigate = useNavigate();
@@ -14,16 +32,25 @@ export default function WalletDeposit() {
   const [amount, setAmount] = useState(0);
   const [customAmount, setCustomAmount] = useState('');
   const [isCustom, setIsCustom] = useState(false);
-  const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
 
-  // Check for dark mode
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-  useEffect(() => {
-    const htmlElement = document.documentElement;
-    setIsDarkMode(htmlElement.classList.contains('dark'));
-  }, []);
+  // Real-time wallet balance
+  const { data: walletData, loading: walletLoading, refresh: refreshWallet } = useRealtimeSubscription(
+    async () => {
+      if (!user) return [];
+      const { data } = await walletService.getBalance(user.id);
+      return data ? [data] : [];
+    },
+    {
+      table: 'wallet_balances',
+      event: '*',
+      filter: `user_id=eq.${user?.id}`
+    }
+  );
+
+  const balance = walletData?.[0]?.balance || 0;
 
   const presetAmounts = [10, 25, 50, 100, 250, 500];
 
@@ -35,22 +62,7 @@ export default function WalletDeposit() {
       });
       return;
     }
-
-    // Load wallet balance
-    const loadBalance = async () => {
-      try {
-        const { data } = await walletService.getBalance(user.id);
-        if (data) {
-          setBalance(data.balance || 0);
-        }
-      } catch (error) {
-        console.error('Error loading balance:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadBalance();
+    setLoading(false);
   }, [user, navigate]);
 
   const handleAmountSelect = (selectedAmount: number) => {
@@ -69,6 +81,7 @@ export default function WalletDeposit() {
   };
 
   const handlePaymentSuccess = async (paymentData: any) => {
+    setProcessing(true);
     try {
       // Process the deposit using wallet service
       const { success, error } = await walletService.processDeposit(
@@ -79,22 +92,40 @@ export default function WalletDeposit() {
       );
 
       if (success) {
-        // Show success message
-        alert(`Deposit successful! $${amount.toFixed(2)} has been added to your wallet.`);
+        // Refresh wallet balance
+        await refreshWallet();
         
-        // Redirect back to wallet
-        navigate('/partner/dashboard/wallet');
+        // Navigate to success page or back to wallet
+        navigate('/partner/dashboard/wallet', { 
+          state: { 
+            success: true, 
+            message: `Deposit successful! $${amount.toFixed(2)} has been added to your wallet.`,
+            amount: amount
+          }
+        });
       } else {
         throw error;
       }
     } catch (error: any) {
       console.error('Error processing deposit:', error);
-      alert(`Deposit failed: ${error?.message || 'Unknown error occurred'}`);
+      navigate('/partner/dashboard/wallet', { 
+        state: { 
+          error: true, 
+          message: `Deposit failed: ${error?.message || 'Unknown error occurred'}`
+        }
+      });
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handlePaymentError = (error: string) => {
-    alert(`Deposit failed: ${error}`);
+    navigate('/partner/dashboard/wallet', { 
+      state: { 
+        error: true, 
+        message: `Deposit failed: ${error}`
+      }
+    });
   };
 
   const formatCurrency = (value: number) => {
@@ -104,302 +135,225 @@ export default function WalletDeposit() {
     }).format(value);
   };
 
-  if (loading) {
+  const getPaymentMethodInfo = (method: string) => {
+    switch (method?.toLowerCase()) {
+      case 'stripe':
+        return { icon: <CreditCard className="w-5 h-5" />, name: 'Card', color: 'text-blue-600', bgColor: 'bg-blue-100' };
+      case 'paypal':
+        return { icon: <Mail className="w-5 h-5" />, name: 'PayPal', color: 'text-blue-500', bgColor: 'bg-blue-100' };
+      case 'crypto':
+        return { icon: <Bitcoin className="w-5 h-5" />, name: 'Crypto', color: 'text-orange-500', bgColor: 'bg-orange-100' };
+      case 'wallet':
+        return { icon: <Wallet className="w-5 h-5" />, name: 'Wallet', color: 'text-green-600', bgColor: 'bg-green-100' };
+      default:
+        return { icon: <DollarSign className="w-5 h-5" />, name: 'Payment', color: 'text-gray-600', bgColor: 'bg-gray-100' };
+    }
+  };
+
+  if (loading || walletLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          <div className="container mx-auto px-4 py-8">
-            <div className="max-w-4xl mx-auto">
-              <div className={`rounded-lg p-8 text-center ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                <p className={`mt-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Loading wallet information...</p>
-              </div>
-            </div>
-          </div>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background">
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className={`flex-grow ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="mb-8">
-              <button
-                onClick={() => navigate('/partner/dashboard/wallet')}
-                className={`flex items-center mb-6 transition-colors ${
-                  isDarkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
-                }`}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Wallet
-              </button>
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                <div>
-                  <h1 className={`text-4xl font-bold mb-3 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Add Funds to Wallet
-                  </h1>
-                  <p className={`text-lg ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Choose an amount to deposit to your partner wallet
-                  </p>
-                </div>
-                <div className={`p-6 rounded-xl border-2 ${
-                  isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
-                }`}>
-                  <div className="flex items-center">
-                    <Wallet className={`w-6 h-6 mr-3 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                    <div>
-                      <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Current Balance</p>
-                      <p className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {formatCurrency(balance)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              {/* Left Column - Amount Selection & Payment */}
-              <div className="xl:col-span-2 space-y-8">
-                {/* Amount Selection */}
-                <div className={`rounded-xl shadow-lg p-8 ${
-                  isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Select Amount
-                  </h2>
-                  
-                  {/* Preset Amounts */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
-                    {presetAmounts.map((presetAmount) => (
-                      <button
-                        key={presetAmount}
-                        onClick={() => handleAmountSelect(presetAmount)}
-                        className={`py-4 px-6 rounded-xl border-2 transition-all font-semibold text-lg ${
-                          amount === presetAmount && !isCustom
-                            ? isDarkMode 
-                              ? 'border-blue-500 bg-blue-900/30 text-blue-300 shadow-lg'
-                              : 'border-blue-500 bg-blue-50 text-blue-700 shadow-lg'
-                            : isDarkMode
-                              ? 'border-gray-600 hover:border-gray-500 text-gray-300 hover:bg-gray-700'
-                              : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        ${presetAmount}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Custom Amount */}
-                  <div className="space-y-4">
-                    <label className={`block text-lg font-medium ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Custom Amount
-                    </label>
-                    <div className="relative">
-                      <span className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-semibold ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                      }`}>
-                        $
-                      </span>
-                      <input
-                        type="number"
-                        value={customAmount}
-                        onChange={(e) => handleCustomAmountChange(e.target.value)}
-                        placeholder="Enter custom amount"
-                        min="1"
-                        step="0.01"
-                        className={`w-full pl-12 pr-4 py-4 border-2 rounded-xl text-lg font-semibold focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          isDarkMode 
-                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
-                        } ${
-                          isCustom ? 'border-blue-500' : ''
-                        }`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Selected Amount Display */}
-                  {amount > 0 && (
-                    <div className={`mt-8 p-6 rounded-xl border-2 ${
-                      isDarkMode 
-                        ? 'bg-blue-900/30 border-blue-700'
-                        : 'bg-blue-50 border-blue-200'
-                    }`}>
-                      <div className="flex justify-between items-center mb-3">
-                        <span className={`text-lg font-semibold ${
-                          isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                        }`}>
-                          Deposit Amount:
-                        </span>
-                        <span className={`text-3xl font-bold ${
-                          isDarkMode ? 'text-blue-200' : 'text-blue-900'
-                        }`}>
-                          ${amount.toFixed(2)}
-                        </span>
-                      </div>
-                      <div className={`text-base font-medium ${
-                        isDarkMode ? 'text-blue-300/80' : 'text-blue-700'
-                      }`}>
-                        New Balance: {formatCurrency(balance + amount)}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Payment Options */}
-                {amount > 0 && (
-                  <div className={`rounded-xl shadow-lg p-8 ${
-                    isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                  }`}>
-                    <h2 className={`text-2xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Payment Method
-                    </h2>
-                    <PaymentOptions
-                      amount={amount}
-                      orderId={`WALLET-DEPOSIT-${Date.now()}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column - Info */}
-              <div className="xl:col-span-1 space-y-8">
-                {/* Wallet Info */}
-                <div className={`rounded-xl shadow-lg p-6 ${
-                  isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
-                }`}>
-                  <h3 className={`text-xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                    Wallet Information
-                  </h3>
-                  <div className="space-y-6">
-                    <div className="flex items-center">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
-                        isDarkMode ? 'bg-green-900/30' : 'bg-green-100'
-                      }`}>
-                        <Zap className={`w-6 h-6 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
-                      </div>
-                      <div>
-                        <div className={`font-semibold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          Instant Processing
-                        </div>
-                        <div className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Funds available immediately
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
-                        isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'
-                      }`}>
-                        <Shield className={`w-6 h-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`} />
-                      </div>
-                      <div>
-                        <div className={`font-semibold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          Secure Transactions
-                        </div>
-                        <div className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          256-bit encryption
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${
-                        isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100'
-                      }`}>
-                        <CreditCard className={`w-6 h-6 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
-                      </div>
-                      <div>
-                        <div className={`font-semibold text-lg ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                          Multiple Payment Options
-                        </div>
-                        <div className={`text-base ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                          Card, PayPal, Crypto
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Usage Info */}
-                <div className={`rounded-xl border-2 p-6 ${
-                  isDarkMode 
-                    ? 'bg-blue-900/20 border-blue-800/50'
-                    : 'bg-blue-50 border-blue-200'
-                }`}>
-                  <h3 className={`text-xl font-bold mb-4 ${
-                    isDarkMode ? 'text-blue-300' : 'text-blue-800'
-                  }`}>
-                    How Wallet Funds Work
-                  </h3>
-                  <ul className={`text-base space-y-3 ${
-                    isDarkMode ? 'text-blue-200/90' : 'text-blue-700'
-                  }`}>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>Funds are automatically used for order payments</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>No transaction fees on internal transfers</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>Available for withdrawal after 24 hours</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="mr-2">•</span>
-                      <span>Minimum withdrawal: $10</span>
-                    </li>
-                  </ul>
-                </div>
-
-                {/* Support */}
-                <div className={`rounded-xl border-2 p-6 ${
-                  isDarkMode 
-                    ? 'bg-gray-800 border-gray-700'
-                    : 'bg-gray-50 border-gray-200'
-                }`}>
-                  <div className="flex items-center mb-4">
-                    <HelpCircle className={`w-6 h-6 mr-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`} />
-                    <h3 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                      Need Help?
-                    </h3>
-                  </div>
-                  <p className={`text-base mb-6 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    Having trouble with your deposit? Contact our support team.
-                  </p>
-                  <button
-                    onClick={() => window.open('https://wa.me/1234567890', '_blank')}
-                    className={`w-full py-3 px-6 rounded-xl font-semibold transition-colors flex items-center justify-center ${
-                      isDarkMode 
-                        ? 'bg-green-700 hover:bg-green-600 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
-                  >
-                    <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/>
-                    </svg>
-                    WhatsApp Support
-                  </button>
-                </div>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate('/partner/dashboard/wallet')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Wallet
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">Deposit Funds</h1>
+            <p className="text-muted-foreground">Add money to your partner wallet</p>
           </div>
         </div>
-      </main>
-      <Footer />
+
+        {/* Current Balance Card */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
+                  <Wallet className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">Current Balance</CardTitle>
+                  <p className="text-sm text-muted-foreground">Available for withdrawal</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-foreground">
+                  {formatCurrency(balance)}
+                </div>
+                <p className="text-xs text-muted-foreground">Real-time balance</p>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Amount Selection */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Select Amount</CardTitle>
+            <p className="text-muted-foreground">Choose how much you want to deposit</p>
+          </CardHeader>
+          <CardContent>
+            {/* Preset Amounts */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
+              {presetAmounts.map((presetAmount) => (
+                <Button
+                  key={presetAmount}
+                  variant={amount === presetAmount && !isCustom ? "default" : "outline"}
+                  onClick={() => handleAmountSelect(presetAmount)}
+                  className="h-16 flex flex-col items-center justify-center"
+                >
+                  <span className="text-lg font-semibold">{formatCurrency(presetAmount)}</span>
+                  <span className="text-xs text-muted-foreground">Quick add</span>
+                </Button>
+              ))}
+            </div>
+
+            {/* Custom Amount */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Custom Amount</label>
+              <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="number"
+                  placeholder="Enter custom amount"
+                  value={customAmount}
+                  onChange={(e) => handleCustomAmountChange(e.target.value)}
+                  className="pl-10 h-12 text-lg"
+                  min="1"
+                  step="0.01"
+                />
+              </div>
+              {amount > 0 && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span>Selected: {formatCurrency(amount)}</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Method Selection */}
+        {amount > 0 && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Choose Payment Method</CardTitle>
+              <p className="text-muted-foreground">Select how you want to pay</p>
+            </CardHeader>
+            <CardContent>
+              <PaymentMethodSelector
+                orderId={`DEP-${Date.now()}`}
+                amount={amount}
+                onPaymentSuccess={handlePaymentSuccess}
+                onPaymentError={handlePaymentError}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Security & Benefits */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card className="border-green-200 dark:border-green-800">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
+                  <Shield className="w-5 h-5 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-lg">Secure Payment</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                All transactions are encrypted and secure. Your financial information is protected.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-200 dark:border-blue-800">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
+                  <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <CardTitle className="text-lg">Instant Processing</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Deposits are processed instantly and added to your wallet immediately.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-purple-200 dark:border-purple-800">
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
+                  <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <CardTitle className="text-lg">Multiple Options</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Choose from various payment methods including cards, PayPal, and cryptocurrency.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Help Section */}
+        <Card className="mt-8">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <HelpCircle className="w-5 h-5 text-muted-foreground" />
+              <CardTitle className="text-lg">Need Help?</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Processing Time</p>
+                  <p className="text-sm text-muted-foreground">Most deposits are processed instantly. Some payment methods may take a few minutes.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Minimum Deposit</p>
+                  <p className="text-sm text-muted-foreground">The minimum deposit amount is $10.00 USD.</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Shield className="w-4 h-4 text-muted-foreground mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Refund Policy</p>
+                  <p className="text-sm text-muted-foreground">Deposits are refundable within 24 hours if there are any issues.</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
