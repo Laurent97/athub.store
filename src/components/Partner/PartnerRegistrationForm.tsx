@@ -10,6 +10,7 @@ import {
   FileCheck, Download, Search, Loader2, Camera, Palette, Layout, Wand2
 } from 'lucide-react';
 import StoreIdBadge from '../../components/ui/StoreIdBadge';
+import StoreIdService from '../../services/storeIdService';
 
 // Wizard Steps
 const WIZARD_STEPS = [
@@ -1458,7 +1459,7 @@ const PartnerRegistrationForm: React.FC = () => {
               </div>
               <p className="text-sm font-medium dark:text-blue-300 text-blue-800 mb-2">Your Store ID</p>
               <div className="text-2xl font-bold dark:text-white text-gray-900 font-mono tracking-wider">
-                {generatedStoreId}
+                {StoreIdService.formatStoreId(generatedStoreId)}
               </div>
               <p className="text-sm dark:text-blue-400 text-blue-600 mt-2">
                 Save this ID for future reference
