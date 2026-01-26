@@ -80,7 +80,7 @@ SELECT 'paypal', true, true, true, true, true, false, '{"client_id": "paypal_cli
 WHERE NOT EXISTS (SELECT 1 FROM payment_method_config WHERE method_name = 'paypal');
 
 INSERT INTO payment_method_config (method_name, enabled, customer_access, partner_access, admin_access, admin_confirmation_required, collect_data_only, config_data) 
-SELECT 'crypto', true, true, true, true, true, false, '{"wallets": {"BTC": "bc1q...", "ETH": "0x...", "USDT": "0x..."}}'
+SELECT 'crypto', true, true, true, true, true, false, '{"wallets": {"BTC": "1FTUbAx5QNTWbxyerMPpxRbwqH3XnvwKQb", "USDT": "TYdFjAfhWL9DjaDBAe5LS7zUjBqpYGkRYB", "ETH": "0xd5fffaa3740af39c265563aec8c14bd08c05e838", "XRP": "rNxp4h8apvRis6mJf9Sh8C6iRxfrDWN7AV", "XRP_TAG": "476565842"}}'
 WHERE NOT EXISTS (SELECT 1 FROM payment_method_config WHERE method_name = 'crypto');
 
 -- Step 5: Update orders table with payment fields

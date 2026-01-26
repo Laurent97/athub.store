@@ -32,7 +32,9 @@ interface DepositFormData {
   cardCvc?: string;
   email?: string;
   cryptoType?: string;
+  cryptoAddress?: string;
   cryptoTransactionId?: string;
+  xrpTag?: string;
   bankAccount?: string;
   bankName?: string;
   routingNumber?: string;
@@ -209,6 +211,8 @@ export default function DepositForm() {
           cryptoType: formData.cryptoType,
           cryptoAddress: formData.cryptoType ? 
             cryptoAddresses.find(c => c.crypto_type === formData.cryptoType)?.address : undefined,
+          xrpTag: formData.cryptoType === 'XRP' ? 
+            cryptoAddresses.find(c => c.crypto_type === formData.cryptoType)?.xrp_tag : undefined,
           cryptoTransactionId: formData.cryptoTransactionId,
           bankName: formData.bankName,
           bankAccount: formData.bankAccount,
@@ -427,15 +431,25 @@ export default function DepositForm() {
                                 <p className="text-xs text-muted-foreground mt-1">
                                   Network: {crypto.network}
                                 </p>
+                                {crypto.crypto_type === 'XRP' && crypto.xrp_tag && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    XRP Tag: {crypto.xrp_tag}
+                                  </p>
+                                )}
                               </div>
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => {
-                                  navigator.clipboard.writeText(crypto.address);
+                                  const addressToCopy = crypto.crypto_type === 'XRP' && crypto.xrp_tag 
+                                    ? `${crypto.address}\nXRP Tag: ${crypto.xrp_tag}`
+                                    : crypto.address;
+                                  navigator.clipboard.writeText(addressToCopy);
                                   toast({
                                     title: "Address Copied!",
-                                    description: "Crypto address copied to clipboard",
+                                    description: crypto.crypto_type === 'XRP' && crypto.xrp_tag 
+                                      ? "XRP address and tag copied to clipboard"
+                                      : "Crypto address copied to clipboard",
                                   });
                                 }}
                                 className="flex items-center gap-1"
@@ -467,6 +481,9 @@ export default function DepositForm() {
                         <ul className="list-disc list-inside space-y-1 text-xs">
                           <li>Send {formData.cryptoType} to the address above</li>
                           <li>Make sure you're sending on the correct network</li>
+                          {formData.cryptoType === 'XRP' && (
+                            <li>Include the XRP Tag (476565842) when sending XRP</li>
+                          )}
                           <li>Minimum deposit: $10.00 USD equivalent</li>
                           <li>Transaction will be credited after confirmation</li>
                           <li>Save your transaction ID for reference</li>

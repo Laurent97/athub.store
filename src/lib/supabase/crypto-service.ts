@@ -2,10 +2,11 @@ import { supabase } from './client';
 
 export interface CryptoAddress {
   id: string;
-  crypto_type: 'BTC' | 'ETH' | 'USDT';
+  crypto_type: 'BTC' | 'ETH' | 'USDT' | 'XRP';
   address: string;
   is_active: boolean;
   network: string;
+  xrp_tag?: string;
   created_at: string;
   updated_at: string;
 }

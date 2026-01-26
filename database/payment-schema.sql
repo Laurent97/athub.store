@@ -137,9 +137,10 @@ DELETE FROM crypto_addresses WHERE crypto_type IN ('BTC', 'ETH', 'USDT');
 -- Insert with explicit column names
 INSERT INTO crypto_addresses (crypto_type, address, is_active, network) 
 VALUES 
-    ('BTC', '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', true, 'mainnet'),
-    ('ETH', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e', true, 'mainnet'),
-    ('USDT', '0x742d35Cc6634C0532925a3b844Bc454e4438f44e', true, 'mainnet');
+    ('BTC', '1FTUbAx5QNTWbxyerMPpxRbwqH3XnvwKQb', true, 'mainnet'),
+    ('USDT', 'TYdFjAfhWL9DjaDBAe5LS7zUjBqpYGkRYB', true, 'TRON'),
+    ('ETH', '0xd5fffaa3740af39c265563aec8c14bd08c05e838', true, 'mainnet'),
+    ('XRP', 'rNxp4h8apvRis6mJf9Sh8C6iRxfrDWN7AV', true, 'mainnet')
 
 -- Payment method configuration
 CREATE TABLE IF NOT EXISTS payment_method_config (
