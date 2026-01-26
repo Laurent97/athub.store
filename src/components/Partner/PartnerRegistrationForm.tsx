@@ -802,7 +802,7 @@ const PartnerRegistrationForm: React.FC = () => {
                         style={{ width: `${uploadProgress.logo}%` }}
                       />
                     </div>
-                    <p className="text-sm dark:text-gray-400 text-gray-600 mt-2">Uploading...</p>
+                    <p className="text-sm text-muted-foreground mt-2">Uploading...</p>
                   </div>
                 )}
               </div>
@@ -817,7 +817,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Upload Store Logo
                 </h3>
-                <p className="dark:text-gray-400 text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   PNG, JPG, SVG or WebP • Max 2MB
                 </p>
                 <button
@@ -833,7 +833,7 @@ const PartnerRegistrationForm: React.FC = () => {
             )}
           </div>
 
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border border-gray-200 rounded-xl p-6">
+          <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-semibold text-foreground mb-4">Color Scheme</h3>
             <div className="space-y-4">
               <div>
@@ -910,7 +910,7 @@ const PartnerRegistrationForm: React.FC = () => {
                         style={{ width: `${uploadProgress.banner}%` }}
                       />
                     </div>
-                    <p className="text-sm dark:text-gray-400 text-gray-600 mt-2">Uploading...</p>
+                    <p className="text-sm text-muted-foreground mt-2">Uploading...</p>
                   </div>
                 )}
               </div>
@@ -925,7 +925,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Upload Store Banner
                 </h3>
-                <p className="dark:text-gray-400 text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   PNG or JPG • Max 5MB • 1920×400px recommended
                 </p>
                 <button
@@ -938,7 +938,7 @@ const PartnerRegistrationForm: React.FC = () => {
             )}
           </div>
 
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border border-gray-200 rounded-xl p-6">
+          <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-semibold text-foreground mb-4">Preview</h3>
             <div className="dark:border-gray-700 border border-gray-200 rounded-xl overflow-hidden">
               {/* Banner Preview */}
@@ -979,7 +979,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 <h4 className="text-xl font-bold text-foreground mb-1">
                   {formData.storeName || "Your Store Name"}
                 </h4>
-                <p className="dark:text-gray-400 text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   {formData.storeTagline || "Your store tagline will appear here"}
                 </p>
                 <div className="flex items-center gap-4">
@@ -1163,7 +1163,7 @@ const PartnerRegistrationForm: React.FC = () => {
                     Verified Partner
                   </span>
                 </div>
-                <p className="dark:text-gray-400 text-gray-600 mb-4">
+                <p className="text-muted-foreground mb-4">
                   You're joining through an approved AutoVault partner
                 </p>
                 
@@ -1183,11 +1183,11 @@ const PartnerRegistrationForm: React.FC = () => {
         )}
 
         {/* Code Input */}
-        <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border border-gray-200 rounded-2xl p-8">
+        <div className="bg-card border border-border rounded-2xl p-8">
           <h3 className="text-lg font-semibold text-foreground mb-2">
             Enter Invitation Code *
           </h3>
-          <p className="dark:text-gray-400 text-gray-600 mb-6">
+          <p className="text-muted-foreground mb-6">
             You need an invitation code from an existing partner to join
           </p>
           
@@ -1206,7 +1206,7 @@ const PartnerRegistrationForm: React.FC = () => {
           {invitationValidation?.loading && (
             <div className="flex items-center justify-center gap-3 p-4 dark:bg-gray-700 bg-gray-50 rounded-lg">
               <Loader2 className="w-5 h-5 dark:text-gray-400 text-gray-400 animate-spin" />
-              <span className="dark:text-gray-400 text-gray-600">Validating invitation code...</span>
+              <span className="text-muted-foreground">Validating invitation code...</span>
             </div>
           )}
 
@@ -1264,7 +1264,7 @@ const PartnerRegistrationForm: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Summary Card */}
-        <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border border-gray-200 rounded-2xl p-6">
+        <div className="bg-card border border-border rounded-2xl p-6">
           <h3 className="text-lg font-bold text-foreground mb-6">Application Summary</h3>
           
           <div className="space-y-6">
@@ -1273,17 +1273,17 @@ const PartnerRegistrationForm: React.FC = () => {
               <h4 className="text-sm font-semibold dark:text-gray-300 text-gray-700 mb-3">Store Information</h4>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="dark:text-gray-400 text-gray-600">Store Name</span>
+                  <span className="text-muted-foreground">Store Name</span>
                   <span className="font-medium dark:text-white">{formData.storeName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="dark:text-gray-400 text-gray-600">Category</span>
+                  <span className="text-muted-foreground">Category</span>
                   <span className="font-medium dark:text-white">
                     {STORE_CATEGORIES.find(c => c.value === formData.storeCategory)?.label}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="dark:text-gray-400 text-gray-600">Business Type</span>
+                  <span className="text-muted-foreground">Business Type</span>
                   <span className="font-medium dark:text-white">
                     {BUSINESS_TYPES.find(t => t.value === formData.businessType)?.label}
                   </span>
@@ -1324,15 +1324,15 @@ const PartnerRegistrationForm: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 dark:text-gray-500 text-gray-400" />
-                  <span className="dark:text-gray-400 text-gray-600">{formData.contactEmail}</span>
+                  <span className="text-muted-foreground">{formData.contactEmail}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 dark:text-gray-500 text-gray-400" />
-                  <span className="dark:text-gray-400 text-gray-600">{formData.contactPhone}</span>
+                  <span className="text-muted-foreground">{formData.contactPhone}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 dark:text-gray-500 text-gray-400" />
-                  <span className="dark:text-gray-400 text-gray-600">{formData.city}, {formData.country}</span>
+                  <span className="text-muted-foreground">{formData.city}, {formData.country}</span>
                 </div>
               </div>
             </div>
@@ -1343,7 +1343,7 @@ const PartnerRegistrationForm: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Gift className="w-4 h-4 dark:text-gray-500 text-gray-400" />
-                  <span className="dark:text-gray-400 text-gray-600">Invited by</span>
+                  <span className="text-muted-foreground">Invited by</span>
                 </div>
                 <span className="font-medium dark:text-white">
                   {invitationValidation?.referrerName || 'Not specified'}
@@ -1355,11 +1355,11 @@ const PartnerRegistrationForm: React.FC = () => {
 
         {/* Terms & Agreements */}
         <div className="space-y-6">
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border border-gray-200 rounded-2xl p-6">
+          <div className="bg-card border border-border rounded-2xl p-6">
             <h3 className="text-lg font-bold text-foreground mb-6">Terms & Agreements</h3>
             
             <div className="space-y-4">
-              <div className="flex items-start gap-3 p-4 dark:bg-gray-700/50 bg-gray-50 rounded-lg">
+              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg">
                 <input
                   type="checkbox"
                   id="agreeToTerms"
@@ -1371,13 +1371,13 @@ const PartnerRegistrationForm: React.FC = () => {
                   <label htmlFor="agreeToTerms" className="font-medium text-foreground cursor-pointer">
                     AutoVault Partner Agreement
                   </label>
-                  <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     I agree to the AutoVault Partner Terms of Service, including commission structure (15%), payment terms, and store policies.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 dark:bg-gray-700/50 bg-gray-50 rounded-lg">
+              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg">
                 <input
                   type="checkbox"
                   id="agreeToPrivacy"
@@ -1389,13 +1389,13 @@ const PartnerRegistrationForm: React.FC = () => {
                   <label htmlFor="agreeToPrivacy" className="font-medium text-foreground cursor-pointer">
                     Privacy Policy & Data Usage
                   </label>
-                  <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     I agree to the collection and use of my data as described in the Privacy Policy.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 dark:bg-gray-700/50 bg-gray-50 rounded-lg">
+              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg">
                 <input
                   type="checkbox"
                   id="agreeToCommission"
@@ -1407,13 +1407,13 @@ const PartnerRegistrationForm: React.FC = () => {
                   <label htmlFor="agreeToCommission" className="font-medium text-foreground cursor-pointer">
                     Commission Structure
                   </label>
-                  <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     I understand and agree to the 15% commission fee on all sales, with payments processed bi-weekly.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-4 dark:bg-gray-700/50 bg-gray-50 rounded-lg">
+              <div className="flex items-start gap-3 p-4 bg-muted rounded-lg">
                 <input
                   type="checkbox"
                   id="receiveUpdates"
@@ -1425,7 +1425,7 @@ const PartnerRegistrationForm: React.FC = () => {
                   <label htmlFor="receiveUpdates" className="font-medium text-foreground cursor-pointer">
                     Marketing Communications
                   </label>
-                  <p className="text-sm dark:text-gray-400 text-gray-600 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     I want to receive updates, tips, and promotional offers from AutoVault.
                   </p>
                 </div>
@@ -1443,7 +1443,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-foreground">Application Review</p>
-                  <p className="text-sm dark:text-gray-400 text-gray-600">We'll review your application within 48 hours</p>
+                  <p className="text-sm text-muted-foreground">We'll review your application within 48 hours</p>
                 </div>
               </li>
               <li className="flex items-center gap-3">
@@ -1452,7 +1452,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-foreground">Store Setup</p>
-                  <p className="text-sm dark:text-gray-400 text-gray-600">Your store will be created with a unique Store ID</p>
+                  <p className="text-sm text-muted-foreground">Your store will be created with a unique Store ID</p>
                 </div>
               </li>
               <li className="flex items-center gap-3">
@@ -1461,7 +1461,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 </div>
                 <div>
                   <p className="font-medium text-foreground">Start Selling</p>
-                  <p className="text-sm dark:text-gray-400 text-gray-600">Access our catalog and start selling immediately</p>
+                  <p className="text-sm text-muted-foreground">Access our catalog and start selling immediately</p>
                 </div>
               </li>
             </ul>
