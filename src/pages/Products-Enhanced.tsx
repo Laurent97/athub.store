@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Search, Filter, Grid, List, ChevronDown, Star, MapPin, Heart, SlidersHorizontal, X, Loader2 } from "lucide-react";
+import { Search, Filter, Grid, List, ChevronDown, Star, MapPin, Heart, SlidersHorizontal, X, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { productService } from "@/lib/supabase/product-service";
 import { supabase } from "@/lib/supabase/client";
+import { usePartnerProducts } from "@/hooks/useRealtimeSubscription";
 import type { Product } from "@/lib/types";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -295,6 +296,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 };
 
 export default function ProductsEnhanced() {
+  const { data: partnerProducts, loading: productsLoading, error, refresh, lastUpdate } = usePartnerProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
