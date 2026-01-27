@@ -154,6 +154,7 @@ const App = () => (
               <Route path="/help/buying/search-products" element={<SearchProducts />} />
               <Route path="/returns" element={<Returns />} />
               <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/shipping" element={<Shipping />} />
               <Route path="/trade-assurance" element={<TradeAssurance />} />
               <Route path="/inspection" element={<Inspection />} />
               <Route path="/financing" element={<Financing />} />

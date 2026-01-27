@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Shield, CheckCircle, AlertCircle, Clock, Users, DollarSign, FileText, HeadphonesIcon, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Shield, CheckCircle, AlertCircle, Clock, Users, DollarSign, FileText, HeadphonesIcon, ArrowRight, ArrowLeft } from 'lucide-react';
 
 export default function TradeAssurance() {
   const [activeTab, setActiveTab] = useState('overview');
@@ -65,12 +66,16 @@ export default function TradeAssurance() {
   ];
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        {/* Hero Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 text-white">
-          <div className="container mx-auto px-4 py-16">
-            <div className="max-w-4xl mx-auto text-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 text-white">
+        <div className="container mx-auto px-4 py-16">
+          <div className="max-w-4xl mx-auto">
+            <Link to="/" className="inline-flex items-center gap-2 mb-6 text-blue-100 hover:text-white transition-colors">
+              <ArrowLeft className="w-5 h-5" />
+              Back to Home
+            </Link>
+            <div className="text-center">
               <div className="flex justify-center mb-6">
                 <Shield className="w-16 h-16" />
               </div>
@@ -312,6 +317,6 @@ export default function TradeAssurance() {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
