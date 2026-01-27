@@ -1,16 +1,24 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { partnerService } from '../../lib/supabase/partner-service';
 import { walletService } from '../../lib/supabase/wallet-service';
+import { storeService } from '../../lib/supabase/store-service';
+import { earningsService } from '../../lib/supabase/earnings-service';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { 
-  Calendar,
+  CreditCard,
+  Wallet,
+  Banknote,
+  Coins,
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  Calendar,
   Clock,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon
+  Store,
+  ExternalLink,
+  Star,
+  MapPin
 } from 'lucide-react';
 
 export default function DashboardEarnings() {
@@ -46,36 +54,40 @@ export default function DashboardEarnings() {
     setLoading(true);
     setError(null);
     try {
-      // Get partner statistics
-      const { data: stats } = await partnerService.getPartnerStats(userProfile.id);
+      // Use real earnings service instead of mock calculations
+      const { data: earningsData, error: earningsError } = await earningsService.getPartnerEarnings(userProfile.id);
       
-      // Get wallet balance
-      const { data: wallet } = await walletService.getBalance(userProfile.id);
-      
-      // Calculate earnings based on stats
-      const allTimeEarnings = stats?.totalRevenue || 0;
-      const availableBalance = wallet?.balance || 0;
-      const pendingBalance = stats?.pendingBalance || 0;
-      const commissionRate = 0.15; // 15% commission example
-      const commissionEarned = allTimeEarnings * commissionRate;
-      const orderCount = stats?.totalOrders || 0;
-      const averageOrderValue = orderCount > 0 ? allTimeEarnings / orderCount : 0;
-      
-      // Set earnings data
-      setEarnings({
-        thisMonth: allTimeEarnings * 0.3, // Example calculation
-        lastMonth: allTimeEarnings * 0.2, // Example calculation
-        thisYear: allTimeEarnings * 0.8,  // Example calculation
-        allTime: allTimeEarnings,
-        availableBalance: availableBalance,
-        pendingBalance: pendingBalance,
-        commissionEarned: commissionEarned,
-        averageOrderValue: averageOrderValue
-      });
+      if (earningsError) {
+        console.warn('Failed to load earnings data:', earningsError);
+        // Fallback to zero values if service fails
+        setEarnings({
+          thisMonth: 0,
+          lastMonth: 0,
+          thisYear: 0,
+          allTime: 0,
+          availableBalance: 0,
+          pendingBalance: 0,
+          commissionEarned: 0,
+          averageOrderValue: 0
+        });
+      } else if (earningsData) {
+        setEarnings(earningsData);
+      }
 
     } catch (err) {
       console.error('Failed to load earnings:', err);
       setError(err instanceof Error ? err.message : 'Failed to load earnings');
+      // Set zero values on error
+      setEarnings({
+        thisMonth: 0,
+        lastMonth: 0,
+        thisYear: 0,
+        allTime: 0,
+        availableBalance: 0,
+        pendingBalance: 0,
+        commissionEarned: 0,
+        averageOrderValue: 0
+      });
     } finally {
       setLoading(false);
     }
@@ -175,7 +187,7 @@ export default function DashboardEarnings() {
                 }`}>
                   <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
                 </div>
-                <TrendingUpIcon className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                <TrendingUp className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
               </div>
               <p className={`text-xs mb-2 ${isDarkMode ? 'text-green-300' : 'text-green-700'}`}>This Year</p>
               <p className={`text-xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
@@ -195,7 +207,7 @@ export default function DashboardEarnings() {
                 }`}>
                   <TrendingUp className={`w-5 h-5 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
                 </div>
-                <DollarSign className={`w-4 h-4 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
+                <TrendingUp className={`w-4 h-4 ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`} />
               </div>
               <p className={`text-xs mb-2 ${isDarkMode ? 'text-orange-300' : 'text-orange-700'}`}>All Time</p>
               <p className={`text-xl font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
@@ -216,7 +228,7 @@ export default function DashboardEarnings() {
                 <div className={`p-2 rounded-lg ${
                   isDarkMode ? 'bg-cyan-900/30' : 'bg-cyan-100'
                 }`}>
-                  <DollarSign className={`w-5 h-5 ${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
+                  <TrendingUp className={`w-5 h-5 ${isDarkMode ? 'text-cyan-400' : 'text-cyan-600'}`} />
                 </div>
               </div>
               <p className={`text-xs mb-2 ${isDarkMode ? 'text-cyan-300' : 'text-cyan-700'}`}>Available Balance</p>
@@ -282,7 +294,7 @@ export default function DashboardEarnings() {
                   <span className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Average Order Value
                   </span>
-                  <TrendingUpIcon className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
+                  <TrendingUp className={`w-4 h-4 ${isDarkMode ? 'text-green-400' : 'text-green-600'}`} />
                 </div>
                 <p className={`text-2xl font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                   {formatCurrency(earnings.averageOrderValue)}
