@@ -9,7 +9,7 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
 import Breadcrumbs from '../../components/Breadcrumbs';
-import { Users, Store, Package, TrendingUp, ArrowUpRight, ArrowDownRight, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Users, Store, Package, TrendingUp, ArrowUpRight, ArrowDownRight, Clock, CheckCircle, AlertCircle, RefreshCw, CreditCard, Key } from 'lucide-react';
 
 interface DashboardStats {
   totalUsers: number;
@@ -319,7 +319,7 @@ const AdminDashboard = () => {
                   <p className="text-muted-foreground text-xs sm:text-sm mt-1">Frequently used admin functions</p>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">
                   <Link
                     to="/admin/users"
                     className="group relative p-4 sm:p-6 rounded-lg sm:rounded-xl border-2 border-border hover:border-primary hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent transition-all overflow-hidden"
@@ -359,6 +359,48 @@ const AdminDashboard = () => {
                         <h3 className="font-bold text-foreground text-sm sm:text-base">Process Orders</h3>
                       </div>
                       <p className="text-xs sm:text-sm text-muted-foreground">Manage and track all orders</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/admin/payments"
+                    className="group relative p-4 sm:p-6 rounded-lg sm:rounded-xl border-2 border-border hover:border-primary hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/5 transition-all"></div>
+                    <div className="relative">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <h3 className="font-bold text-foreground text-sm sm:text-base">Manage Payments</h3>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Wallet transactions & withdrawals</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/admin/password-reset"
+                    className="group relative p-4 sm:p-6 rounded-lg sm:rounded-xl border-2 border-border hover:border-primary hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/5 transition-all"></div>
+                    <div className="relative">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <Key className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <h3 className="font-bold text-foreground text-sm sm:text-base">Password Reset</h3>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Help users reset passwords</p>
+                    </div>
+                  </Link>
+
+                  <Link
+                    to="/admin/settings"
+                    className="group relative p-4 sm:p-6 rounded-lg sm:rounded-xl border-2 border-border hover:border-primary hover:bg-gradient-to-br hover:from-primary/5 hover:to-transparent transition-all overflow-hidden"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/0 group-hover:from-primary/10 group-hover:to-primary/5 transition-all"></div>
+                    <div className="relative">
+                      <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                        <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                        <h3 className="font-bold text-foreground text-sm sm:text-base">System Settings</h3>
+                      </div>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Configure system preferences</p>
                     </div>
                   </Link>
                 </div>
