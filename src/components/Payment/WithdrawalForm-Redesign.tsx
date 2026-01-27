@@ -178,14 +178,14 @@ export default function WithdrawalForm() {
       // Show success message
       toast({
         title: "Withdrawal Request Submitted!",
-        description: `$${getNetAmount().toFixed(2)} withdrawal request has been submitted for admin approval.`,
+        description: `$${getNetAmount().toFixed(2)} withdrawal submitted successfully. Wait for confirmation - this usually takes 10 to 30 minutes.`,
       });
       
       // Navigate back to wallet
       navigate('/partner/dashboard/wallet', {
         state: {
           success: true,
-          message: `Withdrawal request of $${getNetAmount().toFixed(2)} has been submitted for admin approval. You will be notified once it's approved.`,
+          message: `Withdrawal request of $${getNetAmount().toFixed(2)} submitted successfully. Wait for confirmation - this usually takes 10 to 30 minutes.`,
           amount: getNetAmount(),
           pendingApproval: true,
           transactionId: transaction?.id
