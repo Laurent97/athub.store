@@ -459,19 +459,59 @@ export default function DashboardEarnings() {
               <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
                 <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Monthly Average</p>
                 <p className={`text-lg font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {formatCurrency(earnings.allTime / 12)}
+                  {monthlyEarnings.length > 0 
+                    ? formatCurrency(monthlyEarnings.reduce((sum, month) => sum + (month.earnings || 0), 0) / monthlyEarnings.length)
+                    : formatCurrency(earnings.thisMonth)
+                  }
                 </p>
               </div>
               <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
                 <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>YTD Growth</p>
-                <p className={`text-lg font-bold ${earnings.thisYear > (earnings.allTime - earnings.thisYear) ? (isDarkMode ? 'text-green-400' : 'text-green-600') : (isDarkMode ? 'text-red-400' : 'text-red-600')}`}>
-                  {getPercentageChange(earnings.thisYear, earnings.allTime - earnings.thisYear).toFixed(1)}%
+                <p className={`text-lg font-bold ${earnings.lastMonth > 0 ? (earnings.thisMonth > earnings.lastMonth ? (isDarkMode ? 'text-green-400' : 'text-green-600') : (isDarkMode ? 'text-red-400' : 'text-red-600')) : (isDarkMode ? 'text-gray-400' : 'text-gray-600')}`}>
+                  {earnings.lastMonth > 0 
+                    ? `${getPercentageChange(earnings.thisMonth, earnings.lastMonth).toFixed(1)}%`
+                    : 'N/A'
+                  }
                 </p>
               </div>
               <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
                 <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Projected Annual</p>
                 <p className={`text-lg font-bold ${isDarkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                  {formatCurrency(earnings.thisMonth * 12)}
+                  {monthlyEarnings.length > 0 
+                    ? formatCurrency((monthlyEarnings.reduce((sum, month) => sum + (month.earnings || 0), 0) / monthlyEarnings.length) * 12)
+                    : formatCurrency(earnings.thisMonth * 12)
+                  }
+                </p>
+              </div>
+            </div>
+            
+            {/* Additional Real Stats */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
+                <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Best Month</p>
+                <p className={`text-lg font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                  {monthlyEarnings.length > 0 
+                    ? formatCurrency(Math.max(...monthlyEarnings.map(m => m.earnings || 0)))
+                    : formatCurrency(earnings.thisMonth)
+                  }
+                </p>
+              </div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
+                <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Total Orders</p>
+                <p className={`text-lg font-bold ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  {monthlyEarnings.reduce((sum, month) => sum + (month.orderCount || 0), 0)}
+                </p>
+              </div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
+                <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Avg Order Value</p>
+                <p className={`text-lg font-bold ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
+                  {formatCurrency(earnings.averageOrderValue)}
+                </p>
+              </div>
+              <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-gray-700/30' : 'bg-white'}`}>
+                <p className={`text-xs mb-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>Commission Rate</p>
+                <p className={`text-lg font-bold ${isDarkMode ? 'text-amber-400' : 'text-amber-600'}`}>
+                  10%
                 </p>
               </div>
             </div>
