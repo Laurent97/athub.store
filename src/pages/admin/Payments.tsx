@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
+import { walletService } from '../../lib/supabase/wallet-service';
 import { 
   CreditCard, 
   DollarSign, 
@@ -29,6 +30,7 @@ import {
   ExternalLink,
   Wallet,
   ArrowUpRight,
+  ArrowDownRight,
   Activity,
   Shield,
   MapPin,
@@ -42,7 +44,8 @@ import {
   UserCheck,
   Ban,
   Info,
-  Copy
+  Copy,
+  Gift
 } from 'lucide-react';
 
 interface StripePaymentAttempt {
@@ -119,12 +122,47 @@ interface PaymentStats {
   pendingWithdrawals: number;
 }
 
+interface WalletTransaction {
+  id: string;
+  user_id: string;
+  type: 'deposit' | 'withdrawal' | 'order_payment' | 'order_refund' | 'commission' | 'bonus';
+  amount: number;
+  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  description: string;
+  payment_method?: string;
+  order_id?: string;
+  transaction_hash?: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
+}
+
+interface WalletBalance {
+  id: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: string;
+    email: string;
+    full_name: string;
+  };
+}
+
 const Payments: React.FC = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stripeAttempts, setStripeAttempts] = useState<StripePaymentAttempt[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
   const [securityLogs, setSecurityLogs] = useState<PaymentSecurityLog[]>([]);
+  const [walletTransactions, setWalletTransactions] = useState<WalletTransaction[]>([]);
+  const [walletBalances, setWalletBalances] = useState<WalletBalance[]>([]);
   const [stats, setStats] = useState<PaymentStats>({
     totalRevenue: 0,
     todayRevenue: 0,
@@ -142,6 +180,8 @@ const Payments: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState('30');
+  const [walletTransactionType, setWalletTransactionType] = useState<string>('all');
+  const [walletStatus, setWalletStatus] = useState<string>('all');
 
   // Dialog states
   const [selectedPayment, setSelectedPayment] = useState<StripePaymentAttempt | PendingPayment | null>(null);
@@ -234,9 +274,68 @@ const Payments: React.FC = () => {
         setSecurityLogs(logsData || []);
       }
 
+      // Fetch wallet transactions
+      let walletTransactionsQuery = supabase
+        .from('wallet_transactions')
+        .select(`
+          *,
+          user:profiles(id, email, full_name)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (walletTransactionType !== 'all') {
+        walletTransactionsQuery = walletTransactionsQuery.eq('type', walletTransactionType);
+      }
+      if (walletStatus !== 'all') {
+        walletTransactionsQuery = walletTransactionsQuery.eq('status', walletStatus);
+      }
+      if (searchTerm) {
+        walletTransactionsQuery = walletTransactionsQuery.or(`user.email.ilike.%${searchTerm}%,user.full_name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+      }
+      if (dateRange !== 'all') {
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - parseInt(dateRange));
+        walletTransactionsQuery = walletTransactionsQuery.gte('created_at', daysAgo.toISOString());
+      }
+
+      const { data: walletTransactionsData, error: walletTransactionsError } = await walletTransactionsQuery;
+
+      if (walletTransactionsError) {
+        console.error('Error fetching wallet transactions:', walletTransactionsError);
+        setWalletTransactions([]);
+      } else {
+        setWalletTransactions(walletTransactionsData || []);
+      }
+
+      // Fetch wallet balances
+      let walletBalancesQuery = supabase
+        .from('wallet_balances')
+        .select(`
+          *,
+          user:profiles(id, email, full_name)
+        `)
+        .order('balance', { ascending: false })
+        .limit(100);
+
+      if (searchTerm) {
+        walletBalancesQuery = walletBalancesQuery.or(`user.email.ilike.%${searchTerm}%,user.full_name.ilike.%${searchTerm}%`);
+      }
+
+      const { data: walletBalancesData, error: walletBalancesError } = await walletBalancesQuery;
+
+      if (walletBalancesError) {
+        console.error('Error fetching wallet balances:', walletBalancesError);
+        setWalletBalances([]);
+      } else {
+        setWalletBalances(walletBalancesData || []);
+      }
+
       // Calculate stats
       const allPayments = [...(stripeData || []), ...(pendingData || [])];
       const completedPayments = allPayments.filter(p => p.status === 'completed' || p.status === 'succeeded');
+      const walletWithdrawals = walletTransactionsData?.filter(t => t.type === 'withdrawal') || [];
+      const pendingWalletWithdrawals = walletWithdrawals.filter(w => w.status === 'pending');
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -252,6 +351,8 @@ const Payments: React.FC = () => {
         new Date(p.created_at) >= thisMonth
       );
 
+      const totalWalletBalance = walletBalancesData?.reduce((sum, balance) => sum + (balance.balance || 0), 0) || 0;
+
       setStats({
         totalRevenue: completedPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
         todayRevenue: todayPayments.reduce((sum, p) => sum + (p.amount || 0), 0),
@@ -260,8 +361,8 @@ const Payments: React.FC = () => {
         pendingPayments: allPayments.filter(p => p.status === 'pending' || p.status === 'pending_confirmation').length,
         completedPayments: completedPayments.length,
         failedPayments: allPayments.filter(p => p.status === 'failed' || p.status === 'rejected').length,
-        totalWithdrawals: 0, // Not implemented in current schema
-        pendingWithdrawals: 0
+        totalWithdrawals: walletWithdrawals.length,
+        pendingWithdrawals: pendingWalletWithdrawals.length
       });
 
     } catch (error) {
@@ -356,6 +457,83 @@ const Payments: React.FC = () => {
     }
   };
 
+  // Wallet management functions
+  const approveWithdrawal = async (transaction: WalletTransaction) => {
+    setProcessingAction(`approve-withdrawal-${transaction.id}`);
+    setError('');
+    
+    try {
+      const { error } = await walletService.approveWithdrawal(transaction.id);
+
+      if (error) throw error;
+
+      await fetchPaymentData();
+      setError('Withdrawal approved successfully');
+    } catch (error: any) {
+      console.error('Error approving withdrawal:', error);
+      setError('Failed to approve withdrawal');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const rejectWithdrawal = async (transaction: WalletTransaction, reason: string) => {
+    setProcessingAction(`reject-withdrawal-${transaction.id}`);
+    setError('');
+    
+    try {
+      const { error } = await walletService.rejectTransaction(transaction.id, reason);
+
+      if (error) throw error;
+
+      await fetchPaymentData();
+      setError('Withdrawal rejected successfully');
+    } catch (error: any) {
+      console.error('Error rejecting withdrawal:', error);
+      setError('Failed to reject withdrawal');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const approveDeposit = async (transaction: WalletTransaction) => {
+    setProcessingAction(`approve-deposit-${transaction.id}`);
+    setError('');
+    
+    try {
+      const { error } = await walletService.approveDeposit(transaction.id);
+
+      if (error) throw error;
+
+      await fetchPaymentData();
+      setError('Deposit approved successfully');
+    } catch (error: any) {
+      console.error('Error approving deposit:', error);
+      setError('Failed to approve deposit');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const updateWalletBalance = async (userId: string, newBalance: number) => {
+    setProcessingAction(`update-balance-${userId}`);
+    setError('');
+    
+    try {
+      const { error } = await walletService.updateBalance(userId, { balance: newBalance });
+
+      if (error) throw error;
+
+      await fetchPaymentData();
+      setError('Wallet balance updated successfully');
+    } catch (error: any) {
+      console.error('Error updating wallet balance:', error);
+      setError('Failed to update wallet balance');
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setError('Copied to clipboard!');
@@ -392,6 +570,35 @@ const Payments: React.FC = () => {
       usdt: <Bitcoin className="w-4 h-4" />
     };
     return icons[method as keyof typeof icons] || <Wallet className="w-4 h-4" />;
+  };
+
+  const getTransactionTypeIcon = (type: string) => {
+    const icons = {
+      deposit: <ArrowUpRight className="w-4 h-4 text-green-600" />,
+      withdrawal: <ArrowDownRight className="w-4 h-4 text-red-600" />,
+      order_payment: <DollarSign className="w-4 h-4 text-blue-600" />,
+      order_refund: <RefreshCw className="w-4 h-4 text-orange-600" />,
+      commission: <TrendingUp className="w-4 h-4 text-purple-600" />,
+      bonus: <Gift className="w-4 h-4 text-pink-600" />
+    };
+    return icons[type as keyof typeof icons] || <DollarSign className="w-4 h-4" />;
+  };
+
+  const getWalletStatusBadge = (status: string) => {
+    const variants: Record<string, { variant: 'default' | 'secondary' | 'destructive' | 'outline'; icon: React.ReactNode }> = {
+      pending: { variant: 'secondary', icon: <Clock className="w-3 h-3" /> },
+      completed: { variant: 'default', icon: <CheckCircle className="w-3 h-3" /> },
+      failed: { variant: 'destructive', icon: <XCircle className="w-3 h-3" /> },
+      cancelled: { variant: 'destructive', icon: <Ban className="w-3 h-3" /> }
+    };
+
+    const config = variants[status] || variants.pending;
+    return (
+      <Badge variant={config.variant} className="flex items-center gap-1">
+        {config.icon}
+        {status.charAt(0).toUpperCase() + status.slice(1)}
+      </Badge>
+    );
   };
 
   // Open payments in a new window
@@ -434,7 +641,7 @@ const Payments: React.FC = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
@@ -450,13 +657,28 @@ const Payments: React.FC = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Wallet Balance</CardTitle>
+            <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+            <div className="text-2xl font-bold">
+              ${walletBalances.reduce((sum, balance) => sum + (balance.balance || 0), 0).toFixed(2)}
+            </div>
             <p className="text-xs text-muted-foreground">
-              {stats.completedPayments} completed
+              {walletBalances.length} active wallets
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Pending Withdrawals</CardTitle>
+            <ArrowDownRight className="h-4 w-4 text-muted-foreground text-red-600" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingWithdrawals}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.totalWithdrawals} total withdrawals
             </p>
           </CardContent>
         </Card>
@@ -537,6 +759,7 @@ const Payments: React.FC = () => {
         <TabsList>
           <TabsTrigger value="stripe">Stripe Attempts</TabsTrigger>
           <TabsTrigger value="pending">Pending Payments</TabsTrigger>
+          <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
           <TabsTrigger value="security">Security Logs</TabsTrigger>
         </TabsList>
 
@@ -968,6 +1191,315 @@ const Payments: React.FC = () => {
                             )}
                           </DialogContent>
                         </Dialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Wallet Management Tab */}
+        <TabsContent value="wallet" className="space-y-4">
+          {/* Wallet Filters */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Wallet Filters</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <div className="min-w-[150px]">
+                  <Label>Transaction Type</Label>
+                  <Select value={walletTransactionType} onValueChange={setWalletTransactionType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="deposit">Deposits</SelectItem>
+                      <SelectItem value="withdrawal">Withdrawals</SelectItem>
+                      <SelectItem value="order_payment">Order Payments</SelectItem>
+                      <SelectItem value="order_refund">Order Refunds</SelectItem>
+                      <SelectItem value="commission">Commissions</SelectItem>
+                      <SelectItem value="bonus">Bonuses</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="min-w-[150px]">
+                  <Label>Status</Label>
+                  <Select value={walletStatus} onValueChange={setWalletStatus}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="failed">Failed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Wallet Balances */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Wallet Balances</CardTitle>
+              <CardDescription>Manage user wallet balances</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Balance</TableHead>
+                    <TableHead>Currency</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {walletBalances.map((balance) => (
+                    <TableRow key={balance.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{balance.user?.full_name}</div>
+                          <div className="text-sm text-muted-foreground">{balance.user?.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">${balance.balance.toFixed(2)}</div>
+                      </TableCell>
+                      <TableCell>{balance.currency}</TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {new Date(balance.created_at).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedPayment(balance)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                              <DialogHeader>
+                                <DialogTitle>Update Wallet Balance</DialogTitle>
+                                <DialogDescription>
+                                  Adjust the wallet balance for {balance.user?.full_name}
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="space-y-4">
+                                <div>
+                                  <Label>Current Balance</Label>
+                                  <p className="font-medium">${balance.balance.toFixed(2)}</p>
+                                </div>
+                                <div>
+                                  <Label>New Balance</Label>
+                                  <Input
+                                    type="number"
+                                    defaultValue={balance.balance}
+                                    placeholder="Enter new balance"
+                                  />
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={() => updateWalletBalance(balance.user_id, balance.balance)}
+                                    disabled={processingAction === `update-balance-${balance.user_id}`}
+                                  >
+                                    {processingAction === `update-balance-${balance.user_id}` ? 'Updating...' : 'Update Balance'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          {/* Wallet Transactions */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Wallet Transactions</CardTitle>
+              <CardDescription>Manage deposit and withdrawal requests</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {walletTransactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{transaction.user?.full_name}</div>
+                          <div className="text-sm text-muted-foreground">{transaction.user?.email}</div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getTransactionTypeIcon(transaction.type)}
+                          <span className="capitalize">{transaction.type.replace('_', ' ')}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium">
+                          {transaction.type === 'withdrawal' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getWalletStatusBadge(transaction.status)}</TableCell>
+                      <TableCell>
+                        <div className="text-sm max-w-xs truncate" title={transaction.description}>
+                          {transaction.description}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {new Date(transaction.created_at).toLocaleDateString()}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedPayment(transaction)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Transaction Details</DialogTitle>
+                                <DialogDescription>
+                                  Full information about this wallet transaction
+                                </DialogDescription>
+                              </DialogHeader>
+                              {selectedPayment && 'type' in selectedPayment && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Transaction ID</Label>
+                                      <p className="font-mono text-sm bg-muted p-2 rounded">{selectedPayment.id}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Status</Label>
+                                      <div>{getWalletStatusBadge(selectedPayment.status)}</div>
+                                    </div>
+                                    <div>
+                                      <Label>User</Label>
+                                      <p className="font-medium">{selectedPayment.user?.full_name}</p>
+                                      <p className="text-sm text-muted-foreground">{selectedPayment.user?.email}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Amount</Label>
+                                      <p className="font-medium">
+                                        {selectedPayment.type === 'withdrawal' ? '-' : '+'}${selectedPayment.amount}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <Label>Transaction Type</Label>
+                                    <div className="flex items-center gap-2">
+                                      {getTransactionTypeIcon(selectedPayment.type)}
+                                      <span className="capitalize">{selectedPayment.type.replace('_', ' ')}</span>
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <Label>Description</Label>
+                                    <p className="text-sm">{selectedPayment.description}</p>
+                                  </div>
+
+                                  {selectedPayment.payment_method && (
+                                    <div>
+                                      <Label>Payment Method</Label>
+                                      <p className="text-sm">{selectedPayment.payment_method}</p>
+                                    </div>
+                                  )}
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Created</Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(selectedPayment.created_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <Label>Updated</Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(selectedPayment.updated_at).toLocaleString()}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {selectedPayment.status === 'pending' && (
+                                    <div className="flex gap-2 pt-4">
+                                      {selectedPayment.type === 'withdrawal' && (
+                                        <>
+                                          <Button
+                                            onClick={() => approveWithdrawal(selectedPayment)}
+                                            disabled={processingAction === `approve-withdrawal-${selectedPayment.id}`}
+                                            className="bg-green-600 hover:bg-green-700"
+                                          >
+                                            {processingAction === `approve-withdrawal-${selectedPayment.id}` ? 'Approving...' : 'Approve Withdrawal'}
+                                          </Button>
+                                          <Button
+                                            variant="destructive"
+                                            onClick={() => {
+                                              const reason = prompt('Rejection reason:');
+                                              if (reason) rejectWithdrawal(selectedPayment, reason);
+                                            }}
+                                            disabled={processingAction === `reject-withdrawal-${selectedPayment.id}`}
+                                          >
+                                            {processingAction === `reject-withdrawal-${selectedPayment.id}` ? 'Rejecting...' : 'Reject Withdrawal'}
+                                          </Button>
+                                        </>
+                                      )}
+                                      {selectedPayment.type === 'deposit' && (
+                                        <Button
+                                          onClick={() => approveDeposit(selectedPayment)}
+                                          disabled={processingAction === `approve-deposit-${selectedPayment.id}`}
+                                          className="bg-green-600 hover:bg-green-700"
+                                        >
+                                          {processingAction === `approve-deposit-${selectedPayment.id}` ? 'Approving...' : 'Approve Deposit'}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
