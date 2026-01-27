@@ -71,6 +71,7 @@ import TrackOrder from "./pages/TrackOrder";
 import TradeAssurance from "./pages/TradeAssurance";
 import Inspection from "./pages/Inspection";
 import Financing from "./pages/Financing";
+import Withdrawal from "./pages/Withdrawal";
 
 // Payment components for dashboard integration
 import CryptoDeposit from "./components/Payment/CryptoDeposit";
@@ -129,6 +130,7 @@ const App = () => (
                 <Route path="settings" element={<DashboardSettings />} />
                 <Route path="wallet" element={<DashboardWallet />} />
                 <Route path="wallet/deposit" element={<WalletDeposit />} />
+                <Route path="wallet/withdraw" element={<Withdrawal />} />
               </Route>
               <Route path="/admin/users" element={<AdminOnlyRoute><AdminUsers /></AdminOnlyRoute>} />
               <Route path="/admin/products" element={<AdminOnlyRoute><AdminProducts /></AdminOnlyRoute>} />
@@ -163,7 +165,6 @@ const App = () => (
               <Route path="/careers" element={<Careers />} />
               {/* Legacy routes - redirect to dashboard */}
               <Route path="/payment/crypto-deposit" element={<PartnerOnlyRoute requireApproved={true}><Navigate to="/partner/dashboard/wallet/deposit" replace /></PartnerOnlyRoute>} />
-              <Route path="/payment/withdraw" element={<PartnerOnlyRoute requireApproved={true}><Navigate to="/partner/dashboard/wallet/withdraw" replace /></PartnerOnlyRoute>} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
