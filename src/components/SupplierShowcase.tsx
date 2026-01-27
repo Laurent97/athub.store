@@ -138,7 +138,7 @@ const SupplierCard = ({ supplier }: { supplier: typeof topSuppliers[0] }) => {
           <div className="font-bold text-foreground">{supplier.products.toLocaleString()}</div>
           <div className="text-xs text-slate-500">Products</div>
         </div>
-        <Link to={`/suppliers/${supplier.id}`}>
+        <Link to={`/manufacturers`}>
           <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
             View Store
           </Button>

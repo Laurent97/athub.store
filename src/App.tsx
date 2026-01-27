@@ -112,6 +112,9 @@ const App = () => (
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/stores" element={<Stores />} />
               <Route path="/manufacturers" element={<Manufacturers />} />
+              <Route path="/suppliers" element={<Manufacturers />} />
+              <Route path="/suppliers/:id" element={<Manufacturers />} />
+              <Route path="/manufacturers/:id" element={<Manufacturers />} />
               <Route path="/store/:storeSlug" element={<Store />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
