@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { partnerService } from '../../lib/supabase/partner-service';
 import { earningsService } from '../../lib/supabase/earnings-service';
+import { walletService } from '../../lib/supabase/wallet-service';
 import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function DashboardAnalytics() {
@@ -27,15 +28,18 @@ export default function DashboardAnalytics() {
       // Get partner stats for additional metrics
       const { data: stats, error: statsError } = await partnerService.getPartnerStats(userProfile.id);
       
-      if (earningsError || statsError) {
-        throw new Error(earningsError?.message || statsError?.message || 'Failed to load analytics');
+      // Get accurate wallet balance from wallet service
+      const { data: walletData, error: walletError } = await walletService.getBalance(userProfile.id);
+      
+      if (earningsError || statsError || walletError) {
+        throw new Error(earningsError?.message || statsError?.message || walletError?.message || 'Failed to load analytics');
       }
       
       // Calculate real conversion rate (if we had view data, for now use placeholder)
       const totalViews = 0; // TODO: Implement store visits tracking
       const conversionRate = totalViews > 0 ? (stats.totalOrders / totalViews) * 100 : 0;
       
-      // Set comprehensive analytics data
+      // Set comprehensive analytics data with accurate wallet balance
       setAnalytics({
         metrics: {
           totalViews: totalViews,
@@ -46,7 +50,7 @@ export default function DashboardAnalytics() {
           thisMonthEarnings: earningsData?.thisMonth || 0,
           lastMonthEarnings: earningsData?.lastMonth || 0,
           thisYearEarnings: earningsData?.thisYear || 0,
-          availableBalance: earningsData?.availableBalance || 0,
+          availableBalance: walletData?.balance || 0, // Use accurate wallet balance
           pendingBalance: earningsData?.pendingBalance || 0,
           commissionEarned: earningsData?.commissionEarned || 0,
           totalOrders: stats.totalOrders || 0,

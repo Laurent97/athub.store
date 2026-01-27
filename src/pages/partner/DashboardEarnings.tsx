@@ -54,24 +54,31 @@ export default function DashboardEarnings() {
     setLoading(true);
     setError(null);
     try {
-      // Use real earnings service instead of mock calculations
+      // Get real earnings data
       const { data: earningsData, error: earningsError } = await earningsService.getPartnerEarnings(userProfile.id);
       
-      if (earningsError) {
-        console.warn('Failed to load earnings data:', earningsError);
+      // Get accurate wallet balance from wallet service
+      const { data: walletData, error: walletError } = await walletService.getBalance(userProfile.id);
+      
+      if (earningsError || walletError) {
+        console.warn('Failed to load data:', { earningsError, walletError });
         // Fallback to zero values if service fails
         setEarnings({
           thisMonth: 0,
           lastMonth: 0,
           thisYear: 0,
           allTime: 0,
-          availableBalance: 0,
+          availableBalance: walletData?.balance || 0, // Use wallet balance even if earnings fail
           pendingBalance: 0,
           commissionEarned: 0,
           averageOrderValue: 0
         });
       } else if (earningsData) {
-        setEarnings(earningsData);
+        // Use wallet balance for availableBalance, not earnings service
+        setEarnings({
+          ...earningsData,
+          availableBalance: walletData?.balance || 0 // Override with accurate wallet balance
+        });
       }
 
     } catch (err) {
