@@ -54,12 +54,8 @@ const PasswordReset: React.FC = () => {
     setLoading(true);
     try {
       let requestsQuery = supabase
-        .from('password_reset_requests')
-        .select(`
-          *,
-          user:users!id(id, email, full_name),
-          creator:users!id(id, email, full_name)
-        `)
+        .from('v_password_reset_requests_with_users')
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (statusFilter !== 'all') {
@@ -67,7 +63,7 @@ const PasswordReset: React.FC = () => {
       }
       
       if (searchTerm) {
-        requestsQuery = requestsQuery.or(`user.email.ilike.%${searchTerm}%,user.full_name.ilike.%${searchTerm}%`);
+        requestsQuery = requestsQuery.or(`email.ilike.%${searchTerm}%,full_name.ilike.%${searchTerm}%,user_email.ilike.%${searchTerm}%`);
       }
 
       const { data: requestsData, error: requestsError } = await requestsQuery;
