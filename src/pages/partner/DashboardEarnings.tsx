@@ -26,14 +26,8 @@ export default function DashboardEarnings() {
     availableBalance: 0,
     pendingBalance: 0
   });
-  const [withdrawals, setWithdrawals] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
-  const [withdrawalData, setWithdrawalData] = useState({
-    amount: 0,
-    method: 'bank_transfer' as 'bank_transfer' | 'paypal' | 'cryptocurrency',
-  });
 
   // Check for dark mode
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -74,16 +68,6 @@ export default function DashboardEarnings() {
         pendingBalance: stats?.pendingBalance || 0
       });
 
-      // Get wallet transactions instead of withdrawals
-      try {
-        const { data: transactions } = await walletService.getTransactions(userProfile.id);
-        // Filter for withdrawal transactions
-        const withdrawalTransactions = transactions?.filter(t => t.type === 'withdrawal') || [];
-        setWithdrawals(withdrawalTransactions);
-      } catch (err) {
-        console.warn('Transactions not available:', err);
-        setWithdrawals([]);
-      }
     } catch (err) {
       console.error('Failed to load earnings:', err);
       setError(err instanceof Error ? err.message : 'Failed to load earnings');
@@ -92,103 +76,11 @@ export default function DashboardEarnings() {
     }
   };
 
-  const handleRequestWithdrawal = async () => {
-    if (!userProfile?.id) return;
-
-    if (withdrawalData.amount <= 0) {
-      setError('Withdrawal amount must be greater than 0');
-      return;
-    }
-
-    if (withdrawalData.amount > earnings.availableBalance) {
-      setError('Insufficient balance');
-      return;
-    }
-
-    try {
-      // Use walletService.withdrawFunds
-      const { error } = await walletService.withdrawFunds(
-        userProfile.id,
-        withdrawalData.amount,
-        withdrawalData.method,
-        `Withdrawal via ${withdrawalData.method}`
-      );
-      
-      if (error) throw error;
-
-      // Add to local state
-      setWithdrawals([
-        {
-          id: Date.now(),
-          amount: withdrawalData.amount,
-          payment_method: withdrawalData.method,
-          status: 'completed',
-          created_at: new Date().toISOString(),
-        },
-        ...withdrawals,
-      ]);
-
-      // Update earnings (deduct from available balance)
-      setEarnings(prev => ({
-        ...prev,
-        availableBalance: prev.availableBalance - withdrawalData.amount
-      }));
-
-      setShowWithdrawalForm(false);
-      setWithdrawalData({
-        amount: 0,
-        method: 'bank_transfer',
-      });
-      
-      setError(null);
-    } catch (err) {
-      console.error('Failed to request withdrawal:', err);
-      setError(err instanceof Error ? err.message : 'Failed to request withdrawal');
-    }
-  };
-
-  const getMethodLabel = (method: string) => {
-    switch (method) {
-      case 'bank_transfer': return 'Bank Transfer';
-      case 'paypal': return 'PayPal';
-      case 'cryptocurrency': return 'Cryptocurrency';
-      default: return method;
-    }
-  };
-
-  const getMethodIcon = (method: string) => {
-    switch (method) {
-      case 'bank_transfer': return <Banknote className="w-4 h-4" />;
-      case 'paypal': return <CreditCard className="w-4 h-4" />;
-      case 'cryptocurrency': return <Coins className="w-4 h-4" />;
-      default: return <Wallet className="w-4 h-4" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    if (isDarkMode) {
-      switch (status) {
-        case 'completed':
-          return 'text-green-400 bg-green-900/30 border-green-700/50';
-        case 'pending':
-          return 'text-yellow-400 bg-yellow-900/30 border-yellow-700/50';
-        case 'failed':
-          return 'text-red-400 bg-red-900/30 border-red-700/50';
-        default:
-          return 'text-gray-400 bg-gray-900/30 border-gray-700/50';
-      }
-    } else {
-      switch (status) {
-        case 'completed':
-          return 'text-green-800 bg-green-100 border-green-200';
-        case 'pending':
-          return 'text-yellow-800 bg-yellow-100 border-yellow-200';
-        case 'failed':
-          return 'text-red-800 bg-red-100 border-red-200';
-        default:
-          return 'text-gray-800 bg-gray-100 border-gray-200';
-      }
-    }
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(value);
   };
 
   return (
@@ -241,7 +133,7 @@ export default function DashboardEarnings() {
                 <div className={`p-2 rounded-lg ${
                   isDarkMode ? 'bg-purple-900/30' : 'bg-purple-100'
                 }`}>
-                  <Calendar className={`w-5 h-5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
+                  <Clock className={`w-5 h-5 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
                 </div>
                 <TrendingDown className={`w-4 h-4 ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`} />
               </div>
@@ -292,213 +184,39 @@ export default function DashboardEarnings() {
             </div>
           </div>
 
-          {/* Withdrawals Section */}
-          <div className={`mb-8 p-6 rounded-xl ${isDarkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className={`text-lg font-semibold mb-1 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
-                  Withdrawal Requests
-                </h3>
-                <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                  Manage your earnings withdrawal requests
-                </p>
-              </div>
-              <button
-                onClick={() => navigate('/payment/withdraw')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isDarkMode 
-                    ? 'bg-green-700 hover:bg-green-600 text-white' 
-                    : 'bg-green-600 hover:bg-green-700 text-white'
-                }`}
-              >
-                Request Withdrawal
-              </button>
+          {/* Earnings Summary */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-6`}>
+            <div className={`p-6 rounded-xl border ${
+              isDarkMode 
+                ? 'bg-gray-800/50 border-gray-700' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Available Balance
+              </h3>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
+                {formatCurrency(earnings.availableBalance)}
+              </p>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Ready for withdrawal
+              </p>
             </div>
 
-            {/* Withdrawal Form */}
-            {showWithdrawalForm && (
-              <div className={`mb-6 p-6 rounded-xl border ${
-                isDarkMode 
-                  ? 'bg-green-900/20 border-green-800/50' 
-                  : 'bg-green-50 border-green-200'
-              }`}>
-                <h4 className={`font-semibold mb-4 ${isDarkMode ? 'text-green-300' : 'text-green-800'}`}>
-                  Request a Withdrawal
-                </h4>
-                <div className="space-y-4 mb-4">
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Amount ($)
-                    </label>
-                    <input
-                      type="number"
-                      value={withdrawalData.amount}
-                      onChange={(e) => setWithdrawalData({ ...withdrawalData, amount: parseFloat(e.target.value) })}
-                      className={`w-full px-3 py-2 rounded-lg border ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-500 focus:border-green-500 focus:ring-green-500' 
-                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400 focus:border-green-500 focus:ring-green-500'
-                      }`}
-                      placeholder="0.00"
-                      step="0.01"
-                      max={earnings.availableBalance}
-                    />
-                    <div className="flex justify-between text-xs mt-1">
-                      <span className={isDarkMode ? 'text-gray-400' : 'text-gray-500'}>
-                        Available: ${earnings.availableBalance.toFixed(2)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setWithdrawalData({ ...withdrawalData, amount: earnings.availableBalance })}
-                        className="text-blue-500 hover:text-blue-600"
-                      >
-                        Use Max
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${
-                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                    }`}>
-                      Withdrawal Method
-                    </label>
-                    <select
-                      value={withdrawalData.method}
-                      onChange={(e) => setWithdrawalData({ 
-                        ...withdrawalData, 
-                        method: e.target.value as any 
-                      })}
-                      className={`w-full px-3 py-2 rounded-lg border ${
-                        isDarkMode 
-                          ? 'bg-gray-700 border-gray-600 text-white focus:border-green-500 focus:ring-green-500' 
-                          : 'bg-white border-gray-300 text-gray-900 focus:border-green-500 focus:ring-green-500'
-                      }`}
-                    >
-                      <option value="bank_transfer">Bank Transfer</option>
-                      <option value="paypal">PayPal</option>
-                      <option value="cryptocurrency">Cryptocurrency</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleRequestWithdrawal}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-green-700 hover:bg-green-600 text-white' 
-                        : 'bg-green-600 hover:bg-green-700 text-white'
-                    }`}
-                  >
-                    Submit Request
-                  </button>
-                  <button
-                    onClick={() => setShowWithdrawalForm(false)}
-                    className={`px-4 py-2 rounded-lg border font-medium transition-colors ${
-                      isDarkMode 
-                        ? 'bg-gray-700 hover:bg-gray-600 border-gray-600 text-gray-300' 
-                        : 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-700'
-                    }`}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Withdrawals Table */}
-            {withdrawals.length === 0 ? (
-              <div className={`text-center py-8 rounded-lg ${
-                isDarkMode ? 'bg-gray-800/50' : 'bg-gray-100'
-              }`}>
-                <div className={`p-3 rounded-full w-12 h-12 mx-auto mb-4 ${
-                  isDarkMode ? 'bg-gray-700' : 'bg-gray-200'
-                }`}>
-                  <Wallet className={`w-6 h-6 mx-auto ${
-                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                  }`} />
-                </div>
-                <p className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>
-                  No withdrawal requests yet
-                </p>
-                <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
-                  Submit your first withdrawal request to get started
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-lg border">
-                <table className="w-full min-w-full">
-                  <thead className={`border-b ${
-                    isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-200'
-                  }`}>
-                    <tr>
-                      <th className={`px-6 py-3 text-left text-sm font-semibold ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Date
-                      </th>
-                      <th className={`px-6 py-3 text-left text-sm font-semibold ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Amount
-                      </th>
-                      <th className={`px-6 py-3 text-left text-sm font-semibold ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Method
-                      </th>
-                      <th className={`px-6 py-3 text-left text-sm font-semibold ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className={`divide-y ${
-                    isDarkMode ? 'divide-gray-700' : 'divide-gray-200'
-                  }`}>
-                    {withdrawals.map((withdrawal) => (
-                      <tr key={withdrawal.id} className={`transition-colors ${
-                        isDarkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'
-                      }`}>
-                        <td className={`px-6 py-4 ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          {new Date(withdrawal.created_at).toLocaleDateString('en-US', {
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </td>
-                        <td className={`px-6 py-4 font-medium ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          ${withdrawal.amount?.toFixed(2)}
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className={`p-1.5 rounded ${
-                              isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
-                            }`}>
-                              {getMethodIcon(withdrawal.payment_method)}
-                            </div>
-                            <span className={isDarkMode ? 'text-gray-300' : 'text-gray-700'}>
-                              {getMethodLabel(withdrawal.payment_method)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(withdrawal.status)}`}>
-                            {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <div className={`p-6 rounded-xl border ${
+              isDarkMode 
+                ? 'bg-gray-800/50 border-gray-700' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <h3 className={`text-lg font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                Pending Balance
+              </h3>
+              <p className={`text-2xl font-bold ${isDarkMode ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                {formatCurrency(earnings.pendingBalance)}
+              </p>
+              <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Processing transactions
+              </p>
+            </div>
           </div>
         </>
       )}
