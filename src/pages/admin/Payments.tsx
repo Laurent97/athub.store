@@ -1579,7 +1579,7 @@ const Payments: React.FC = () => {
                                 {processingAction === `approve-loan-${application.id}` ? (
                                   <RefreshCw className="w-4 h-4 animate-spin" />
                                 ) : (
-                                  <Check className="w-4 h-4" />
+                                  <CheckCircle className="w-4 h-4" />
                                 )}
                               </Button>
                               <Button
@@ -1597,7 +1597,7 @@ const Payments: React.FC = () => {
                                 {processingAction === `reject-loan-${application.id}` ? (
                                   <RefreshCw className="w-4 h-4 animate-spin" />
                                 ) : (
-                                  <X className="w-4 h-4" />
+                                  <XCircle className="w-4 h-4" />
                                 )}
                               </Button>
                             </>
