@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { cloudinaryService } from '../cloudinary/cloudinary-service';
 
 export interface LoanApplication {
   id: string;
@@ -337,52 +338,42 @@ export const loanService = {
   },
 
   /**
-   * Upload document for loan application
+   * Upload document for loan application using Cloudinary
    */
   async uploadDocument(applicationId: string, file: File, documentType: string) {
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${applicationId}/${documentType}_${Date.now()}.${fileExt}`;
+      // Validate file
+      const validation = cloudinaryService.validateFile(file);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
+
+      // Upload to Cloudinary
+      const uploadResponse = await cloudinaryService.uploadDocument(file, applicationId, documentType);
       
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('loan_documents')
-        .upload(fileName, file);
+      // Create document metadata
+      const documentMetadata = cloudinaryService.createDocumentMetadata(
+        uploadResponse,
+        file.name,
+        documentType
+      );
 
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from('loan_documents')
-        .getPublicUrl(fileName);
-
-      // Update application documents array
+      // Add to database using Cloudinary function
       const { data, error } = await supabase
-        .from('loan_applications')
-        .select('documents')
-        .eq('id', applicationId)
-        .single();
+        .rpc('add_cloudinary_document', {
+          p_application_id: applicationId,
+          p_public_id: uploadResponse.public_id,
+          p_secure_url: uploadResponse.secure_url,
+          p_resource_type: uploadResponse.resource_type,
+          p_format: uploadResponse.format,
+          p_size_bytes: uploadResponse.bytes,
+          p_document_name: file.name,
+          p_document_type: documentType
+        });
 
       if (error) throw error;
 
-      const updatedDocuments = [
-        ...(data.documents || []),
-        {
-          name: file.name,
-          type: documentType,
-          url: urlData.publicUrl,
-          uploaded_at: new Date().toISOString()
-        }
-      ];
-
-      const { data: updateData, error: updateError } = await supabase
-        .from('loan_applications')
-        .update({ documents: updatedDocuments })
-        .eq('id', applicationId)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      return { data: updateData, error: null };
+      return { data: documentMetadata, error: null };
     } catch (error) {
       console.error('Error uploading document:', error);
       return { 
@@ -393,42 +384,27 @@ export const loanService = {
   },
 
   /**
-   * Delete document from loan application
+   * Delete document from Cloudinary and database
    */
-  async deleteDocument(applicationId: string, documentUrl: string) {
+  async deleteDocument(applicationId: string, publicId: string) {
     try {
-      // Extract file path from URL
-      const url = new URL(documentUrl);
-      const filePath = url.pathname.split('/').pop();
+      // Delete from Cloudinary
+      const cloudinaryDeleted = await cloudinaryService.deleteDocument(publicId);
+      
+      if (!cloudinaryDeleted) {
+        throw new Error('Failed to delete from Cloudinary');
+      }
 
-      // Delete from storage
-      const { error: storageError } = await supabase.storage
-        .from('loan_documents')
-        .remove([filePath]);
-
-      if (storageError) throw storageError;
-
-      // Update application documents array
+      // Remove from database
       const { data, error } = await supabase
-        .from('loan_applications')
-        .select('documents')
-        .eq('id', applicationId)
-        .single();
+        .rpc('remove_cloudinary_document', {
+          p_application_id: applicationId,
+          p_public_id: publicId
+        });
 
       if (error) throw error;
 
-      const updatedDocuments = (data.documents || []).filter((doc: any) => doc.url !== documentUrl);
-
-      const { data: updateData, error: updateError } = await supabase
-        .from('loan_applications')
-        .update({ documents: updatedDocuments })
-        .eq('id', applicationId)
-        .select()
-        .single();
-
-      if (updateError) throw updateError;
-
-      return { data: updateData, error: null };
+      return { data, error: null };
     } catch (error) {
       console.error('Error deleting document:', error);
       return { 
@@ -436,5 +412,5 @@ export const loanService = {
         error: error instanceof Error ? error.message : 'Failed to delete document' 
       };
     }
-  }
+  },
 };
