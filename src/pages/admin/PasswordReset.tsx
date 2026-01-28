@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -8,9 +10,11 @@ import { Badge } from '../../components/ui/badge';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import { Key, Clock, CheckCircle, AlertTriangle, RefreshCw, Search, Eye, Copy, ExternalLink, Send } from 'lucide-react';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import AdminSidebar from '../../components/Admin/AdminSidebar';
 
 interface PasswordResetRequest {
   id: string;
@@ -31,7 +35,8 @@ interface PasswordResetRequest {
 }
 
 const PasswordReset: React.FC = () => {
-  const { user: admin } = useAuth();
+  const { user: admin, userProfile } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [resetRequests, setResetRequests] = useState<PasswordResetRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +48,13 @@ const PasswordReset: React.FC = () => {
   const [resetType, setResetType] = useState<'email' | 'temporary'>('email');
   const [expiryHours, setExpiryHours] = useState('24');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (userProfile?.user_type !== 'admin') {
+      navigate('/');
+      return;
+    }
+  }, [userProfile, navigate]);
 
   useEffect(() => {
     if (admin) {
@@ -185,326 +197,336 @@ const PasswordReset: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Password Reset Management</h1>
-          <p className="text-muted-foreground">Help users reset their passwords securely</p>
-        </div>
-        <Button onClick={openPasswordResetWindow}>
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Open in New Window
-        </Button>
-      </div>
-
-      {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-            <Key className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{resetRequests.length}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {resetRequests.filter(r => r.status === 'pending').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Active requests</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Used</CardTitle>
-            <CheckCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {resetRequests.filter(r => r.status === 'used').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Completed</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Expired</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {resetRequests.filter(r => r.status === 'expired').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Not used in time</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Password Reset</CardTitle>
-          <CardDescription>Generate secure password reset links for users</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-            <DialogTrigger asChild>
-              <Button>
-                <Key className="w-4 h-4 mr-2" />
-                Create Password Reset
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create Password Reset</DialogTitle>
-                <DialogDescription>Generate a secure password reset for a user</DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="user-email">User Email</Label>
-                  <Input
-                    id="user-email"
-                    type="email"
-                    placeholder="user@example.com"
-                    value={userEmail}
-                    onChange={(e) => setUserEmail(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="reset-type">Reset Type</Label>
-                  <Select value={resetType} onValueChange={(value: 'email' | 'temporary') => setResetType(value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="email">Send Reset Link via Email</SelectItem>
-                      <SelectItem value="temporary">Generate Temporary Password</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="expiry">Expires In</Label>
-                  <Select value={expiryHours} onValueChange={setExpiryHours}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 Hour</SelectItem>
-                      <SelectItem value="6">6 Hours</SelectItem>
-                      <SelectItem value="24">24 Hours</SelectItem>
-                      <SelectItem value="72">3 Days</SelectItem>
-                      <SelectItem value="168">1 Week</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={createPasswordReset}
-                    disabled={processingAction === 'create'}
-                    className="flex-1"
-                  >
-                    {processingAction === 'create' ? (
-                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <Key className="w-4 h-4 mr-2" />
-                    )}
-                    Create Reset
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Filters</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <Label htmlFor="search">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="search"
-                  placeholder="Search by email or name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <div className="flex-grow">
+        <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+            <AdminSidebar />
             
-            <div>
-              <Label>Status</Label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="used">Used</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="flex-grow min-w-0">
+              {/* Welcome Header */}
+              <div className="mb-6 sm:mb-8 lg:mb-10 animate-fade-in">
+                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-primary-foreground shadow-lg">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Password Reset Management</h1>
+                  <p className="text-primary-foreground/90 text-base sm:text-lg">Help users reset their passwords securely</p>
+                  <p className="text-primary-foreground/70 mt-1 text-xs sm:text-sm">Generate secure password reset links and manage requests</p>
+                </div>
+              </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Password Reset Requests</CardTitle>
-          <CardDescription>Manage all password reset requests</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Expires</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {resetRequests.map((request) => (
-                <TableRow key={request.id}>
-                  <TableCell className="font-mono text-xs">
-                    {request.id.slice(0, 8)}...
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{request.user?.full_name}</div>
-                      <div className="text-sm text-muted-foreground">{request.user?.email}</div>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
+                    <Key className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{resetRequests.length}</div>
+                    <p className="text-xs text-muted-foreground">All time</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pending</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {resetRequests.filter(r => r.status === 'pending').length}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {request.temporary_password ? 'Temporary' : 'Email Link'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(request.status)}</TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {new Date(request.expires_at).toLocaleDateString()}
+                    <p className="text-xs text-muted-foreground">Active requests</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Used</CardTitle>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {resetRequests.filter(r => r.status === 'used').length}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {new Date(request.created_at).toLocaleDateString()}
+                    <p className="text-xs text-muted-foreground">Completed</p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Expired</CardTitle>
+                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {resetRequests.filter(r => r.status === 'expired').length}
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
+                    <p className="text-xs text-muted-foreground">Not used in time</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Create Password Reset</CardTitle>
+                  <CardDescription>Generate secure password reset links for users</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Key className="w-4 h-4 mr-2" />
+                        Create Password Reset
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Create Password Reset</DialogTitle>
+                        <DialogDescription>Generate a secure password reset for a user</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="user-email">User Email</Label>
+                          <Input
+                            id="user-email"
+                            type="email"
+                            placeholder="user@example.com"
+                            value={userEmail}
+                            onChange={(e) => setUserEmail(e.target.value)}
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor="reset-type">Reset Type</Label>
+                          <Select value={resetType} onValueChange={(value: 'email' | 'temporary') => setResetType(value)}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="email">Send Reset Link via Email</SelectItem>
+                              <SelectItem value="temporary">Generate Temporary Password</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="expiry">Expires In</Label>
+                          <Select value={expiryHours} onValueChange={setExpiryHours}>
+                            <SelectTrigger className="w-full">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 Hour</SelectItem>
+                              <SelectItem value="6">6 Hours</SelectItem>
+                              <SelectItem value="24">24 Hours</SelectItem>
+                              <SelectItem value="72">3 Days</SelectItem>
+                              <SelectItem value="168">1 Week</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="flex gap-2">
                           <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedRequest(request)}
+                            onClick={createPasswordReset}
+                            disabled={processingAction === 'create'}
+                            className="flex-1"
                           >
-                            <Eye className="w-4 h-4" />
+                            {processingAction === 'create' ? (
+                              <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                            ) : (
+                              <Key className="w-4 h-4 mr-2" />
+                            )}
+                            Create Reset
                           </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Reset Request Details</DialogTitle>
-                            <DialogDescription>Full information about this password reset request</DialogDescription>
-                          </DialogHeader>
-                          {selectedRequest && (
-                            <div className="space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label>Request ID</Label>
-                                  <p className="font-mono text-sm bg-muted p-2 rounded">{selectedRequest.id}</p>
-                                </div>
-                                <div>
-                                  <Label>Status</Label>
-                                  <div>{getStatusBadge(selectedRequest.status)}</div>
-                                </div>
-                                <div>
-                                  <Label>User</Label>
-                                  <p className="font-medium">{selectedRequest.user?.full_name}</p>
-                                  <p className="text-sm text-muted-foreground">{selectedRequest.user?.email}</p>
-                                </div>
-                                <div>
-                                  <Label>Reset Type</Label>
-                                  <Badge variant="outline">
-                                    {selectedRequest.temporary_password ? 'Temporary Password' : 'Email Link'}
-                                  </Badge>
-                                </div>
-                              </div>
+                          <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </CardContent>
+              </Card>
 
-                              <div>
-                                <Label>Reset Token</Label>
-                                <div className="flex gap-2">
-                                  <p className="font-mono text-sm bg-muted p-2 rounded flex-1">
-                                    {selectedRequest.reset_token}
-                                  </p>
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle>Filters</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="search">Search</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="search"
+                          placeholder="Search by email or name..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <Label>Status</Label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[150px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="used">Used</SelectItem>
+                          <SelectItem value="expired">Expired</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Password Reset Requests</CardTitle>
+                  <CardDescription>Manage all password reset requests</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>User</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Expires</TableHead>
+                        <TableHead>Created</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {resetRequests.map((request) => (
+                        <TableRow key={request.id}>
+                          <TableCell className="font-mono text-xs">
+                            {request.id.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{request.user?.full_name}</div>
+                              <div className="text-sm text-muted-foreground">{request.user?.email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {request.temporary_password ? 'Temporary' : 'Email Link'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{getStatusBadge(request.status)}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {new Date(request.expires_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {new Date(request.created_at).toLocaleDateString()}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Dialog>
+                                <DialogTrigger asChild>
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => copyToClipboard(selectedRequest.reset_token)}
+                                    onClick={() => setSelectedRequest(request)}
                                   >
-                                    <Copy className="w-4 h-4" />
+                                    <Eye className="w-4 h-4" />
                                   </Button>
-                                </div>
-                              </div>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                  <DialogHeader>
+                                    <DialogTitle>Reset Request Details</DialogTitle>
+                                    <DialogDescription>Full information about this password reset request</DialogDescription>
+                                  </DialogHeader>
+                                  {selectedRequest && (
+                                    <div className="space-y-4">
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label>Request ID</Label>
+                                          <p className="font-mono text-sm bg-muted p-2 rounded">{selectedRequest.id}</p>
+                                        </div>
+                                        <div>
+                                          <Label>Status</Label>
+                                          <div>{getStatusBadge(selectedRequest.status)}</div>
+                                        </div>
+                                        <div>
+                                          <Label>User</Label>
+                                          <p className="font-medium">{selectedRequest.user?.full_name}</p>
+                                          <p className="text-sm text-muted-foreground">{selectedRequest.user?.email}</p>
+                                        </div>
+                                        <div>
+                                          <Label>Reset Type</Label>
+                                          <Badge variant="outline">
+                                            {selectedRequest.temporary_password ? 'Temporary Password' : 'Email Link'}
+                                          </Badge>
+                                        </div>
+                                      </div>
 
-                              <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                  <Label>Created</Label>
-                                  <p className="text-sm text-muted-foreground">
-                                    {new Date(selectedRequest.created_at).toLocaleString()}
-                                  </p>
-                                </div>
-                                <div>
-                                  <Label>Expires</Label>
-                                  <p className="text-sm text-muted-foreground">
-                                    {new Date(selectedRequest.expires_at).toLocaleString()}
-                                  </p>
-                                </div>
-                              </div>
+                                      <div>
+                                        <Label>Reset Token</Label>
+                                        <div className="flex gap-2">
+                                          <p className="font-mono text-sm bg-muted p-2 rounded flex-1">
+                                            {selectedRequest.reset_token}
+                                          </p>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => copyToClipboard(selectedRequest.reset_token)}
+                                          >
+                                            <Copy className="w-4 h-4" />
+                                          </Button>
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                          <Label>Created</Label>
+                                          <p className="text-sm text-muted-foreground">
+                                            {new Date(selectedRequest.created_at).toLocaleString()}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <Label>Expires</Label>
+                                          <p className="text-sm text-muted-foreground">
+                                            {new Date(selectedRequest.expires_at).toLocaleString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </DialogContent>
+                              </Dialog>
                             </div>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 };

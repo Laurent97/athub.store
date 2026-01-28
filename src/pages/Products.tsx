@@ -484,34 +484,34 @@ const Products = () => {
       <main className="pt-8 pb-16">
         <div className="container-wide">
           {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground mb-2 break-words">
               {categoryFilter === "all" ? "All Products" : categories.find(c => c.id === categoryFilter)?.label}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {loading ? 'Loading...' : `${total} products found`}
             </p>
           </div>
 
           {/* Prominent Category Buttons */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Shop by Category</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
+          <div className="mb-6 sm:mb-8">
+            <h2 className="text-lg sm:text-xl font-semibold text-foreground mb-3 sm:mb-4">Shop by Category</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4">
               {categories.filter(cat => cat.id !== 'all').map((category) => (
                 <button
                   key={category.id}
                   onClick={() => handleCategoryChange(category.id)}
-                  className={`p-4 rounded-lg border transition-all hover:shadow-md ${
+                  className={`p-3 sm:p-4 rounded-lg border transition-all hover:shadow-md ${
                     categoryFilter === category.id
                       ? "bg-accent text-accent-foreground border-accent-foreground"
                       : "bg-background border-border hover:bg-secondary/50"
                   }`}
                 >
                   <div className="flex flex-col items-center text-center">
-                    <div className="text-2xl mb-2">
+                    <div className="text-xl sm:text-2xl mb-1 sm:mb-2">
                       {getCategoryIcon(category.id)}
                     </div>
-                    <span className="text-sm font-medium">{category.label}</span>
+                    <span className="text-xs sm:text-sm font-medium">{category.label}</span>
                   </div>
                 </button>
               ))}

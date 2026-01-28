@@ -1,7 +1,9 @@
-// Updated Payments component with real database integration and window opening
+// Updated Payments component with real database integration and proper admin layout
 // Last updated: 2025-01-26 - Fixed window opening and database integration
 
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { Badge } from '../../components/ui/badge';
@@ -12,7 +14,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import { walletService } from '../../lib/supabase/wallet-service';
 import { 
@@ -53,6 +54,9 @@ import {
   Download,
   Filter
 } from 'lucide-react';
+import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import AdminSidebar from '../../components/Admin/AdminSidebar';
 
 interface StripePaymentAttempt {
   id: string;
@@ -182,7 +186,8 @@ interface LoanApplication {
 }
 
 const Payments: React.FC = () => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stripeAttempts, setStripeAttempts] = useState<StripePaymentAttempt[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
@@ -218,6 +223,13 @@ const Payments: React.FC = () => {
   const [selectedLoanApplication, setSelectedLoanApplication] = useState<LoanApplication | null>(null);
   const [processingAction, setProcessingAction] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (userProfile?.user_type !== 'admin') {
+      navigate('/');
+      return;
+    }
+  }, [userProfile, navigate]);
 
   useEffect(() => {
     if (user) {
@@ -894,28 +906,30 @@ const Payments: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Payment Management</h1>
-            <p className="text-muted-foreground">Manage payments, transactions, and financial operations</p>
-          </div>
-          <Button onClick={openPaymentsWindow}>
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Open in New Window
-          </Button>
-        </div>
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <div className="flex-grow">
+        <div className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+            <AdminSidebar />
+            
+            <div className="flex-grow min-w-0">
+              {/* Welcome Header */}
+              <div className="mb-6 sm:mb-8 lg:mb-10 animate-fade-in">
+                <div className="bg-gradient-to-r from-primary to-primary/90 rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 text-primary-foreground shadow-lg">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">Payment Management</h1>
+                  <p className="text-primary-foreground/90 text-base sm:text-lg">Manage payments, transactions, and financial operations</p>
+                  <p className="text-primary-foreground/70 mt-1 text-xs sm:text-sm">Monitor revenue, approve payments, and handle financial operations</p>
+                </div>
+              </div>
 
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+              {/* Error Alert */}
+              {error && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -2051,6 +2065,11 @@ const Payments: React.FC = () => {
           </Card>
         </TabsContent>
       </Tabs>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
     </div>
   );
 };

@@ -76,26 +76,29 @@ const Navbar = () => {
       {/* Top Business Bar */}
       <div className="bg-slate-900 text-white py-2 px-4 text-sm">
         <div className="container-wide flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-green-400" />
-              Trade Assurance
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+            <span className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-green-400" />
+              <span className="hidden xs:inline">Trade Assurance</span>
+              <span className="xs:hidden">Assurance</span>
             </span>
-            <span className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-blue-400" />
-              Worldwide Shipping
+            <span className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <Globe className="w-3 h-3 sm:w-4 sm:h-4 text-blue-400" />
+              <span className="hidden sm:inline">Worldwide Shipping</span>
+              <span className="sm:hidden">Shipping</span>
             </span>
-            <span className="flex items-center gap-2">
-              <Building2 className="w-4 h-4 text-orange-400" />
-              10,000+ Suppliers
+            <span className="flex items-center gap-1 sm:gap-2 whitespace-nowrap">
+              <Building2 className="w-3 h-3 sm:w-4 sm:h-4 text-orange-400" />
+              <span className="hidden sm:inline">10,000+ Suppliers</span>
+              <span className="sm:hidden">10K+ Suppliers</span>
             </span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:inline">Mon-Fri: 9AM-6PM EST</span>
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+            <span className="hidden sm:inline text-xs">Mon-Fri: 9AM-6PM EST</span>
             <Link to="/contact">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-0">
-                <Headphones className="w-4 h-4 mr-1" />
-                Support
+              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-1 sm:p-0">
+                <Headphones className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="hidden xs:inline ml-1">Support</span>
               </Button>
             </Link>
           </div>
@@ -234,45 +237,58 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           {isOpen && (
-            <div className="lg:hidden py-4 border-t border-border">
+            <div className="lg:hidden py-4 border-t border-border max-h-[70vh] overflow-y-auto">
               <div className="flex flex-col gap-2">
-                {navLinks.map((link) => (
-                  <div key={link.name}>
-                    <Link
-                      to={link.href}
+                {/* Mobile User Actions First */}
+                <div className="px-4 py-3 bg-blue-50 rounded-lg mb-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="font-semibold text-blue-900">Account</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
                       onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-between px-4 py-3 text-foreground hover:bg-blue-50 rounded-lg transition-colors"
                     >
-                      <span className="font-medium">{link.name}</span>
-                      {link.dropdown && <ChevronDown className="w-4 h-4" />}
-                    </Link>
-                    
-                    {/* Mobile Dropdown */}
-                    {link.dropdown && (
-                      <div className="pl-4 pr-4 pb-2">
-                        {link.dropdown.map((item) => (
-                          <Link
-                            key={item.name}
-                            to={item.href}
-                            onClick={() => setIsOpen(false)}
-                            className="block px-4 py-2 text-sm text-muted-foreground hover:text-blue-600 transition-colors"
-                          >
-                            {item.name}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                      <X className="w-4 h-4" />
+                    </Button>
                   </div>
-                ))}
-                
-                <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border mt-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link to="/cart" className="flex-1">
-                      <Button variant="outline" className="w-full gap-2 relative text-xs">
+                  {user ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link to={dashboardUrl} className="flex-1" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full gap-1 text-xs">
+                          <User className="w-3 h-3" />
+                          Dashboard
+                        </Button>
+                      </Link>
+                      <Button variant="ghost" className="flex-1 text-xs" onClick={() => { signOut(); setIsOpen(false); }}>
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link to="/auth" className="flex-1" onClick={() => setIsOpen(false)}>
+                        <Button variant="outline" className="w-full text-xs">
+                          Sign In
+                        </Button>
+                      </Link>
+                      <Link to="/become-partner" className="flex-1" onClick={() => setIsOpen(false)}>
+                        <Button className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white">
+                          Supplier
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick Actions */}
+                <div className="px-4 py-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <Link to="/cart" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full gap-1 relative text-xs p-2">
                         <ShoppingCart className="w-3 h-3" />
-                        Cart
+                        <span className="hidden xs:inline">Cart</span>
                         {getItemCount() > 0 && (
-                          <span className="absolute top-0 right-2 w-4 h-4 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
                             {getItemCount()}
                           </span>
                         )}
@@ -280,56 +296,63 @@ const Navbar = () => {
                     </Link>
                     <Button 
                       variant="outline" 
-                      className="w-full gap-2 relative text-xs"
-                      onClick={() => setIsNotificationsOpen(true)}
+                      className="w-full gap-1 relative text-xs p-2"
+                      onClick={() => { setIsNotificationsOpen(true); setIsOpen(false); }}
                     >
                       <Bell className="w-3 h-3" />
-                      Notif
-                      <span className="absolute top-0 right-2 w-2 h-2 rounded-full bg-red-500"></span>
+                      <span className="hidden xs:inline">Notif</span>
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
                     </Button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Link to="/liked-items" className="flex-1">
-                      <Button variant="outline" className="w-full gap-2 text-xs">
+                    <Link to="/liked-items" className="flex-1" onClick={() => setIsOpen(false)}>
+                      <Button variant="outline" className="w-full gap-1 text-xs p-2">
                         <Heart className="w-3 h-3" />
-                        Liked
+                        <span className="hidden xs:inline">Liked</span>
                       </Button>
                     </Link>
-                    {user && (
-                      <Link to="/my-orders" className="flex-1">
+                  </div>
+                  {user && (
+                    <div className="mt-2">
+                      <Link to="/my-orders" className="flex-1" onClick={() => setIsOpen(false)}>
                         <Button variant="outline" className="w-full gap-2 text-xs">
                           <Package className="w-3 h-3" />
-                          Orders
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                  {user ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link to={dashboardUrl} className="flex-1">
-                        <Button variant="outline" className="w-full gap-2 text-xs">
-                          <User className="w-3 h-3" />
-                          Dashboard
-                        </Button>
-                      </Link>
-                      <Button variant="ghost" className="flex-1 text-xs" onClick={signOut}>
-                        Sign Out
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2">
-                      <Link to="/auth" className="flex-1">
-                        <Button variant="outline" className="w-full text-xs">
-                          Sign In
-                        </Button>
-                      </Link>
-                      <Link to="/become-partner" className="flex-1">
-                        <Button className="w-full text-xs bg-blue-600 hover:bg-blue-700 text-white">
-                          Supplier
+                          My Orders
                         </Button>
                       </Link>
                     </div>
                   )}
+                </div>
+
+                {/* Navigation Links */}
+                <div className="px-4 pt-2 border-t border-border">
+                  <div className="font-semibold text-sm text-muted-foreground mb-2">Navigation</div>
+                  {navLinks.map((link) => (
+                    <div key={link.name}>
+                      <Link
+                        to={link.href}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center justify-between px-3 py-3 text-foreground hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        <span className="font-medium">{link.name}</span>
+                        {link.dropdown && <ChevronDown className="w-4 h-4" />}
+                      </Link>
+                      
+                      {/* Mobile Dropdown */}
+                      {link.dropdown && (
+                        <div className="pl-4 pr-3 pb-2">
+                          {link.dropdown.map((item) => (
+                            <Link
+                              key={item.name}
+                              to={item.href}
+                              onClick={() => setIsOpen(false)}
+                              className="block px-3 py-2 text-sm text-muted-foreground hover:text-blue-600 transition-colors rounded hover:bg-gray-50"
+                            >
+                              {item.name}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
