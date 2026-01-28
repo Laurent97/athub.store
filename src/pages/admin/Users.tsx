@@ -631,16 +631,15 @@ const openBalanceModal = (user: UserType) => {
     amount: 0,
     type: 'add',
     reason: ''
-  amount: 0,
-  type: 'add',
-  reason: ''
-});
-setShowBalanceModal(true);
+  });
+  setShowBalanceModal(true);
 };
 
 const filteredUsers = users.filter(user => {
-const matchesSearch = 
-  user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const matchesSearch = 
+    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
   user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
   user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
   
