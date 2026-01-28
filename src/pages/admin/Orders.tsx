@@ -632,9 +632,15 @@ export default function AdminOrders() {
         .single();
 
       if (orderData?.partner_id) {
-        const { data: trackingRecord } = await supabase
-          .from('order_tracking')
-          .upsert({
+        try {
+          // First try to get existing tracking record
+          const { data: existingTracking } = await supabase
+            .from('order_tracking')
+            .select('*')
+            .eq('order_id', orderData.order_number)
+            .single();
+
+          const trackingData = {
             order_id: orderData.order_number, // Use order_number consistently
             tracking_number: logisticsForm.tracking_number,
             shipping_method: logisticsForm.shipping_provider,
@@ -643,26 +649,48 @@ export default function AdminOrders() {
             admin_id: user?.id,
             partner_id: orderData.partner_id,
             estimated_delivery: logisticsForm.estimated_delivery,
-            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
-          }, {
-            onConflict: 'order_id'
-          })
-          .select()
-          .single();
+          };
 
-        // Add initial tracking update
-        if (trackingRecord?.id) {
-          await supabase
-            .from('tracking_updates')
-            .insert({
-              tracking_id: trackingRecord.id,
-              status: 'shipped',
-              description: `Package shipped via ${logisticsForm.shipping_provider}`,
-              location: 'Warehouse',
-              timestamp: new Date().toISOString(),
-              updated_by: user?.id
-            });
+          let trackingRecord;
+          if (existingTracking) {
+            // Update existing record
+            const { data } = await supabase
+              .from('order_tracking')
+              .update(trackingData)
+              .eq('id', existingTracking.id)
+              .select()
+              .single();
+            trackingRecord = data;
+          } else {
+            // Insert new record
+            const { data } = await supabase
+              .from('order_tracking')
+              .insert({
+                ...trackingData,
+                created_at: new Date().toISOString()
+              })
+              .select()
+              .single();
+            trackingRecord = data;
+          }
+
+          // Add initial tracking update
+          if (trackingRecord?.id) {
+            await supabase
+              .from('tracking_updates')
+              .insert({
+                tracking_id: trackingRecord.id,
+                status: 'shipped',
+                description: `Package shipped via ${logisticsForm.shipping_provider}`,
+                location: 'Warehouse',
+                timestamp: new Date().toISOString(),
+                updated_by: user?.id
+              });
+          }
+        } catch (trackingError) {
+          console.error('Error managing tracking record:', trackingError);
+          // Continue with order update even if tracking fails
         }
       }
 
