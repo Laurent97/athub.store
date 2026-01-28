@@ -7,47 +7,57 @@ export default async function handler(req, res) {
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(
       process.env.VITE_SUPABASE_URL,
-      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY
+      process.env.VITE_SUPABASE_ANON_KEY
     );
 
-    // Get table structure
-    const { data: tables, error: tablesError } = await supabase
-      .from('information_schema.columns')
-      .select('table_name, column_name, data_type')
-      .eq('table_schema', 'public')
-      .in('table_name', ['products', 'orders', 'users', 'partner_profiles', 'order_items'])
-      .order('table_name, ordinal_position');
+    console.log('Testing Supabase connection...');
+    console.log('Supabase URL:', process.env.VITE_SUPABASE_URL);
+    console.log('Supabase Key exists:', !!process.env.VITE_SUPABASE_ANON_KEY);
 
-    if (tablesError) {
-      throw tablesError;
-    }
-
-    // Group by table
-    const schema = {};
-    tables.forEach(col => {
-      if (!schema[col.table_name]) {
-        schema[col.table_name] = [];
-      }
-      schema[col.table_name].push({
-        column: col.column_name,
-        type: col.data_type
-      });
-    });
-
-    // Get sample data from products table
+    // First, try to get sample products to see what columns exist
     const { data: sampleProducts, error: sampleError } = await supabase
       .from('products')
       .select('*')
-      .limit(3);
+      .limit(1);
 
-    return res.status(200).json({
-      schema,
-      sampleProducts: sampleProducts || [],
-      sampleError: sampleError?.message
-    });
+    if (sampleError) {
+      console.error('Products query error:', sampleError);
+      return res.status(500).json({ 
+        error: 'Products query failed',
+        details: sampleError.message,
+        code: sampleError.code 
+      });
+    }
+
+    // If we have products, examine the structure
+    if (sampleProducts && sampleProducts.length > 0) {
+      const product = sampleProducts[0];
+      const columns = Object.keys(product);
+      
+      return res.status(200).json({
+        success: true,
+        sampleProduct: product,
+        availableColumns: columns,
+        columnTypes: columns.map(col => ({
+          column: col,
+          value: product[col],
+          type: typeof product[col]
+        }))
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        message: 'No products found in table',
+        sampleProduct: null,
+        availableColumns: []
+      });
+    }
 
   } catch (error) {
     console.error('Schema debug error:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ 
+      error: error.message,
+      stack: error.stack 
+    });
   }
 }
