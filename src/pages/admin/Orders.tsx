@@ -699,7 +699,7 @@ export default function AdminOrders() {
             order_id: orderData.order_number, // Use order_number consistently
             tracking_number: logisticsForm.tracking_number,
             carrier: logisticsForm.carrier,
-            status: 'shipped', // Always set to shipped when tracking is added
+            status: logisticsForm.current_status, // Use the current status from form
             admin_id: user?.id,
             partner_id: orderData.partner_id,
             estimated_delivery: logisticsForm.estimated_delivery,
@@ -735,8 +735,8 @@ export default function AdminOrders() {
               .from('tracking_updates')
               .insert({
                 tracking_id: trackingRecord.id,
-                status: 'shipped',
-                description: `Package shipped via ${logisticsForm.carrier}`,
+                status: logisticsForm.current_status,
+                description: `Tracking updated via ${logisticsForm.carrier} - Status: ${logisticsForm.current_status}`,
                 location: 'Warehouse',
                 timestamp: new Date().toISOString(),
                 updated_by: user?.id
@@ -748,42 +748,15 @@ export default function AdminOrders() {
         }
       }
 
-      // Update order status to shipped
-      const { data: currentOrder } = await supabase
-        .from('orders')
-        .select('status')
-        .eq('id', selectedOrder.id)
-        .single();
-
-      await supabase
-        .from('orders')
-        .update({
-          status: 'shipped',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', selectedOrder.id);
-
-      // Create order tracking history entry
-      if (currentOrder?.status && currentOrder.status !== 'shipped') {
-        await supabase
-          .from('order_tracking_history')
-          .insert({
-            order_reference: selectedOrder.id,
-            old_status: currentOrder.status,
-            new_status: 'shipped',
-            changed_by: user?.id,
-            change_reason: 'Tracking information added',
-            notes: `Package shipped via ${logisticsForm.carrier} with tracking number ${logisticsForm.tracking_number}`,
-            created_at: new Date().toISOString()
-          });
-      }
-
+      // Only update tracking information, don't change order status
+      // The order status will be managed separately through the status update buttons
+      
       setShowLogisticsModal(false);
       loadOrders();
       if (orderDetails?.id === selectedOrder.id) {
         loadOrderDetails(selectedOrder.id);
       }
-      alert('Logistics information saved and order marked as shipped. Partners can now view tracking info.');
+      alert('✅ Tracking information saved successfully! You can update the order status separately using the status buttons.');
     } catch (error) {
       console.error('Error saving logistics:', error);
       alert('Failed to save logistics information');
@@ -1660,7 +1633,7 @@ export default function AdminOrders() {
                   disabled={!logisticsForm.carrier || !logisticsForm.tracking_number || !logisticsForm.estimated_delivery}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
-                  🚚 Save & Mark as Shipped
+                  � Save Tracking Information
                 </button>
               </div>
             </div>
