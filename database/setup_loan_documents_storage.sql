@@ -96,11 +96,3 @@ WHERE la.documents IS NOT NULL;
 
 -- Grant access to the documents view
 GRANT SELECT ON v_loan_application_documents TO authenticated;
-
--- Add comments
-COMMENT ON STORAGE.BUCKET loan_documents IS 'Storage bucket for loan application documents (PDFs, images, etc.)';
-COMMENT ON POLICY "Users can upload loan documents" ON storage.objects IS 'Allows authenticated users to upload documents to their own loan application folders';
-COMMENT ON POLICY "Users can view own loan documents" ON storage.objects IS 'Allows users to view documents from their own loan applications';
-COMMENT ON POLICY "Admins can manage all loan documents" ON storage.objects IS 'Allows admin users to manage all loan documents';
-COMMENT ON FUNCTION storage.foldername IS 'Helper function to extract folder name from storage object path';
-COMMENT ON VIEW v_loan_application_documents IS 'View showing all loan application documents with metadata';

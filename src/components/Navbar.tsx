@@ -92,10 +92,12 @@ const Navbar = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="hidden sm:inline">Mon-Fri: 9AM-6PM EST</span>
-            <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-0">
-              <Headphones className="w-4 h-4 mr-1" />
-              Support
-            </Button>
+            <Link to="/contact">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-0">
+                <Headphones className="w-4 h-4 mr-1" />
+                Support
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

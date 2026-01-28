@@ -4,16 +4,34 @@ import Footer from '@/components/Footer';
 import { ArrowLeft, Mail, Phone, MapPin, Clock, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { emailService } from '@/services/emailService';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setLoading(true);
+    setError('');
+
+    try {
+      const result = await emailService.sendContactEmail(formData);
+      
+      if (result.success) {
+        setSubmitted(true);
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,7 +59,7 @@ export default function Contact() {
                   <Mail className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-bold mb-1">Email</h3>
-                    <p className="text-muted-foreground">support@autotradehub.com</p>
+                    <p className="text-muted-foreground">support@athub.store</p>
                     <p className="text-muted-foreground text-sm">Response within 24 hours</p>
                     <p className="text-muted-foreground text-sm">automotivetradehub@gmail.com</p>
                     <p className="text-muted-foreground text-sm">Alternative contact</p>
@@ -131,13 +149,18 @@ export default function Contact() {
                     placeholder="Your message..."
                   />
                 </div>
-                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 gap-2">
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 gap-2" disabled={loading}>
                   <Send className="w-4 h-4" />
-                  Send Message
+                  {loading ? 'Sending...' : 'Send Message'}
                 </Button>
+                {error && (
+                  <div className="p-3 bg-destructive/10 text-destructive rounded-lg text-sm">
+                    ⚠ {error}
+                  </div>
+                )}
                 {submitted && (
                   <div className="p-3 bg-success/10 text-success rounded-lg text-sm">
-                    ✓ Message sent successfully! We'll be in touch soon.
+                    ✓ Email client opened! Please send the email to contact us.
                   </div>
                 )}
               </form>
@@ -151,7 +174,7 @@ export default function Contact() {
               {[
                 { q: 'What is your response time?', a: 'We typically respond to emails within 24 hours.' },
                 { q: 'Do you have a physical store?', a: 'We operate online, but we have warehouses in major cities worldwide.' },
-                { q: 'Can I schedule a call?', a: 'Yes, email us at support@autotradehub.com to schedule a call.' },
+                { q: 'Can I schedule a call?', a: 'Yes, email us at support@athub.store to schedule a call.' },
                 { q: 'What languages do you support?', a: 'We support over 50 languages for customer support.' },
               ].map((faq, idx) => (
                 <div key={idx} className="border-b border-border pb-4 last:border-0">

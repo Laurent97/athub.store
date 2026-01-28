@@ -1,9 +1,5 @@
 import { Link } from "react-router-dom";
 import { 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Youtube, 
   Mail, 
   Phone, 
   MapPin,
@@ -80,9 +76,9 @@ const Footer = () => {
             
             {/* Contact Info */}
             <div className="space-y-3 text-sm">
-              <a href="mailto:support@autotradehub.com" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
+              <a href="mailto:support@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
                 <Mail className="w-4 h-4" />
-                support@autotradehub.com
+                support@athub.store
               </a>
               <a href="tel:+447719924445" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
                 <Phone className="w-4 h-4" />
@@ -133,21 +129,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Social */}
-          <div>
-            <h4 className="font-semibold mb-4">Follow Us</h4>
-            <div className="flex gap-3">
-              {[Facebook, Twitter, Instagram, Youtube].map((Icon, index) => (
-                <a
-                  key={Icon.name}
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Icon className="w-5 h-5" />
-                </a>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 

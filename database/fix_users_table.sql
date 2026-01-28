@@ -1,9 +1,18 @@
 -- Fix users table constraint issue
 -- This script handles the user_type check constraint problem
 
--- First, let's check what constraints exist on the users table
--- If the table already exists with different constraints, we need to handle it
+-- First, let's see what data exists and fix any invalid values
+-- Update any existing rows with invalid user_type values
+UPDATE users 
+SET user_type = 'user' 
+WHERE user_type IS NULL OR user_type NOT IN ('user', 'partner', 'admin', 'pending');
 
+-- Do the same for profiles table if it exists
+UPDATE profiles 
+SET user_type = 'user' 
+WHERE user_type IS NULL OR user_type NOT IN ('user', 'partner', 'admin', 'pending');
+
+-- Now drop and recreate the constraint
 -- Drop the existing check constraint if it exists
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_user_type_check;
 
@@ -11,20 +20,10 @@ ALTER TABLE users DROP CONSTRAINT IF EXISTS users_user_type_check;
 ALTER TABLE users ADD CONSTRAINT users_user_type_check 
     CHECK (user_type IN ('user', 'partner', 'admin', 'pending'));
 
--- Also check if there are any existing rows with invalid user_type values
--- Update any invalid user_type values to 'user'
-UPDATE users 
-SET user_type = 'user' 
-WHERE user_type NOT IN ('user', 'partner', 'admin', 'pending');
-
 -- Do the same for profiles table if it exists
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_user_type_check;
 ALTER TABLE profiles ADD CONSTRAINT profiles_user_type_check 
     CHECK (user_type IN ('user', 'partner', 'admin', 'pending'));
-
-UPDATE profiles 
-SET user_type = 'user' 
-WHERE user_type NOT IN ('user', 'partner', 'admin', 'pending');
 
 -- Now try to insert the sample data again
 INSERT INTO users (id, email, full_name, user_type) 
