@@ -1221,27 +1221,6 @@ export default function AdminOrders() {
                         {orderDetails.status}
                       </span>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium text-foreground">
-                        Update Status
-                      </label>
-                      <div className="flex flex-wrap gap-2">
-                        {['pending', 'waiting_confirmation', 'confirmed', 'processing', 'shipped', 'delivered', 'completed', 'cancelled'].map((status) => (
-                          <button
-                            key={status}
-                            onClick={() => updateOrderStatus(orderDetails.id, status)}
-                            className={`px-3 py-1 rounded text-sm ${
-                              orderDetails.status === status
-                                ? 'bg-primary text-primary-foreground'
-                                : 'bg-muted text-foreground hover:bg-muted/80'
-                            }`}
-                          >
-                            {status}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
 
@@ -1258,13 +1237,7 @@ export default function AdminOrders() {
                       </div>
                     ) : (
                       <div>
-                        <p className="text-yellow-600 mb-3 text-sm">Not assigned to any partner</p>
-                        <button
-                          onClick={() => setShowAssignModal(true)}
-                          className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 text-sm"
-                        >
-                          Assign to Partner
-                        </button>
+                        <p className="text-yellow-600 text-sm">Not assigned to any partner</p>
                       </div>
                     )}
                   </div>
