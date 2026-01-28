@@ -340,7 +340,8 @@ export default function AdminOrders() {
         // Create new user using the working function
         const { data: newUser, error: userError } = await supabase.rpc('get_or_create_user_simple', {
           user_email: newOrder.customer_email,
-          user_full_name: newOrder.customer_name
+          user_full_name: newOrder.customer_name,
+          user_type: 'user'
         });
 
         if (userError) {
@@ -351,6 +352,7 @@ export default function AdminOrders() {
             .insert({
               email: newOrder.customer_email,
               full_name: newOrder.customer_name,
+              user_type: 'user',
               created_at: new Date().toISOString()
             })
             .select('id')
@@ -695,6 +697,12 @@ export default function AdminOrders() {
       }
 
       // Update order status to shipped
+      const { data: currentOrder } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', selectedOrder.id)
+        .single();
+
       await supabase
         .from('orders')
         .update({
@@ -702,6 +710,21 @@ export default function AdminOrders() {
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedOrder.id);
+
+      // Create order tracking history entry
+      if (currentOrder?.status && currentOrder.status !== 'shipped') {
+        await supabase
+          .from('order_tracking_history')
+          .insert({
+            order_reference: selectedOrder.id,
+            old_status: currentOrder.status,
+            new_status: 'shipped',
+            changed_by: user?.id,
+            change_reason: 'Tracking information added',
+            notes: `Package shipped via ${logisticsForm.shipping_provider} with tracking number ${logisticsForm.tracking_number}`,
+            created_at: new Date().toISOString()
+          });
+      }
 
       setShowLogisticsModal(false);
       loadOrders();
