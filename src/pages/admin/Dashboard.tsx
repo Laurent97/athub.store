@@ -17,6 +17,8 @@ interface DashboardStats {
   totalOrders: number;
   totalRevenue: number;
   pendingPartners: number;
+  paidOrders: number;
+  pendingPayments: number;
 }
 
 const AdminDashboard = () => {
@@ -31,7 +33,9 @@ const AdminDashboard = () => {
     totalPartners: 0,
     totalOrders: 0,
     totalRevenue: 0,
-    pendingPartners: 0
+    pendingPartners: 0,
+    paidOrders: 0,
+    pendingPayments: 0
   });
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -49,13 +53,17 @@ const AdminDashboard = () => {
       const totalOrders = orders?.length || 0;
       const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const pendingPartners = partners?.filter(p => p.partner_status === 'pending').length || 0;
+      const paidOrders = orders?.filter(order => order.payment_status === 'paid').length || 0;
+      const pendingPayments = orders?.filter(order => order.payment_status === 'pending').length || 0;
 
       setStats({
         totalUsers,
         totalPartners,
         totalOrders,
         totalRevenue,
-        pendingPartners
+        pendingPartners,
+        paidOrders,
+        pendingPayments
       });
       setLastUpdate(new Date());
     }
@@ -194,6 +202,75 @@ const AdminDashboard = () => {
                   <p className="text-muted-foreground text-xs sm:text-sm font-medium mb-1">Total Revenue</p>
                   <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-foreground mb-2 sm:mb-3">${stats.totalRevenue.toLocaleString()}</p>
                   <p className="text-xs text-muted-foreground hidden sm:block">Lifetime revenue</p>
+                </div>
+              </div>
+
+              {/* Payment Status Breakdown */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-4 sm:mb-6 lg:mb-8">
+                {/* Paid Orders Card */}
+                <div className="group bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 lg:p-6 border border-green-200 dark:border-green-800/30 animate-fade-in hover:scale-105 transform">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 p-2 sm:p-3 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform">
+                      <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+                  <p className="text-muted-foreground text-xs sm:text-sm font-medium mb-1">Paid Orders</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-700 dark:text-green-300 mb-2 sm:mb-3">{stats.paidOrders}</p>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Completed payments</p>
+                </div>
+
+                {/* Pending Payments Card */}
+                <div className="group bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 lg:p-6 border border-yellow-200 dark:border-yellow-800/30 animate-fade-in hover:scale-105 transform">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 p-2 sm:p-3 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform">
+                      <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-600 opacity-50" />
+                  </div>
+                  <p className="text-muted-foreground text-xs sm:text-sm font-medium mb-1">Pending Payments</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-yellow-700 dark:text-yellow-300 mb-2 sm:mb-3">{stats.pendingPayments}</p>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Awaiting payment</p>
+                </div>
+
+                {/* Payment Completion Rate */}
+                <div className="group bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 lg:p-6 border border-blue-200 dark:border-blue-800/30 animate-fade-in hover:scale-105 transform">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 sm:p-3 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform">
+                      <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 opacity-50" />
+                  </div>
+                  <p className="text-muted-foreground text-xs sm:text-sm font-medium mb-1">Payment Rate</p>
+                  <p className="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2 sm:mb-3">
+                    {stats.totalOrders > 0 ? Math.round((stats.paidOrders / stats.totalOrders) * 100) : 0}%
+                  </p>
+                  <p className="text-xs text-muted-foreground hidden sm:block">Completion rate</p>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="group bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-lg sm:rounded-xl lg:rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 p-3 sm:p-4 lg:p-6 border border-purple-200 dark:border-purple-800/30 animate-fade-in hover:scale-105 transform">
+                  <div className="flex items-start justify-between mb-3 sm:mb-4">
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-2 sm:p-3 rounded-lg sm:rounded-xl group-hover:scale-110 transition-transform">
+                      <RefreshCw className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                    </div>
+                    <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 opacity-0 group-hover:opacity-100 transition" />
+                  </div>
+                  <p className="text-muted-foreground text-xs sm:text-sm font-medium mb-1">Quick Actions</p>
+                  <div className="space-y-2">
+                    <Link
+                      to="/admin/payments"
+                      className="block w-full text-center px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                    >
+                      Manage Payments
+                    </Link>
+                    <button
+                      onClick={refreshAllData}
+                      className="w-full px-3 py-2 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 text-sm rounded-lg transition-colors"
+                    >
+                      Refresh Data
+                    </button>
+                  </div>
                 </div>
               </div>
 
