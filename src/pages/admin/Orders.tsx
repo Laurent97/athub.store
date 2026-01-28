@@ -627,7 +627,7 @@ export default function AdminOrders() {
       // Also update new order_tracking table for partner dashboard
       const { data: orderData } = await supabase
         .from('orders')
-        .select('partner_id')
+        .select('partner_id, order_number')
         .eq('id', selectedOrder.id)
         .single();
 
@@ -635,7 +635,7 @@ export default function AdminOrders() {
         await supabase
           .from('order_tracking')
           .upsert({
-            order_id: selectedOrder.order_number || selectedOrder.id,
+            order_id: orderData.order_number, // Use order_number consistently
             tracking_number: logisticsForm.tracking_number,
             shipping_method: logisticsForm.shipping_provider,
             carrier: logisticsForm.shipping_provider,
