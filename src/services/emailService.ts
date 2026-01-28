@@ -9,7 +9,11 @@ export const emailService = {
   async sendContactEmail(data: EmailData): Promise<{ success: boolean; message: string }> {
     try {
       // Use the serverless function to send the email
-      const response = await fetch('/api/contact', {
+      const apiUrl = '/api/contact';
+      console.log('Sending to API URL:', apiUrl);
+      console.log('Current origin:', window.location.origin);
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -17,7 +21,11 @@ export const emailService = {
         body: JSON.stringify(data),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       const result = await response.json();
+      console.log('Response data:', result);
 
       if (response.ok) {
         return {

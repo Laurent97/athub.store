@@ -43,26 +43,37 @@ export default async function handler(req, res) {
     // Option 1: Using Resend (recommended - you need to add RESEND_API_KEY to environment)
     const RESEND_API_KEY = process.env.RESEND_API_KEY;
     
+    console.log('RESEND_API_KEY exists:', !!RESEND_API_KEY);
+    
     if (RESEND_API_KEY) {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'noreply@athub.store', // Use your verified domain
-          to: ['support@athub.store', 'admin@athub.store'], // Send to both emails
-          subject: emailData.subject,
-          html: emailData.html,
-          replyTo: email,
-        }),
-      });
+      try {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'noreply@athub.store', // Use your verified domain
+            to: ['support@athub.store', 'admin@athub.store'], // Send to both emails
+            subject: emailData.subject,
+            html: emailData.html,
+            replyTo: email,
+          }),
+        });
 
-      if (response.ok) {
-        return res.status(200).json({ message: 'Email sent successfully!' });
-      } else {
-        throw new Error('Failed to send email via Resend');
+        console.log('Resend response status:', response.status);
+        
+        if (response.ok) {
+          return res.status(200).json({ message: 'Email sent successfully!' });
+        } else {
+          const errorText = await response.text();
+          console.error('Resend error response:', errorText);
+          throw new Error(`Resend API error: ${response.status} - ${errorText}`);
+        }
+      } catch (fetchError) {
+        console.error('Fetch error to Resend:', fetchError);
+        throw fetchError;
       }
     }
 
