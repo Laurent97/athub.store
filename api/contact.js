@@ -54,7 +54,7 @@ export default async function handler(req, res) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'noreply@athub.store', // Use your verified domain
+            from: 'support@athub.store', // Use your existing verified email
             to: ['support@athub.store', 'admin@athub.store'], // Send to both emails
             subject: emailData.subject,
             html: emailData.html,
