@@ -48,8 +48,8 @@ INSERT INTO order_tracking (
   'Standard Shipping',
   'FedEx',
   'shipped',
-  (SELECT id FROM users WHERE user_type = 'admin' LIMIT 1), -- Real admin ID or NULL
-  (SELECT id FROM users WHERE user_type = 'partner' LIMIT 1), -- Real partner ID or NULL
+  (SELECT id FROM users WHERE user_type = 'admin' LIMIT 1), -- Real admin ID from users table
+  (SELECT id FROM partner_profiles LIMIT 1), -- Real partner ID from partner_profiles table
   NOW() + INTERVAL '7 days',
   NOW(),
   NOW()
@@ -139,7 +139,7 @@ SELECT
   ) as updates
 FROM order_tracking ot
 LEFT JOIN tracking_updates tu ON ot.id = tu.tracking_id
-WHERE ot.partner_id = '00000000-0000-0000-0000-000000000000'::uuid
+WHERE ot.partner_id IN (SELECT id FROM partner_profiles) -- Use actual partner IDs
 GROUP BY ot.id;
 
 -- Cleanup test data
