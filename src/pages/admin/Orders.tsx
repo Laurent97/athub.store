@@ -5,6 +5,12 @@ import { supabase } from '../../lib/supabase/client';
 import { Order, PartnerProfile, OrderStatus, PaymentStatus } from '../../lib/types/database';
 import { NotificationService } from '../../lib/supabase/notification-service';
 import { adminService } from '../../lib/supabase/admin-service';
+import { 
+  getStatusConfig, 
+  PROFESSIONAL_ORDER_STATUSES, 
+  STATUS_CATEGORIES,
+  getNextStatuses 
+} from '../../lib/constants/orderStatuses';
 import { OrderStatusBadge } from '../../components/OrderStatusBadge';
 import { CancelOrderButton } from '../../components/CancelOrderButton';
 import { useOrderRealtime } from '../../hooks/useOrderRealtime';
@@ -1200,27 +1206,149 @@ export default function AdminOrders() {
                     <div className="flex items-center justify-between">
                       <span>Current Status:</span>
                       <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                        orderDetails.status === 'pending' 
-                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' 
-                          : orderDetails.status === 'waiting_confirmation' 
-                            ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300' 
-                            : orderDetails.status === 'confirmed' 
-                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300' 
-                              : orderDetails.status === 'processing' 
-                                ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' 
-                                : orderDetails.status === 'shipped' 
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300' 
-                                  : orderDetails.status === 'delivered' 
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
-                                    : orderDetails.status === 'completed' 
-                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
-                                      : orderDetails.status === 'cancelled' 
-                                        ? 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300' 
-                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300'
+                        getStatusConfig(orderDetails.status).color
                       }`}>
-                        {orderDetails.status}
+                        {getStatusConfig(orderDetails.status).label}
                       </span>
                     </div>
+                    <div className="text-sm text-muted-foreground">
+                      {getStatusConfig(orderDetails.status).description}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Tracking Information */}
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground dark:text-white mb-3">
+                    📦 Professional Tracking
+                  </h3>
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800/30">
+                    {orderDetails.logistics ? (
+                      <div className="space-y-4">
+                        {/* Tracking Number */}
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground dark:text-gray-400">Tracking Number</div>
+                            <div className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                              {orderDetails.logistics.tracking_number || 'Not Assigned'}
+                            </div>
+                          </div>
+                          {orderDetails.logistics.tracking_number && (
+                            <button
+                              onClick={() => navigator.clipboard.writeText(orderDetails.logistics.tracking_number)}
+                              className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                            >
+                              📋 Copy
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Shipping Provider */}
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground dark:text-gray-400">Shipping Provider</div>
+                          <div className="font-medium flex items-center gap-2">
+                            {orderDetails.logistics.shipping_provider && (
+                              <span className="text-lg">
+                                {orderDetails.logistics.shipping_provider === 'DHL' ? '🚚' :
+                                 orderDetails.logistics.shipping_provider === 'FedEx' ? '✈️' :
+                                 orderDetails.logistics.shipping_provider === 'UPS' ? '📦' :
+                                 orderDetails.logistics.shipping_provider === 'USPS' ? '📬' : '🚛'}
+                              </span>
+                            )}
+                            {orderDetails.logistics.shipping_provider || 'Not Assigned'}
+                          </div>
+                        </div>
+
+                        {/* Current Tracking Status */}
+                        <div>
+                          <div className="text-sm font-medium text-muted-foreground dark:text-gray-400">Current Tracking Status</div>
+                          <div className="font-medium">
+                            {orderDetails.logistics.current_status ? 
+                              getStatusConfig(orderDetails.logistics.current_status)?.label || orderDetails.logistics.current_status :
+                              'Not Updated'
+                            }
+                          </div>
+                        </div>
+
+                        {/* Delivery Timeline */}
+                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-blue-200 dark:border-blue-800/30">
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground dark:text-gray-400">Estimated Delivery</div>
+                            <div className="font-medium text-sm">
+                              {orderDetails.logistics.estimated_delivery ? 
+                                new Date(orderDetails.logistics.estimated_delivery).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : 
+                                'Not Set'
+                              }
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground dark:text-gray-400">Last Updated</div>
+                            <div className="font-medium text-sm">
+                              {orderDetails.logistics.updated_at ? 
+                                new Date(orderDetails.logistics.updated_at).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : 
+                                'Never'
+                              }
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Professional Status Flow */}
+                        <div className="pt-2 border-t border-blue-200 dark:border-blue-800/30">
+                          <div className="text-sm font-medium text-muted-foreground dark:text-gray-400 mb-2">Status Progress</div>
+                          <div className="flex items-center gap-1">
+                            {Object.values(STATUS_CATEGORIES).map((category, index) => {
+                              const currentCategory = getStatusConfig(orderDetails.status).category;
+                              const isActive = category.includes(orderDetails.status);
+                              const isComplete = index < Object.values(STATUS_CATEGORIES).findIndex(cat => 
+                                cat.includes(orderDetails.status)
+                              );
+                              
+                              return (
+                                <div key={index} className="flex items-center">
+                                  <div className={`w-3 h-3 rounded-full ${
+                                    isComplete ? 'bg-green-500' :
+                                    isActive ? 'bg-blue-500' :
+                                    'bg-gray-300'
+                                  }`} />
+                                  {index < Object.values(STATUS_CATEGORIES).length - 1 && (
+                                    <div className={`w-8 h-0.5 ${
+                                      isComplete ? 'bg-green-500' :
+                                      isActive ? 'bg-blue-500' :
+                                      'bg-gray-300'
+                                    }`} />
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                            <span>Order</span>
+                            <span>Process</span>
+                            <span>Ship</span>
+                            <span>Deliver</span>
+                            <span>Complete</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-4">
+                        <div className="text-4xl mb-2">📦</div>
+                        <p className="text-muted-foreground text-sm">No tracking information available</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Tracking details will appear once shipping is initiated
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1407,12 +1535,47 @@ export default function AdminOrders() {
                     onChange={(e) => setLogisticsForm({...logisticsForm, current_status: e.target.value})}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg"
                   >
-                    <option value="processing">Processing</option>
-                    <option value="picked_up">Picked Up</option>
-                    <option value="in_transit">In Transit</option>
-                    <option value="out_for_delivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="delayed">Delayed</option>
+                    <optgroup label="Pre-Shipment">
+                      <option value="ORDER_RECEIVED">Order Received</option>
+                      <option value="PAYMENT_AUTHORIZED">Payment Authorized</option>
+                      <option value="ORDER_VERIFIED">Order Verified</option>
+                      <option value="INVENTORY_ALLOCATED">Inventory Allocated</option>
+                    </optgroup>
+                    <optgroup label="Fulfillment">
+                      <option value="ORDER_PROCESSING">Order Processing</option>
+                      <option value="PICKING_STARTED">Picking Started</option>
+                      <option value="PICKING_COMPLETED">Picking Completed</option>
+                      <option value="PACKING_STARTED">Packing Started</option>
+                      <option value="PACKING_COMPLETED">Packing Completed</option>
+                      <option value="READY_TO_SHIP">Ready to Ship</option>
+                    </optgroup>
+                    <optgroup label="Shipping">
+                      <option value="CARRIER_PICKUP_SCHEDULED">Pickup Scheduled</option>
+                      <option value="PICKED_UP">Picked Up</option>
+                      <option value="IN_TRANSIT">In Transit</option>
+                      <option value="ARRIVED_AT_ORIGIN">Arrived at Origin Facility</option>
+                      <option value="DEPARTED_ORIGIN">Departed Origin Facility</option>
+                      <option value="ARRIVED_AT_SORT">Arrived at Sort Facility</option>
+                      <option value="PROCESSED_AT_SORT">Processed at Sort Facility</option>
+                      <option value="DEPARTED_SORT">Departed Sort Facility</option>
+                      <option value="ARRIVED_AT_DESTINATION">Arrived at Destination</option>
+                    </optgroup>
+                    <optgroup label="Delivery">
+                      <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                      <option value="DELIVERY_ATTEMPTED">Delivery Attempted</option>
+                      <option value="DELIVERED">Delivered</option>
+                    </optgroup>
+                    <optgroup label="Exceptions">
+                      <option value="DELAYED">Delayed</option>
+                      <option value="WEATHER_DELAY">Weather Delay</option>
+                      <option value="MECHANICAL_DELAY">Mechanical Delay</option>
+                      <option value="ADDRESS_ISSUE">Address Issue</option>
+                      <option value="CUSTOMER_UNAVAILABLE">Customer Unavailable</option>
+                      <option value="SECURITY_DELAY">Security Delay</option>
+                      <option value="CUSTOMS_HOLD">Customs Hold</option>
+                      <option value="DAMAGED">Package Damaged</option>
+                      <option value="LOST">Package Lost</option>
+                    </optgroup>
                   </select>
                 </div>
 
