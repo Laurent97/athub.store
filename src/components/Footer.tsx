@@ -80,6 +80,10 @@ const Footer = () => {
                 <Mail className="w-4 h-4" />
                 support@athub.store
               </a>
+              <a href="mailto:admin@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
+                <Mail className="w-4 h-4" />
+                admin@athub.store
+              </a>
               <a href="tel:+447719924445" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
                 <Phone className="w-4 h-4" />
                 +44 7719 924445

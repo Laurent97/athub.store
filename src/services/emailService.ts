@@ -8,27 +8,30 @@ interface EmailData {
 export const emailService = {
   async sendContactEmail(data: EmailData): Promise<{ success: boolean; message: string }> {
     try {
-      // For production deployment, we'll use a serverless function or backend service
-      // For now, we'll create a mailto link that opens the user's email client
-      const subject = encodeURIComponent(`Contact Form: ${data.subject}`);
-      const body = encodeURIComponent(
-        `Name: ${data.name}\nEmail: ${data.email}\n\nMessage:\n${data.message}`
-      );
-      
-      const mailtoLink = `mailto:support@athub.store?subject=${subject}&body=${body}`;
-      
-      // Open the email client
-      window.location.href = mailtoLink;
-      
-      return {
-        success: true,
-        message: 'Email client opened. Please send the email to contact us.'
-      };
+      // Use the serverless function to send the email
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        return {
+          success: true,
+          message: result.message || 'Message sent successfully! We\'ll be in touch soon.'
+        };
+      } else {
+        throw new Error(result.error || 'Failed to send message');
+      }
     } catch (error) {
       console.error('Error sending email:', error);
       return {
         success: false,
-        message: 'Failed to open email client. Please try again.'
+        message: 'Failed to send message. Please try again.'
       };
     }
   },
