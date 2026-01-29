@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase/client';
 import { partnerService } from '../../lib/supabase/partner-service';
 import { walletService } from '../../lib/supabase/wallet-service';
 import { storeService } from '../../lib/supabase/store-service';
@@ -51,7 +52,11 @@ export default function DashboardEarnings() {
     availableBalance: 0,
     pendingBalance: 0,
     commissionEarned: 0,
-    averageOrderValue: 0
+    averageOrderValue: 0,
+    totalOrders: 0,
+    storeRating: 0,
+    storeCreditScore: 0,
+    commissionRate: 0.10
   });
   const [monthlyEarnings, setMonthlyEarnings] = useState<any[]>([]);
   const [stores, setStores] = useState<any[]>([]);
@@ -98,17 +103,31 @@ export default function DashboardEarnings() {
       // Get accurate wallet balance from wallet service
       const { data: walletData, error: walletError } = await walletService.getBalance(userProfile.id);
       
+      // Get partner profile for additional metrics
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('*')
+        .eq('user_id', userProfile.id)
+        .single();
+      
       // Get monthly earnings data for chart
       const { data: monthlyData, error: monthlyError } = await earningsService.getMonthlyEarnings(userProfile.id);
       
+      // Get real order data for additional metrics
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('total_amount, commission_amount, status, created_at')
+        .eq('partner_id', userProfile.id)
+        .eq('status', 'completed');
+      
       console.log('🔍 Debug - Earnings Data:', earningsData);
       console.log('🔍 Debug - Wallet Data:', walletData);
-      console.log('🔍 Debug - Earnings Balance:', earningsData?.availableBalance);
-      console.log('🔍 Debug - Wallet Balance:', walletData?.balance);
+      console.log('🔍 Debug - Partner Profile:', partnerProfile);
+      console.log('🔍 Debug - Orders Data:', ordersData);
       console.log('📊 Debug - Monthly Data:', monthlyData);
       
-      if (earningsError || walletError) {
-        console.warn('Failed to load data:', { earningsError, walletError });
+      if (earningsError || walletError || profileError) {
+        console.warn('Failed to load data:', { earningsError, walletError, profileError });
         // Fallback to zero values if service fails
         setEarnings({
           thisMonth: 0,
@@ -118,13 +137,33 @@ export default function DashboardEarnings() {
           availableBalance: walletData?.balance || 0, // Use wallet balance even if earnings fail
           pendingBalance: 0,
           commissionEarned: 0,
-          averageOrderValue: 0
+          averageOrderValue: 0,
+          totalOrders: 0,
+          storeRating: 0,
+          storeCreditScore: 0,
+          commissionRate: 0.10
         });
-      } else if (earningsData) {
+      } else {
+        // Calculate real metrics from orders data
+        const totalOrders = ordersData?.length || 0;
+        const totalRevenue = ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+        const totalCommission = ordersData?.reduce((sum, order) => sum + (order.commission_amount || 0), 0) || 0;
+        const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+        
         // Use wallet balance for availableBalance, not earnings service
         const finalEarnings = {
-          ...earningsData,
-          availableBalance: walletData?.balance || 0 // Override with accurate wallet balance
+          thisMonth: earningsData?.thisMonth || 0,
+          lastMonth: earningsData?.lastMonth || 0,
+          thisYear: earningsData?.thisYear || 0,
+          allTime: earningsData?.allTime || totalCommission,
+          availableBalance: walletData?.balance || 0, // Use accurate wallet balance
+          pendingBalance: earningsData?.pendingBalance || 0,
+          commissionEarned: totalCommission,
+          averageOrderValue: avgOrderValue,
+          totalOrders: totalOrders,
+          storeRating: partnerProfile?.store_rating || 0,
+          storeCreditScore: partnerProfile?.store_credit_score || 0,
+          commissionRate: partnerProfile?.commission_rate || 0.10
         };
         
         console.log('🔍 Debug - Final Earnings:', finalEarnings);
@@ -151,7 +190,11 @@ export default function DashboardEarnings() {
         availableBalance: 0,
         pendingBalance: 0,
         commissionEarned: 0,
-        averageOrderValue: 0
+        averageOrderValue: 0,
+        totalOrders: 0,
+        storeRating: 0,
+        storeCreditScore: 0,
+        commissionRate: 0.10
       });
       setMonthlyEarnings([]);
     } finally {

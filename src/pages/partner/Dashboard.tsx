@@ -3,6 +3,7 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { partnerService } from '../../lib/supabase/partner-service';
+import { walletService } from '../../lib/supabase/wallet-service';
 import StoreIdBadge from '../../components/ui/StoreIdBadge';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
@@ -120,6 +121,10 @@ export default function PartnerDashboard() {
       if (partnerData) {
         // Load partner analytics
         const { success, data: stats } = await partnerService.getPartnerStats(partnerData.id);
+        
+        // Get wallet balance
+        const { data: walletData } = await walletService.getBalance(user.id);
+        
         if (success && stats) {
           setStats({
             totalSales: stats.totalRevenue || 0,
@@ -128,21 +133,21 @@ export default function PartnerDashboard() {
             conversionRate: stats.totalOrders > 0 ? (stats.completedOrders / stats.totalOrders) * 100 : 0,
             averageOrderValue: stats.totalOrders > 0 ? (stats.totalRevenue / stats.totalOrders) : 0,
             totalOrders: stats.totalOrders || 0,
-            storeVisits: {
-              today: Math.floor(Math.random() * 50) + 10, // Mock data - replace with real analytics
-              thisWeek: Math.floor(Math.random() * 200) + 50,
-              thisMonth: Math.floor(Math.random() * 800) + 200,
-              lastMonth: Math.floor(Math.random() * 600) + 150,
-              allTime: Math.floor(Math.random() * 5000) + 1000
+            storeVisits: partnerData.store_visits || {
+              today: 0,
+              thisWeek: 0,
+              thisMonth: 0,
+              lastMonth: 0,
+              allTime: 0
             },
-            storeCreditScore: Math.floor(Math.random() * 200) + 600, // Mock data - set by admin
-            storeRating: parseFloat((Math.random() * 2 + 3).toFixed(1)), // Mock data - 3.0-5.0
-            totalProducts: Math.floor(Math.random() * 50) + 10,
-            activeProducts: Math.floor(Math.random() * 40) + 5,
-            walletBalance: Math.floor(Math.random() * 5000) + 1000,
-            pendingBalance: Math.floor(Math.random() * 500) + 100,
-            monthlyRevenue: Math.floor(Math.random() * 10000) + 2000,
-            lastMonthRevenue: Math.floor(Math.random() * 8000) + 1500
+            storeCreditScore: partnerData.store_credit_score || 0,
+            storeRating: partnerData.store_rating || 0,
+            totalProducts: partnerData.total_products || 0,
+            activeProducts: partnerData.active_products || 0,
+            walletBalance: walletData?.balance || 0,
+            pendingBalance: partnerData.pending_balance || 0,
+            monthlyRevenue: stats.thisMonthRevenue || 0,
+            lastMonthRevenue: stats.lastMonthRevenue || 0
           });
         }
       } else {

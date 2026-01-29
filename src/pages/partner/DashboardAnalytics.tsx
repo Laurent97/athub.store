@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase/client';
 import { partnerService } from '../../lib/supabase/partner-service';
 import { earningsService } from '../../lib/supabase/earnings-service';
 import { walletService } from '../../lib/supabase/wallet-service';
@@ -58,6 +59,13 @@ export default function DashboardAnalytics() {
       // Get real earnings data
       const { data: earningsData, error: earningsError } = await earningsService.getPartnerEarnings(userProfile.id);
       
+      // Get partner profile for real store visits and performance metrics
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('*')
+        .eq('user_id', userProfile.id)
+        .single();
+      
       // Get partner stats for additional metrics
       const { data: stats, error: statsError } = await partnerService.getPartnerStats(userProfile.id);
       
@@ -67,40 +75,76 @@ export default function DashboardAnalytics() {
       // Get monthly earnings data for charts
       const { data: monthlyEarnings, error: monthlyError } = await earningsService.getMonthlyEarnings(userProfile.id);
       
-      if (earningsError || statsError || walletError) {
-        throw new Error(earningsError?.message || statsError?.message || walletError?.message || 'Failed to load analytics');
+      // Get real daily earnings for the last 30 days using direct query
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: dailyEarnings, error: dailyError } = await supabase
+        .from('orders')
+        .select('created_at, total_amount, commission_amount')
+        .eq('partner_id', userProfile.id)
+        .eq('status', 'completed')
+        .gte('created_at', thirtyDaysAgo)
+        .order('created_at', { ascending: true });
+      
+      // Get weekly performance data using direct query
+      const twelveWeeksAgo = new Date(Date.now() - 12 * 7 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: weeklyOrders, error: weeklyError } = await supabase
+        .from('orders')
+        .select('created_at, total_amount, commission_amount')
+        .eq('partner_id', userProfile.id)
+        .eq('status', 'completed')
+        .gte('created_at', twelveWeeksAgo)
+        .order('created_at', { ascending: true });
+      
+      // Process daily earnings data
+      const realDailyEarnings = dailyEarnings ? 
+        Array.from({ length: 30 }, (_, i) => {
+          const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          const dayOrders = dailyEarnings.filter(order => order.created_at.startsWith(date));
+          return {
+            date,
+            earnings: dayOrders.reduce((sum, order) => sum + (order.commission_amount || 0), 0),
+            orders: dayOrders.length,
+            profit: dayOrders.reduce((sum, order) => sum + (order.commission_amount || 0), 0)
+          };
+        }) : [];
+      
+      // Process weekly data
+      const realWeeklyData = weeklyOrders ? 
+        Array.from({ length: 12 }, (_, i) => {
+          const weekStart = new Date(Date.now() - (11 - i) * 7 * 24 * 60 * 60 * 1000);
+          const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+          const weekOrders = weeklyOrders.filter(order => {
+            const orderDate = new Date(order.created_at);
+            return orderDate >= weekStart && orderDate < weekEnd;
+          });
+          return {
+            week: `Week ${i + 1}`,
+            revenue: weekOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0),
+            profit: weekOrders.reduce((sum, order) => sum + (order.commission_amount || 0), 0),
+            orders: weekOrders.length
+          };
+        }) : [];
+      
+      if (earningsError || statsError || walletError || profileError) {
+        throw new Error(earningsError?.message || statsError?.message || walletError?.message || profileError?.message || 'Failed to load analytics');
       }
       
-      // Generate mock data for demonstration (replace with real data)
-      const mockStoreVisits = {
-        today: Math.floor(Math.random() * 100) + 50,
-        thisWeek: Math.floor(Math.random() * 500) + 200,
-        thisMonth: Math.floor(Math.random() * 2000) + 800,
-        lastMonth: Math.floor(Math.random() * 1800) + 700,
-        allTime: Math.floor(Math.random() * 10000) + 5000
+      // Use real store visits from partner profile
+      const realStoreVisits = partnerProfile?.store_visits || {
+        today: 0,
+        thisWeek: 0,
+        thisMonth: 0,
+        lastMonth: 0,
+        allTime: 0
       };
       
-      const mockDailyEarnings = Array.from({ length: 30 }, (_, i) => ({
-        date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        earnings: Math.floor(Math.random() * 500) + 100,
-        orders: Math.floor(Math.random() * 10) + 1,
-        profit: Math.floor(Math.random() * 200) + 50
-      }));
-      
-      const mockWeeklyData = Array.from({ length: 12 }, (_, i) => ({
-        week: `Week ${i + 1}`,
-        revenue: Math.floor(Math.random() * 2000) + 500,
-        profit: Math.floor(Math.random() * 800) + 200,
-        orders: Math.floor(Math.random() * 50) + 10
-      }));
-      
-      // Set comprehensive analytics data
+      // Set comprehensive analytics data with real values
       setAnalytics({
         metrics: {
-          totalViews: mockStoreVisits.allTime,
+          totalViews: realStoreVisits.allTime || 0,
           totalSales: stats.totalOrders || 0,
           totalRevenue: earningsData?.allTime || 0,
-          conversionRate: mockStoreVisits.thisMonth > 0 ? (stats.totalOrders / mockStoreVisits.thisMonth) * 100 : 0,
+          conversionRate: realStoreVisits.thisMonth > 0 ? ((stats.totalOrders || 0) / realStoreVisits.thisMonth) * 100 : 0,
           avgOrderValue: earningsData?.averageOrderValue || 0,
           thisMonthEarnings: earningsData?.thisMonth || 0,
           lastMonthEarnings: earningsData?.lastMonth || 0,
@@ -113,10 +157,15 @@ export default function DashboardAnalytics() {
           pendingOrders: stats.pendingOrders || 0,
           completedOrders: stats.completedOrders || 0,
           cancelledOrders: stats.cancelledOrders || 0,
-          todayEarnings: mockDailyEarnings[mockDailyEarnings.length - 1]?.earnings || 0,
-          last7DaysEarnings: mockDailyEarnings.slice(-7).reduce((sum, day) => sum + day.earnings, 0),
-          last30DaysEarnings: mockDailyEarnings.reduce((sum, day) => sum + day.earnings, 0),
-          storeVisits: mockStoreVisits
+          todayEarnings: realDailyEarnings.length > 0 ? realDailyEarnings[realDailyEarnings.length - 1]?.earnings || 0 : 0,
+          last7DaysEarnings: realDailyEarnings.slice(-7).reduce((sum, day) => sum + (day.earnings || 0), 0),
+          last30DaysEarnings: realDailyEarnings.reduce((sum, day) => sum + (day.earnings || 0), 0),
+          storeVisits: realStoreVisits,
+          storeRating: partnerProfile?.store_rating || 0,
+          storeCreditScore: partnerProfile?.store_credit_score || 0,
+          totalProducts: partnerProfile?.total_products || 0,
+          activeProducts: partnerProfile?.active_products || 0,
+          commissionRate: partnerProfile?.commission_rate || 0.10
         },
         performance: {
           topProducts: [], // TODO: Implement top products query
@@ -124,8 +173,8 @@ export default function DashboardAnalytics() {
           recentActivity: stats.totalOrders || 0
         },
         charts: {
-          dailyEarnings: mockDailyEarnings,
-          weeklyData: mockWeeklyData,
+          dailyEarnings: realDailyEarnings,
+          weeklyData: realWeeklyData,
           monthlyEarnings: monthlyEarnings || []
         }
       });
