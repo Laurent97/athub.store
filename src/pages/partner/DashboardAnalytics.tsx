@@ -28,7 +28,11 @@ import {
   Download,
   Filter,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Zap,
+  TrendingUp as TrendingIcon,
+  Play,
+  Pause
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,9 +48,20 @@ export default function DashboardAnalytics() {
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y' | 'all'>('30d');
   const [chartType, setChartType] = useState<'profit' | 'revenue' | 'orders'>('profit');
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [visitDistribution, setVisitDistribution] = useState<any>(null);
+  const [realtimeVisits, setRealtimeVisits] = useState<any>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
   useEffect(() => {
     loadAnalytics();
+    
+    // Set up real-time updates for visit distribution
+    const interval = setInterval(() => {
+      loadRealtimeVisits();
+      checkVisitDistribution();
+    }, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
   }, [userProfile]);
 
   const loadAnalytics = async () => {
@@ -274,6 +289,51 @@ export default function DashboardAnalytics() {
     }
   };
 
+  // Load real-time visit data
+  const loadRealtimeVisits = async () => {
+    if (!userProfile?.id) return;
+    
+    try {
+      const { data: partnerProfile, error } = await supabase
+        .from('partner_profiles')
+        .select('store_visits, updated_at')
+        .eq('user_id', userProfile.id)
+        .single();
+      
+      if (!error && partnerProfile) {
+        setRealtimeVisits({
+          visits: partnerProfile.store_visits,
+          lastUpdated: partnerProfile.updated_at
+        });
+        setLastUpdate(new Date());
+      }
+    } catch (err) {
+      console.error('Error loading realtime visits:', err);
+    }
+  };
+
+  // Check for active visit distribution
+  const checkVisitDistribution = async () => {
+    if (!userProfile?.id) return;
+    
+    try {
+      const { data: distribution, error } = await supabase
+        .from('visit_distribution')
+        .select('*')
+        .eq('partner_id', userProfile.id)
+        .eq('is_active', true)
+        .single();
+      
+      if (!error && distribution) {
+        setVisitDistribution(distribution);
+      } else {
+        setVisitDistribution(null);
+      }
+    } catch (err) {
+      console.error('Error checking visit distribution:', err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -476,6 +536,79 @@ export default function DashboardAnalytics() {
             </Card>
           </div>
 
+          {/* Real-time Visit Distribution Status */}
+          {visitDistribution && (
+            <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-900/20 dark:to-emerald-800/10 border-emerald-200 dark:border-emerald-700/30">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Activity className="w-5 h-5 text-emerald-600" />
+                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    </div>
+                    <CardTitle className="text-lg">Live Visit Distribution Active</CardTitle>
+                  </div>
+                  <Badge variant="secondary" className="bg-emerald-100 text-emerald-800">
+                    {visitDistribution.time_period === 'second' ? 'Per Second' :
+                     visitDistribution.time_period === 'minute' ? 'Per Minute' : 'Per Hour'}
+                  </Badge>
+                </div>
+                <CardDescription>
+                  Automatic visit distribution in progress - Real-time updates every 5 seconds
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-emerald-600">
+                      {visitDistribution.total_visits}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Target Visits</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {visitDistribution.total_distributed || 0}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Distributed</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-amber-600">
+                      {Math.max(0, visitDistribution.total_visits - (visitDistribution.total_distributed || 0))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Remaining</p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {visitDistribution.visits_per_unit.toFixed(4)}
+                    </div>
+                    <p className="text-sm text-muted-foreground">Rate per {visitDistribution.time_period}</p>
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="mt-4">
+                  <div className="flex justify-between text-sm text-muted-foreground mb-2">
+                    <span>Progress</span>
+                    <span>{Math.round(((visitDistribution.total_distributed || 0) / visitDistribution.total_visits) * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                    <div 
+                      className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(100, ((visitDistribution.total_distributed || 0) / visitDistribution.total_visits) * 100)}%` 
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+                  <span>Started: {new Date(visitDistribution.start_time).toLocaleString()}</span>
+                  <span>Ends: {new Date(visitDistribution.end_time).toLocaleString()}</span>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Performance Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Total Revenue */}
@@ -625,36 +758,79 @@ export default function DashboardAnalytics() {
             {/* Store Visits */}
             <Card>
               <CardHeader>
-                <CardTitle>Store Visits</CardTitle>
-                <CardDescription>Customer engagement metrics</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Store Visits</CardTitle>
+                    <CardDescription>Customer engagement metrics</CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {realtimeVisits && (
+                      <div className="flex items-center gap-1 text-xs text-green-600">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span>Live</span>
+                      </div>
+                    )}
+                    <Button
+                      onClick={loadRealtimeVisits}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4">
+                  <div className="text-center p-4 relative">
                     <div className="text-2xl font-bold text-orange-600">
-                      {metrics.storeVisits?.today || 0}
+                      {realtimeVisits?.visits?.today || metrics.storeVisits?.today || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">Today</p>
+                    {visitDistribution && (
+                      <div className="absolute top-2 right-2">
+                        <Zap className="w-3 h-3 text-emerald-500 animate-pulse" />
+                      </div>
+                    )}
                   </div>
                   <div className="text-center p-4">
                     <div className="text-2xl font-bold text-blue-600">
-                      {metrics.storeVisits?.thisWeek || 0}
+                      {realtimeVisits?.visits?.thisWeek || metrics.storeVisits?.thisWeek || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">This Week</p>
                   </div>
                   <div className="text-center p-4">
                     <div className="text-2xl font-bold text-purple-600">
-                      {metrics.storeVisits?.thisMonth || 0}
+                      {realtimeVisits?.visits?.thisMonth || metrics.storeVisits?.thisMonth || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">This Month</p>
                   </div>
                   <div className="text-center p-4">
                     <div className="text-2xl font-bold text-green-600">
-                      {metrics.storeVisits?.allTime || 0}
+                      {realtimeVisits?.visits?.allTime || metrics.storeVisits?.allTime || 0}
                     </div>
                     <p className="text-sm text-muted-foreground">All Time</p>
                   </div>
                 </div>
+                
+                {visitDistribution && (
+                  <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-emerald-700 dark:text-emerald-300">
+                        🚀 Auto-distribution active
+                      </span>
+                      <span className="text-xs text-emerald-600 dark:text-emerald-400">
+                        +{visitDistribution.visits_per_unit.toFixed(4)}/{visitDistribution.time_period}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
+                {realtimeVisits && (
+                  <div className="mt-2 text-xs text-muted-foreground text-center">
+                    Last updated: {lastUpdate.toLocaleTimeString()}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -706,6 +882,141 @@ export default function DashboardAnalytics() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Real-time Visit Activity Feed */}
+          {(visitDistribution || realtimeVisits) && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-5 h-5 text-emerald-600" />
+                    <CardTitle>Real-time Visit Activity</CardTitle>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 text-xs text-green-600">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Live</span>
+                    </div>
+                    <Button
+                      onClick={loadRealtimeVisits}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <RefreshCw className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+                <CardDescription>
+                  {visitDistribution 
+                    ? `Automatic distribution: ${visitDistribution.visits_per_unit.toFixed(4)} visits per ${visitDistribution.time_period}`
+                    : 'Real-time visit monitoring'
+                  }
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Current Session Stats */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-300">
+                        {realtimeVisits?.visits?.today || 0}
+                      </div>
+                      <p className="text-xs text-muted-foreground">Today's Total</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-blue-700 dark:text-blue-300">
+                        {visitDistribution ? 
+                          `${visitDistribution.visits_per_unit.toFixed(4)}/${visitDistribution.time_period}` : 
+                          'Manual'
+                        }
+                      </div>
+                      <p className="text-xs text-muted-foreground">Growth Rate</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-semibold text-purple-700 dark:text-purple-300">
+                        {visitDistribution ? 
+                          `${Math.round(((visitDistribution.total_distributed || 0) / visitDistribution.total_visits) * 100)}%` : 
+                          'N/A'
+                        }
+                      </div>
+                      <p className="text-xs text-muted-foreground">Progress</p>
+                    </div>
+                  </div>
+
+                  {/* Activity Timeline */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Recent Activity</h4>
+                    <div className="space-y-2">
+                      {visitDistribution && (
+                        <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+                          <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                          <div className="flex-1">
+                            <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                              🚀 Auto-distribution started
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(visitDistribution.start_time).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {realtimeVisits && (
+                        <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                          <div className="flex-1">
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                              📊 Visit data updated
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {realtimeVisits.lastUpdated ? new Date(realtimeVisits.lastUpdated).toLocaleString() : 'Unknown'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full" />
+                        <div className="flex-1">
+                          <p className="text-sm text-purple-700 dark:text-purple-300">
+                            👥 Total visitors this session: {realtimeVisits?.visits?.today || 0}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Tracking all time periods
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Distribution Progress */}
+                  {visitDistribution && (
+                    <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                          Distribution Progress
+                        </span>
+                        <span className="text-sm text-amber-600 dark:text-amber-400">
+                          {visitDistribution.total_distributed || 0} / {visitDistribution.total_visits}
+                        </span>
+                      </div>
+                      <div className="w-full bg-amber-200 dark:bg-amber-800 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full transition-all duration-500"
+                          style={{ 
+                            width: `${Math.min(100, ((visitDistribution.total_distributed || 0) / visitDistribution.total_visits) * 100)}%` 
+                          }}
+                        />
+                      </div>
+                      <div className="mt-2 text-xs text-amber-700 dark:text-amber-300 text-center">
+                        {Math.round(((visitDistribution.total_distributed || 0) / visitDistribution.total_visits) * 100)}% Complete
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Commission and Performance */}
           <Card>
