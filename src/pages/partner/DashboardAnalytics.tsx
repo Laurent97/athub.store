@@ -155,7 +155,7 @@ export default function DashboardAnalytics() {
         console.warn('Could not load store visits:', visitsError);
       }
 
-      // Calculate store visits from actual data
+      // Calculate store visits from actual data + active distribution
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -167,12 +167,53 @@ export default function DashboardAnalytics() {
       const monthVisits = allVisits.filter(visit => new Date(visit.created_at) >= monthStart).length;
       const totalVisits = allVisits.length;
 
-      const storeVisits = {
+      // Get active visit distribution settings
+      const { data: activeDistribution, error: distributionError } = await supabase
+        .from('visit_distribution')
+        .select('*')
+        .eq('partner_id', userProfile.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      let calculatedVisits = {
         today: todayVisits,
         thisWeek: weekVisits,
         thisMonth: monthVisits,
         allTime: totalVisits
       };
+
+      // If there's an active distribution, add distributed visits
+      if (activeDistribution && !distributionError) {
+        const startTime = new Date(activeDistribution.start_time);
+        const endTime = new Date(activeDistribution.end_time);
+        
+        if (now >= startTime && now <= endTime) {
+          // Calculate elapsed time and proportionate visits
+          const totalDuration = endTime.getTime() - startTime.getTime();
+          const elapsedDuration = now.getTime() - startTime.getTime();
+          const progressRatio = Math.min(elapsedDuration / totalDuration, 1);
+          
+          const accumulatedVisits = Math.floor((activeDistribution.total_visits || 0) * progressRatio);
+          
+          // Add distributed visits to actual visits
+          calculatedVisits = {
+            today: todayVisits + accumulatedVisits,
+            thisWeek: weekVisits + accumulatedVisits,
+            thisMonth: monthVisits + accumulatedVisits,
+            allTime: totalVisits + accumulatedVisits
+          };
+        } else if (now > endTime) {
+          // Distribution has ended, add all target visits
+          calculatedVisits = {
+            today: todayVisits + (activeDistribution.total_visits || 0),
+            thisWeek: weekVisits + (activeDistribution.total_visits || 0),
+            thisMonth: monthVisits + (activeDistribution.total_visits || 0),
+            allTime: totalVisits + (activeDistribution.total_visits || 0)
+          };
+        }
+      }
+
+      const storeVisits = calculatedVisits;
 
       // 6. Get partner stats
       const partnerStats = await partnerService.getPartnerStats(userProfile.id);
@@ -203,12 +244,9 @@ export default function DashboardAnalytics() {
       // Get store visits from database - no mock data
       const storeVisitsFromProfile = partnerProfile?.store_visits || null;
 
-      // Calculate real-time visits if distribution is active
-      const calculatedVisits = calculateRealtimeVisits(visitDistribution, storeVisitsFromProfile);
-      
       // Calculate conversion rate
-      const conversionRate = calculatedVisits.thisMonth > 0 ? 
-        (completedOrders.length / calculatedVisits.thisMonth) * 100 : 0;
+      const conversionRate = storeVisits.thisMonth > 0 ? 
+        (completedOrders.length / storeVisits.thisMonth) * 100 : 0;
 
       // Calculate time-based earnings
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
