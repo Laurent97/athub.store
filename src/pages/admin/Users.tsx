@@ -797,6 +797,8 @@ export default function AdminUsers() {
                     balance: newBalance,
                     currency: 'USD',
                     updated_at: new Date().toISOString()
+                  }, {
+                    onConflict: 'user_id'
                   });
                 
                 if (error) throw error;
