@@ -38,6 +38,17 @@ import {
   Shield,
   AlertTriangle
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+
+// Add this helper function at the top
+const safeRender = (value: any): string => {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') {
+    if (Array.isArray(value)) return value.join(', ');
+    return JSON.stringify(value); // Or handle objects differently
+  }
+  return String(value);
+};
 
 interface BalanceUpdate {
   userId: string;
@@ -177,18 +188,20 @@ export default function AdminUsers() {
           } else {
             const metricsMap: Record<string, any> = {};
             partnersData?.forEach((partner: any) => {
+              // Ensure storeVisits is properly structured
+              const storeVisits = partner.store_visits || {};
               metricsMap[partner.user_id] = {
                 storeVisits: {
-                  today: partner.store_visits?.today || Math.floor(Math.random() * 100) + 50,
-                  thisWeek: partner.store_visits?.thisWeek || Math.floor(Math.random() * 500) + 200,
-                  thisMonth: partner.store_visits?.thisMonth || Math.floor(Math.random() * 2000) + 800,
-                  lastMonth: partner.store_visits?.lastMonth || Math.floor(Math.random() * 1800) + 700,
-                  allTime: partner.store_visits?.allTime || Math.floor(Math.random() * 10000) + 5000
+                  today: storeVisits.today || 0,
+                  thisWeek: storeVisits.thisWeek || 0,
+                  thisMonth: storeVisits.thisMonth || 0,
+                  lastMonth: storeVisits.lastMonth || 0,
+                  allTime: storeVisits.allTime || 0
                 },
-                storeCreditScore: partner.store_credit_score || Math.floor(Math.random() * 200) + 600,
-                storeRating: partner.store_rating || parseFloat((Math.random() * 2 + 3).toFixed(1)),
-                totalProducts: partner.total_products || Math.floor(Math.random() * 50) + 10,
-                activeProducts: partner.active_products || Math.floor(Math.random() * 40) + 5,
+                storeCreditScore: partner.store_credit_score || 750,
+                storeRating: partner.store_rating || 0,
+                totalProducts: partner.total_products || 0,
+                activeProducts: partner.active_products || 0,
                 commissionRate: partner.commission_rate || 0.10,
                 totalEarnings: partner.total_earnings || 0,
                 pendingBalance: partner.pending_balance || 0,
@@ -257,241 +270,47 @@ export default function AdminUsers() {
     }
   };
 
-  const updateUser = async (userId: string) => {
-    console.log('Updating user:', userId);
-    
-    try {
-      // Update users table
-      const { error: userError } = await supabase
-        .from('users')
-        .update({
-          full_name: editForm.full_name,
-          phone: editForm.phone,
-          user_type: editForm.user_type,
-          partner_status: editForm.partner_status,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
+  // ... rest of your functions (updateUser, updateUserBalance, deleteUser, etc.) ...
 
-      if (userError) throw userError;
-
-      // If user is a partner, also update partner_profiles table
-      if (editForm.user_type === 'partner') {
-        console.log('Updating partner_profiles for user:', userId);
-        
-        // First try to update existing record
-        const { error: partnerError, data: partnerData } = await supabase
-          .from('partner_profiles')
-          .update({
-            partner_status: editForm.partner_status,
-            updated_at: new Date().toISOString()
-          })
-          .eq('user_id', userId)
-          .select();
-
-        // If no record exists (0 rows affected), create one
-        if (!partnerError && partnerData && partnerData.length === 0) {
-          console.log('No partner profile found, creating new one...');
-          const { error: insertError } = await supabase
-            .from('partner_profiles')
-            .insert({
-              user_id: userId,
-              store_name: editForm.full_name || 'Store #' + userId,
-              store_slug: (editForm.full_name || 'Store').toLowerCase().replace(/\s+/g, '-'),
-              partner_status: editForm.partner_status,
-              commission_rate: 0.10,
-              total_earnings: 0.00,
-              pending_balance: 0.00,
-              total_balance: 0.00,
-              total_orders: 0,
-              rating: 0.00,
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            });
-
-          console.log('Partner profile insert result:', { insertError });
-        }
-
-        if (partnerError) {
-          console.error('Error updating partner profile:', partnerError);
-        }
-      }
-
-      // Send notification to partner about status change
-      if (editForm.user_type === 'partner' && editForm.partner_status !== selectedUser?.partner_status) {
-        await NotificationService.notifyPartnerStatusChanged(
-          userId,
-          editForm.partner_status
-        );
-      }
-
-      setShowUserModal(false);
-      setTimeout(() => {
-        loadUsers();
-      }, 500);
-      alert('User updated successfully!');
-    } catch (error) {
-      console.error('Error updating user:', error);
-      alert('Failed to update user');
-    }
-  };
-
-  const updateUserBalance = async () => {
-    if (!balanceUpdate.userId || balanceUpdate.amount <= 0) {
-      alert('Please enter valid amount');
-      return;
-    }
-
-    try {
-      const currentBalance = userBalances[balanceUpdate.userId]?.balance || 0;
-      const newAmount = balanceUpdate.type === 'add' 
-        ? currentBalance + balanceUpdate.amount
-        : currentBalance - balanceUpdate.amount;
-
-      if (newAmount < 0) {
-        alert('Cannot set negative balance');
-        return;
-      }
-
-      const { error: balanceError } = await supabase
-        .from('wallet_balances')
-        .upsert({
-          user_id: balanceUpdate.userId,
-          balance: newAmount,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (balanceError) throw balanceError;
-
-      // Send notification to user about balance update
-      await NotificationService.notifyBalanceUpdated(
-        balanceUpdate.userId, 
-        balanceUpdate.amount, 
-        balanceUpdate.type
-      );
-
-      setShowBalanceModal(false);
-      setBalanceUpdate({ userId: '', amount: 0, type: 'add', reason: '' });
-      loadUsers();
-      alert(`Balance ${balanceUpdate.type === 'add' ? 'added' : 'subtracted'} successfully!`);
-    } catch (error) {
-      console.error('Error updating balance:', error);
-      alert('Failed to update balance');
-    }
-  };
-
-  const deleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      // First, delete user-related data from all tables
-      const { error: walletError } = await supabase
-        .from('wallet_balances')
-        .delete()
-        .eq('user_id', userId);
-
-      if (walletError) {
-        console.error('Error deleting wallet balance:', walletError);
-      }
-
-      const { error: transactionsError } = await supabase
-        .from('wallet_transactions')
-        .delete()
-        .eq('user_id', userId);
-
-      if (transactionsError) {
-        console.error('Error deleting wallet transactions:', transactionsError);
-      }
-
-      const { error: partnerError } = await supabase
-        .from('partner_profiles')
-        .delete()
-        .eq('user_id', userId);
-
-      if (partnerError) {
-        console.error('Error deleting partner profile:', partnerError);
-      }
-
-      // Delete user's orders
-      const { error: ordersError } = await supabase
-        .from('orders')
-        .delete()
-        .or(`customer_id.eq.${userId},partner_id.eq.${userId}`);
-
-      if (ordersError) {
-        console.error('Error deleting orders:', ordersError);
-      }
-
-      // Finally, delete the user from the users table
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      loadUsers();
-      alert('User deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Failed to delete user: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    }
-  };
-
-  const openUserModal = (user: UserType) => {
-    setSelectedUser(user);
-    setEditForm({
-      full_name: user.full_name || '',
-      phone: user.phone || '',
-      user_type: user.user_type,
-      partner_status: user.partner_status
-    });
-    setShowUserModal(true);
-  };
-
-  // Fix: Add a safe way to access storeVisits
-  const getStoreVisits = (userId: string, period: keyof any) => {
+  // Fix: Safe getter for store visits
+  const getStoreVisitValue = (userId: string, key: string): number => {
     const metrics = partnerMetrics[userId];
     if (!metrics || !metrics.storeVisits) return 0;
     
-    // Handle both object and number formats
-    if (typeof metrics.storeVisits === 'object') {
-      const value = metrics.storeVisits[period];
-      return typeof value === 'number' ? value : 0;
+    // Handle the case where storeVisits might be a number or an object
+    if (typeof metrics.storeVisits === 'number') {
+      return metrics.storeVisits;
     }
     
-    // If it's a number, return it (for backward compatibility)
-    return typeof metrics.storeVisits === 'number' ? metrics.storeVisits : 0;
+    if (typeof metrics.storeVisits === 'object') {
+      return metrics.storeVisits[key] || 0;
+    }
+    
+    return 0;
   };
 
-  // Fix: Add a function to safely update storeVisits
-  const updateStoreVisits = (userId: string, period: string, value: number) => {
+  // Fix: Safe setter for store visits
+  const setStoreVisitValue = (userId: string, key: string, value: number) => {
     setPartnerMetrics(prev => {
-      const currentMetrics = prev[userId] || {};
-      const currentStoreVisits = currentMetrics.storeVisits || { today: 0, thisWeek: 0, thisMonth: 0, allTime: 0 };
+      const current = prev[userId] || {};
+      const currentStoreVisits = current.storeVisits || {};
       
-      // Ensure storeVisits is an object
+      // Ensure we have a proper object
       const storeVisits = typeof currentStoreVisits === 'object' 
         ? { ...currentStoreVisits }
         : { today: 0, thisWeek: 0, thisMonth: 0, allTime: 0 };
       
-      // Calculate the difference
-      const oldValue = storeVisits[period] || 0;
-      const difference = value - oldValue;
-      
-      // Update all periods
+      // Update the specific key
       const updatedStoreVisits = {
         ...storeVisits,
-        [period]: value
+        [key]: value
       };
       
-      // Cascade update to other periods
-      if (period === 'today') {
+      // Cascade updates for today
+      if (key === 'today') {
+        const oldValue = storeVisits.today || 0;
+        const difference = value - oldValue;
+        
         updatedStoreVisits.thisWeek = (storeVisits.thisWeek || 0) + difference;
         updatedStoreVisits.thisMonth = (storeVisits.thisMonth || 0) + difference;
         updatedStoreVisits.allTime = (storeVisits.allTime || 0) + difference;
@@ -500,429 +319,12 @@ export default function AdminUsers() {
       return {
         ...prev,
         [userId]: {
-          ...currentMetrics,
+          ...current,
           storeVisits: updatedStoreVisits
         }
       };
     });
   };
-
-  const openPartnerMetricsModal = async (user: UserType) => {
-    setSelectedUser(user);
-    
-    // Fetch current partner metrics from database
-    try {
-      const { data: partnerProfile, error } = await supabase
-        .from('partner_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
-        console.error('Error fetching partner profile:', error);
-      }
-
-      if (partnerProfile) {
-        // Fetch real product counts from partner_products table
-        const productCounts = await fetchPartnerProductCounts(user.id);
-        
-        // Check for active distribution
-        const { data: activeDistribution, error: distError } = await supabase
-          .from('visit_distribution')
-          .select('*')
-          .eq('partner_id', user.id)
-          .eq('is_active', true)
-          .single();
-
-        // Update local state with database values and real product counts
-        setPartnerMetrics(prev => ({
-          ...prev,
-          [user.id]: {
-            storeVisits: partnerProfile.store_visits || {
-              today: 0,
-              thisWeek: 0,
-              thisMonth: 0,
-              allTime: 0
-            },
-            storeCreditScore: partnerProfile.store_credit_score || 750,
-            storeRating: partnerProfile.store_rating || 0,
-            totalProducts: productCounts.totalProducts, // Real count from inventory
-            activeProducts: productCounts.activeProducts, // Real count from inventory
-            commissionRate: partnerProfile.commission_rate || 0.10,
-            isVerified: partnerProfile.is_verified || false,
-            isActive: partnerProfile.is_active !== false // default to true
-          }
-        }));
-
-        // If there's an active distribution, restart the timer
-        if (activeDistribution && !distError) {
-          const distributionConfig = {
-            totalVisits: activeDistribution.total_visits,
-            timePeriod: activeDistribution.time_period,
-            visitsPerUnit: activeDistribution.visits_per_unit,
-            isActive: true,
-            lastDistribution: activeDistribution.last_distribution,
-            totalDistributed: activeDistribution.total_distributed || 0,
-            startTime: activeDistribution.start_time,
-            endTime: activeDistribution.end_time
-          };
-          
-          // Update local state
-          setVisitDistribution(prev => ({
-            ...prev,
-            [user.id]: distributionConfig
-          }));
-
-          // Restart the timer
-          startDistributionTimer(user.id, distributionConfig);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading partner metrics:', error);
-    }
-    
-    setShowPartnerMetricsModal(true);
-  };
-
-  const updatePartnerMetrics = async (userId: string, metrics: any) => {
-    try {
-      setSavingMetrics(userId);
-      console.log('Updating partner metrics for user:', userId);
-      
-      // Build update object
-      const updateData: any = {
-        store_visits: metrics.storeVisits || {
-          today: 0,
-          thisWeek: 0,
-          thisMonth: 0,
-          allTime: 0
-        },
-        store_credit_score: metrics.storeCreditScore || 750,
-        store_rating: metrics.storeRating || 0,
-        total_products: metrics.totalProducts || 0,
-        active_products: metrics.activeProducts || 0,
-        commission_rate: metrics.commissionRate || 0.10,
-        is_verified: metrics.isVerified || false,
-        is_active: metrics.isActive !== false,
-        updated_at: new Date().toISOString()
-      };
-      
-      console.log('Updating partner metrics with data:', updateData);
-      
-      const { error: updateError } = await supabase
-        .from('partner_profiles')
-        .update(updateData)
-        .eq('user_id', userId);
-
-      if (updateError) {
-        console.error('Database update error:', updateError);
-        throw updateError;
-      }
-
-      // Update local state immediately
-      setPartnerMetrics(prev => ({
-        ...prev,
-        [userId]: {
-          ...prev[userId],
-          ...metrics
-        }
-      }));
-
-      setTimeout(() => {
-        setSavingMetrics(null);
-        setShowPartnerMetricsModal(false);
-        alert('✅ Partner metrics updated successfully!');
-      }, 500);
-    } catch (error: any) {
-      console.error('Error updating partner metrics:', error);
-      setSavingMetrics(null);
-      alert(`❌ Failed to update partner metrics: ${error.message || 'Unknown error'}`);
-    }
-  };
-
-  const calculateVisitsPerUnit = (totalVisits: number, timePeriod: 'hour' | 'minute' | 'second') => {
-    const totalUnits = 24; // 24 hours
-    const unitsPerPeriod = timePeriod === 'hour' ? 1 : 
-                          timePeriod === 'minute' ? 60 : 
-                          3600; // seconds per hour
-    
-    const totalPeriods = totalUnits * unitsPerPeriod;
-    const visitsPerUnit = totalVisits / totalPeriods;
-    
-    // Return the exact value for precise distribution, not rounded down
-    return visitsPerUnit;
-  };
-
-  const startVisitDistribution = async (userId: string, totalVisits: number, timePeriod: 'hour' | 'minute' | 'second') => {
-    const visitsPerUnit = calculateVisitsPerUnit(totalVisits, timePeriod);
-    
-    if (visitsPerUnit <= 0) {
-      alert('Invalid configuration: Visits per unit must be greater than 0');
-      return;
-    }
-
-    // Calculate end time (24 hours from now)
-    const startTime = new Date();
-    const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000)); // 24 hours from now
-
-    // Create distribution record in database
-    try {
-      const { data: distributionData, error } = await supabase
-        .from('visit_distribution')
-        .insert({
-          partner_id: userId,
-          total_visits: totalVisits,
-          time_period: timePeriod,
-          visits_per_unit: visitsPerUnit,
-          is_active: true,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          total_distributed: 0,
-          last_distribution: startTime.toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Update local state
-      const newDistribution = {
-        totalVisits,
-        timePeriod,
-        visitsPerUnit,
-        isActive: true,
-        lastDistribution: startTime.toISOString(),
-        totalDistributed: 0,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString()
-      };
-      
-      setVisitDistribution(prev => ({
-        ...prev,
-        [userId]: newDistribution
-      }));
-
-      // Start the distribution process
-      startDistributionTimer(userId, newDistribution);
-      
-      alert(`✅ Automatic visit distribution started: ${totalVisits} visits over 24 hours (${visitsPerUnit.toFixed(4)} visits per ${timePeriod})`);
-    } catch (error) {
-      console.error('Error starting visit distribution:', error);
-      alert('❌ Failed to start visit distribution');
-    }
-  };
-
-  const stopVisitDistribution = async (userId: string) => {
-    try {
-      // Update database to stop distribution
-      const { error } = await supabase
-        .from('visit_distribution')
-        .update({
-          is_active: false,
-          end_time: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('partner_id', userId)
-        .eq('is_active', true);
-
-      if (error) throw error;
-
-      // Update local state
-      setVisitDistribution(prev => ({
-        ...prev,
-        [userId]: {
-          ...prev[userId],
-          isActive: false,
-          endTime: new Date().toISOString()
-        }
-      }));
-
-      // Stop the timer
-      if ((window as any).visitDistributionTimers && (window as any).visitDistributionTimers[userId]) {
-        clearInterval((window as any).visitDistributionTimers[userId]);
-        delete (window as any).visitDistributionTimers[userId];
-      }
-      
-      alert('✅ Automatic visit distribution stopped');
-    } catch (error) {
-      console.error('Error stopping visit distribution:', error);
-      alert('❌ Failed to stop visit distribution');
-    }
-  };
-
-  const startDistributionTimer = (userId: string, config: any) => {
-    const intervalMs = config.timePeriod === 'hour' ? 60 * 60 * 1000 : 
-                       config.timePeriod === 'minute' ? 60 * 1000 : 
-                       1000; // seconds
-
-    // Track accumulated fractional visits
-    let accumulatedVisits = 0;
-    let totalDistributed = config.totalDistributed || 0;
-
-    const timer = setInterval(async () => {
-      try {
-        // Add fractional visits to accumulator
-        accumulatedVisits += config.visitsPerUnit;
-        
-        // Only add whole visits to the store
-        const wholeVisitsToAdd = Math.floor(accumulatedVisits);
-        
-        if (wholeVisitsToAdd > 0) {
-          // Subtract the whole visits from accumulator
-          accumulatedVisits -= wholeVisitsToAdd;
-          totalDistributed += wholeVisitsToAdd;
-          
-          // Get current metrics
-          const currentMetrics = partnerMetrics[userId];
-          if (currentMetrics) {
-            // Calculate updated visits with cascade
-            const updatedVisits = {
-              ...currentMetrics.storeVisits,
-              today: (currentMetrics.storeVisits.today || 0) + wholeVisitsToAdd,
-              thisWeek: (currentMetrics.storeVisits.thisWeek || 0) + wholeVisitsToAdd,
-              thisMonth: (currentMetrics.storeVisits.thisMonth || 0) + wholeVisitsToAdd,
-              allTime: (currentMetrics.storeVisits.allTime || 0) + wholeVisitsToAdd
-            };
-
-            // Update local state with cascade
-            setPartnerMetrics(prev => ({
-              ...prev,
-              [userId]: {
-                ...prev[userId],
-                storeVisits: updatedVisits
-              }
-            }));
-
-            // Update database with cascade
-            await supabase
-              .from('partner_profiles')
-              .update({
-                store_visits: updatedVisits,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', userId);
-
-            // Update distribution tracking
-            await supabase
-              .from('visit_distribution')
-              .update({
-                total_distributed: totalDistributed,
-                last_distribution: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              })
-              .eq('partner_id', userId)
-              .eq('is_active', true);
-
-            // Update local distribution state
-            setVisitDistribution(prev => ({
-              ...prev,
-              [userId]: {
-                ...prev[userId],
-                totalDistributed: totalDistributed,
-                lastDistribution: new Date().toISOString()
-              }
-            }));
-
-            console.log(`Added ${wholeVisitsToAdd} visits to partner ${userId} (Total distributed: ${totalDistributed})`);
-          }
-        }
-        
-        // Check if we've distributed all visits
-        if (totalDistributed >= config.totalVisits) {
-          clearInterval(timer);
-          // Stop distribution in database
-          await supabase
-            .from('visit_distribution')
-            .update({
-              is_active: false,
-              end_time: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            })
-            .eq('partner_id', userId);
-          
-          // Update local state
-          setVisitDistribution(prev => ({
-            ...prev,
-            [userId]: {
-              ...prev[userId],
-              isActive: false,
-              endTime: new Date().toISOString()
-            }
-          }));
-          
-          console.log(`Distribution completed for partner ${userId}. Total: ${totalDistributed}`);
-        }
-      } catch (error) {
-        console.error('Error in distribution timer:', error);
-      }
-    }, intervalMs);
-
-    // Store timer reference for cleanup
-    (window as any).visitDistributionTimers = (window as any).visitDistributionTimers || {};
-    (window as any).visitDistributionTimers[userId] = timer;
-  };
-
-  const manuallyAddVisits = async (userId: string, visitsToAdd: number) => {
-    try {
-      const currentMetrics = partnerMetrics[userId];
-      if (!currentMetrics) return;
-
-      const updatedVisits = {
-        ...currentMetrics.storeVisits,
-        today: (currentMetrics.storeVisits.today || 0) + visitsToAdd,
-        thisWeek: (currentMetrics.storeVisits.thisWeek || 0) + visitsToAdd,
-        thisMonth: (currentMetrics.storeVisits.thisMonth || 0) + visitsToAdd,
-        allTime: (currentMetrics.storeVisits.allTime || 0) + visitsToAdd
-      };
-
-      // Update local state
-      setPartnerMetrics(prev => ({
-        ...prev,
-        [userId]: {
-          ...prev[userId],
-          storeVisits: updatedVisits
-        }
-      }));
-
-      // Update database
-      await supabase
-        .from('partner_profiles')
-        .update({
-          store_visits: updatedVisits,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', userId);
-
-      alert(`✅ Added ${visitsToAdd} visits successfully!`);
-    } catch (error) {
-      console.error('Error adding visits:', error);
-      alert('❌ Failed to add visits');
-    }
-  };
-
-  const openBalanceModal = (user: UserType) => {
-    setSelectedUser(user);
-    setBalanceUpdate({
-      userId: user.id,
-      amount: 0,
-      type: 'add',
-      reason: ''
-    });
-    setShowBalanceModal(true);
-  };
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = 
-      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesType = filterType === 'all' || user.user_type === filterType;
-    
-    return matchesSearch && matchesType;
-  });
 
   // Color helper function for consistent styling
   const getBadgeColor = (type: string, status?: string) => {
@@ -950,6 +352,17 @@ export default function AdminUsers() {
     }
     return '';
   };
+
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.phone?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesType = filterType === 'all' || user.user_type === filterType;
+    
+    return matchesSearch && matchesType;
+  });
 
   return (
     <AdminLayout>
@@ -1059,7 +472,7 @@ export default function AdminUsers() {
           </div>
         </div>
 
-        {/* Users Table */}
+        {/* Users Table - FIXED with safe rendering */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden animate-fade-in hover:shadow-lg transition-shadow">
           {loading ? (
             <div className="p-8 text-center">
@@ -1101,13 +514,13 @@ export default function AdminUsers() {
                         <td className="px-6 py-4">
                           <div>
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {user.full_name || 'No Name'}
+                              {safeRender(user.full_name) || 'No Name'}
                             </div>
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {user.email}
+                              {safeRender(user.email)}
                             </div>
                             <div className="text-xs text-gray-500 dark:text-gray-500">
-                              {user.phone || 'No Phone'}
+                              {safeRender(user.phone) || 'No Phone'}
                             </div>
                           </div>
                         </td>
@@ -1117,7 +530,7 @@ export default function AdminUsers() {
                               {user.user_type === 'admin' && '⚙️ '}
                               {user.user_type === 'partner' && '🏪 '}
                               {user.user_type === 'user' && '🥇 '}
-                              {user.user_type}
+                              {safeRender(user.user_type)}
                             </span>
                             {user.user_type === 'partner' && (
                               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getBadgeColor('partner_status', user.partner_status)}`}>
@@ -1125,7 +538,7 @@ export default function AdminUsers() {
                                 {user.partner_status === 'pending' && '⚠️ '}
                                 {user.partner_status === 'rejected' && '❌ '}
                                 {user.partner_status === 'suspended' && '🚫 '}
-                                {user.partner_status}
+                                {safeRender(user.partner_status)}
                               </span>
                             )}
                           </div>
@@ -1181,626 +594,7 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Edit User Modal */}
-      {showUserModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Edit User: {selectedUser.email}
-                </h2>
-                <button
-                  onClick={() => setShowUserModal(false)}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editForm.full_name}
-                    onChange={(e) => setEditForm({...editForm, full_name: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={editForm.phone}
-                    onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    User Type
-                  </label>
-                  <select
-                    value={editForm.user_type}
-                    onChange={(e) => setEditForm({...editForm, user_type: e.target.value as UserTypeEnum})}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                  >
-                    <option value="customer">Customer</option>
-                    <option value="partner">Partner</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                {editForm.user_type === 'partner' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Partner Status
-                    </label>
-                    <select
-                      value={editForm.partner_status}
-                      onChange={(e) => setEditForm({...editForm, partner_status: e.target.value as PartnerStatus})}
-                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="suspended">Suspended</option>
-                    </select>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-3 pt-6">
-                  <button
-                    onClick={() => setShowUserModal(false)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => updateUser(selectedUser.id)}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Balance Update Modal */}
-      {showBalanceModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  Adjust Balance: {selectedUser.email}
-                </h2>
-                <button
-                  onClick={() => setShowBalanceModal(false)}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-gray-50 dark:bg-gray-900/50 p-4 rounded-lg">
-                  <div className="text-sm text-gray-600 dark:text-gray-400">Current Balance</div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(userBalances[selectedUser.id]?.balance || 0).toFixed(2)}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Action
-                  </label>
-                  <div className="flex space-x-4">
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        checked={balanceUpdate.type === 'add'}
-                        onChange={() => setBalanceUpdate({...balanceUpdate, type: 'add'})}
-                        className="mr-2"
-                      />
-                      <span className="text-green-600 dark:text-green-400">Add Funds</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        checked={balanceUpdate.type === 'subtract'}
-                        onChange={() => setBalanceUpdate({...balanceUpdate, type: 'subtract'})}
-                        className="mr-2"
-                      />
-                      <span className="text-red-600 dark:text-red-400">Subtract Funds</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Amount (USD)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
-                    <input
-                      type="number"
-                      value={balanceUpdate.amount}
-                      onChange={(e) => setBalanceUpdate({...balanceUpdate, amount: parseFloat(e.target.value) || 0})}
-                      className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Reason for Adjustment
-                  </label>
-                  <textarea
-                    value={balanceUpdate.reason}
-                    onChange={(e) => setBalanceUpdate({...balanceUpdate, reason: e.target.value})}
-                    rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-                    placeholder="Explain why you're adjusting this balance..."
-                  />
-                </div>
-
-                <div className="flex justify-end space-x-3 pt-6">
-                  <button
-                    onClick={() => setShowBalanceModal(false)}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={updateUserBalance}
-                    className={`px-4 py-2 rounded-lg text-white transition-colors ${
-                      balanceUpdate.type === 'add' 
-                        ? 'bg-green-600 hover:bg-green-700' 
-                        : 'bg-red-600 hover:bg-red-700'
-                    }`}
-                  >
-                    {balanceUpdate.type === 'add' ? 'Add Funds' : 'Subtract Funds'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Partner Metrics Modal */}
-      {showPartnerMetricsModal && selectedUser && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    Partner Metrics: {selectedUser.full_name || selectedUser.email}
-                  </h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    Manage partner performance metrics and analytics
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowPartnerMetricsModal(false)}
-                  className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
-                >
-                  ×
-                </button>
-              </div>
-
-              {/* Loading State */}
-              {loading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                  <p className="mt-4 text-gray-600 dark:text-gray-400">Loading partner metrics...</p>
-                </div>
-              )}
-
-              {/* Error State */}
-              {!loading && !partnerMetrics[selectedUser.id] && (
-                <div className="text-center py-8">
-                  <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">Unable to load partner metrics</p>
-                  <button
-                    onClick={loadUsers}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 mx-auto"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Retry
-                  </button>
-                </div>
-              )}
-
-              {/* Main Content */}
-              {!loading && partnerMetrics[selectedUser.id] && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Store Visits Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <BarChart3 className="w-5 h-5" />
-                          Store Visits
-                        </h3>
-                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
-                          Auto-calculated
-                        </span>
-                      </div>
-                      <div className="space-y-3">
-                        {/* Today's Visits - Manual Input */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                              Today's Visits
-                            </label>
-                            <span className="text-xs text-gray-500">Manual Input</span>
-                          </div>
-                          <input
-                            type="number"
-                            min="0"
-                            value={String(getStoreVisits(selectedUser.id, 'today'))}
-                            onChange={(e) => {
-                              const value = parseInt(e.target.value) || 0;
-                              updateStoreVisits(selectedUser.id, 'today', value);
-                            }}
-                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                          />
-                        </div>
-
-                        {/* Auto-calculated Periods */}
-                        <div className="space-y-2">
-                          {[
-                            { label: 'This Week', key: 'thisWeek' },
-                            { label: 'This Month', key: 'thisMonth' },
-                            { label: 'All Time', key: 'allTime' }
-                          ].map(({ label, key }) => (
-                            <div key={key} className="relative">
-                              <div className="flex items-center justify-between mb-1">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  {label}
-                                </label>
-                                <span className="text-xs text-gray-500">Auto-calculated</span>
-                              </div>
-                              <input
-                                type="number"
-                                readOnly
-                                value={String(getStoreVisits(selectedUser.id, key))}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 cursor-not-allowed"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent dark:via-gray-800/5 rounded-lg pointer-events-none" />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Store Performance Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <TrendingUp className="w-5 h-5" />
-                          Store Performance
-                        </h3>
-                      </div>
-                      <div className="space-y-3">
-                        {/* Database-fetched Fields */}
-                        {[
-                          { 
-                            label: 'Store Credit Score', 
-                            key: 'storeCreditScore', 
-                            icon: <Award className="w-4 h-4" />,
-                            max: 1000 
-                          },
-                          { 
-                            label: 'Store Rating', 
-                            key: 'storeRating', 
-                            icon: <Star className="w-4 h-4" />,
-                            max: 5,
-                            step: 0.1 
-                          }
-                        ].map(({ label, key, icon, max, step = 1 }) => (
-                          <div key={key}>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                {icon}
-                                {label}
-                              </label>
-                              <span className="text-xs text-gray-500">Fetched from database</span>
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="number"
-                                readOnly
-                                min="0"
-                                max={max}
-                                step={step}
-                                value={String(partnerMetrics[selectedUser.id]?.[key] || 0)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 cursor-not-allowed"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent dark:via-gray-800/5 rounded-lg pointer-events-none" />
-                            </div>
-                          </div>
-                        ))}
-
-                        {/* Commission Rate - Manual Input */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                              <DollarSign className="w-4 h-4" />
-                              Commission Rate
-                            </label>
-                            <span className="text-xs text-gray-500">Manual Input</span>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.01"
-                              value={String(((partnerMetrics[selectedUser.id]?.commissionRate || 0) * 100).toFixed(2))}
-                              onChange={(e) => {
-                                const value = parseFloat(e.target.value) || 0;
-                                setPartnerMetrics(prev => ({
-                                  ...prev,
-                                  [selectedUser.id]: {
-                                    ...prev[selectedUser.id],
-                                    commissionRate: value / 100
-                                  }
-                                }));
-                              }}
-                              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all pr-10"
-                            />
-                            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 dark:text-gray-400">
-                              %
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Products Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <Package className="w-5 h-5" />
-                          Products
-                        </h3>
-                        <button
-                          onClick={() => updatePartnerMetricsWithProducts(selectedUser.id)}
-                          className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors flex items-center gap-1"
-                          title="Refresh product counts from inventory"
-                        >
-                          <RefreshCw className="w-3 h-3" />
-                          Refresh
-                        </button>
-                      </div>
-                      <div className="space-y-3">
-                        {[
-                          { label: 'Total Products', key: 'totalProducts' },
-                          { label: 'Active Products', key: 'activeProducts' }
-                        ].map(({ label, key }) => (
-                          <div key={key}>
-                            <div className="flex items-center justify-between mb-1">
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                {label}
-                              </label>
-                              <span className="text-xs text-gray-500">From partner inventory</span>
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="number"
-                                readOnly
-                                min="0"
-                                value={String(partnerMetrics[selectedUser.id]?.[key] || 0)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 cursor-not-allowed"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent dark:via-gray-800/5 rounded-lg pointer-events-none" />
-                            </div>
-                          </div>
-                        ))}
-                        <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-                          🔔 Product counts are fetched from the partner's actual inventory at https://www.athub.store/partner/dashboard/inventory
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Status Section */}
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                          <Settings className="w-5 h-5" />
-                          Status & Settings
-                        </h3>
-                      </div>
-                      <div className="space-y-3">
-                        {/* Status Toggles */}
-                        <div className="bg-gray-50 dark:bg-gray-900/30 rounded-lg p-4 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                                <UserCheck className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  Verified Partner
-                                </label>
-                                <p className="text-xs text-gray-500">Manual toggle</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={partnerMetrics[selectedUser.id]?.isVerified || false}
-                              onCheckedChange={(checked) => {
-                                setPartnerMetrics(prev => ({
-                                  ...prev,
-                                  [selectedUser.id]: {
-                                    ...prev[selectedUser.id],
-                                    isVerified: checked
-                                  }
-                                }));
-                              }}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                                <Activity className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                  Active Partner
-                                </label>
-                                <p className="text-xs text-gray-500">Manual toggle</p>
-                              </div>
-                            </div>
-                            <Switch
-                              checked={partnerMetrics[selectedUser.id]?.isActive !== false}
-                              onCheckedChange={(checked) => {
-                                setPartnerMetrics(prev => ({
-                                  ...prev,
-                                  [selectedUser.id]: {
-                                    ...prev[selectedUser.id],
-                                    isActive: checked
-                                  }
-                                }));
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Auto-save indicator */}
-                  {savingMetrics === selectedUser.id && (
-                    <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                        <span className="text-sm text-blue-700 dark:text-blue-300">
-                          Saving changes to database...
-                        </span>
-                      </div>
-                      <span className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded">
-                        Real-time
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Visit Distribution Controls */}
-                  <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
-                        <Activity className="w-4 h-4" />
-                        Automatic Visit Distribution
-                      </h4>
-                      {visitDistribution[selectedUser.id]?.isActive ? (
-                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
-                          Inactive
-                        </span>
-                      )}
-                    </div>
-
-                    {visitDistribution[selectedUser.id]?.isActive ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                          🔄 Currently distributing {visitDistribution[selectedUser.id].totalVisits} visits over 24 hours
-                        </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          Rate: {visitDistribution[selectedUser.id].visitsPerUnit.toFixed(4)} visits per {visitDistribution[selectedUser.id].timePeriod}
-                        </p>
-                        <button
-                          onClick={() => stopVisitDistribution(selectedUser.id)}
-                          className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                          <Activity className="w-4 h-4" />
-                          Stop Distribution
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                          📊 Distribute today's visits ({String(getStoreVisits(selectedUser.id, 'today'))}) automatically over 24 hours
-                        </p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'hour')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Hour
-                          </button>
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'minute')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Minute
-                          </button>
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'second')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Second
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={() => setShowPartnerMetricsModal(false)}
-                      className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Close
-                    </button>
-                    <button
-                      onClick={() => {
-                        const metrics = partnerMetrics[selectedUser.id];
-                        if (metrics) {
-                          updatePartnerMetrics(selectedUser.id, metrics);
-                        }
-                      }}
-                      disabled={savingMetrics === selectedUser.id}
-                      className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2"
-                    >
-                      {savingMetrics === selectedUser.id ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-4 h-4" />
-                          Update All Changes
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ... rest of your modals (Edit User Modal, Balance Update Modal, Partner Metrics Modal) ... */}
     </AdminLayout>
   );
 }
