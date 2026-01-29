@@ -1648,91 +1648,125 @@ export default function AdminUsers() {
                                 setPartnerMetrics(prev => ({
                                   ...prev,
                                   [selectedUser.id]: {
-                                    ...prev[selectedUser.id],
                                     isActive: checked
                                   }
                                 }));
                               }}
                             />
                           </div>
-                  </div>
-
-                  {/* Auto-save indicator */}
-                  {savingMetrics === selectedUser.id && (
-                    <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
-                        <span className="text-sm text-blue-700 dark:text-blue-300">
-                          Saving changes to database...
-                        </span>
-                      </div>
-                      <span className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded">
-                        Real-time
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Visit Distribution Controls */}
-                  <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
-                        <Activity className="w-4 h-4" />
-                        Automatic Visit Distribution
-                      </h4>
-                      {visitDistribution[selectedUser.id]?.isActive ? (
-                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="text-xs bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
-                          Inactive
-                        </span>
-                      )}
-                    </div>
-                    
-                    {visitDistribution[selectedUser.id]?.isActive ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                          🔄 Currently distributing {visitDistribution[selectedUser.id].totalVisits} visits over 24 hours
-                        </p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400">
-                          Rate: {visitDistribution[selectedUser.id].visitsPerUnit.toFixed(4)} visits per {visitDistribution[selectedUser.id].timePeriod}
-                        </p>
-                        <button
-                          onClick={() => stopVisitDistribution(selectedUser.id)}
-                          className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                          <Activity className="w-4 h-4" />
-                          Stop Distribution
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <p className="text-xs text-amber-700 dark:text-amber-300">
-                          📊 Distribute today's visits ({partnerMetrics[selectedUser.id]?.storeVisits?.today || 0}) automatically over 24 hours
-                        </p>
-                        <div className="grid grid-cols-3 gap-2">
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'hour')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Hour
-                          </button>
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'minute')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Minute
-                          </button>
-                          <button
-                            onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'second')}
-                            className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
-                          >
-                            Per Second
-                          </button>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Auto-save indicator */}
+                    {savingMetrics === selectedUser.id && (
+                      <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <RefreshCw className="w-4 h-4 text-blue-600 dark:text-blue-400 animate-spin" />
+                          <span className="text-sm text-blue-700 dark:text-blue-300">
+                            Saving changes to database...
+                          </span>
+                        </div>
+                        <span className="text-xs text-blue-600 dark:text-blue-400 px-2 py-1 bg-blue-100 dark:bg-blue-900 rounded">
+                          Real-time
+                        </span>
+                      </div>
                     )}
+
+                    {/* Visit Distribution Controls */}
+                    <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="text-sm font-semibold text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                          <Activity className="w-4 h-4" />
+                          Automatic Visit Distribution
+                        </h4>
+                        {visitDistribution[selectedUser.id]?.isActive ? (
+                          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 px-2 py-1 rounded">
+                            Inactive
+                          </span>
+                        )}
+                      </div>
+　　　　　　　　　　
+                      {visitDistribution[selectedUser.id]?.isActive ? (
+                        <div className="space-y-2">
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            🔄 Currently distributing {visitDistribution[selectedUser.id].totalVisits} visits over 24 hours
+                          </p>
+                          <p className="text-xs text-amber-600 dark:text-amber-400">
+                            Rate: {visitDistribution[selectedUser.id].visitsPerUnit.toFixed(4)} visits per {visitDistribution[selectedUser.id].timePeriod}
+                          </p>
+                          <button
+                            onClick={() => stopVisitDistribution(selectedUser.id)}
+                            className="w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-2"
+                          >
+                            <Activity className="w-4 h-4" />
+                            Stop Distribution
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <p className="text-xs text-amber-700 dark:text-amber-300">
+                            📊 Distribute today's visits ({partnerMetrics[selectedUser.id]?.storeVisits?.today || 0}) automatically over 24 hours
+                          </p>
+                          <div className="grid grid-cols-3 gap-2">
+                            <button
+                              onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'hour')}
+                              className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
+                            >
+                              Per Hour
+                            </button>
+                            <button
+                              onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'minute')}
+                              className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
+                            >
+                              Per Minute
+                            </button>
+                            <button
+                              onClick={() => startVisitDistribution(selectedUser.id, partnerMetrics[selectedUser.id]?.storeVisits?.today || 0, 'second')}
+                              className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
+                            >
+                              Per Second
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
+                      <button
+                        onClick={() => setShowPartnerMetricsModal(false)}
+                        className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        Close
+                      </button>
+                      <button
+                        onClick={() => {
+                          const metrics = partnerMetrics[selectedUser.id];
+                          if (metrics) {
+                            updatePartnerMetrics(selectedUser.id, metrics);
+                          }
+                        }}
+                        disabled={savingMetrics === selectedUser.id}
+                        className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                      >
+                        {savingMetrics === selectedUser.id ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            Update All Changes
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1742,4 +1776,3 @@ export default function AdminUsers() {
       </AdminLayout>
   );
 }
-</>
