@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
@@ -589,12 +589,12 @@ export default function AdminUsers() {
       setTimeout(() => {
         setSavingMetrics(null);
         setShowPartnerMetricsModal(false);
-        alert('✅ Partner metrics updated successfully!');
+        alert('âœ… Partner metrics updated successfully!');
       }, 500);
     } catch (error: any) {
       console.error('Error updating partner metrics:', error);
       setSavingMetrics(null);
-      alert(`❌ Failed to update partner metrics: ${error.message || 'Unknown error'}`);
+      alert(`âŒ Failed to update partner metrics: ${error.message || 'Unknown error'}`);
     }
   };
 
@@ -665,10 +665,10 @@ export default function AdminUsers() {
       // Start the distribution process
       startDistributionTimer(userId, newDistribution);
       
-      alert(`✅ Automatic visit distribution started: ${totalVisits} visits over 24 hours (${visitsPerUnit.toFixed(4)} visits per ${timePeriod})`);
+      alert(`âœ… Automatic visit distribution started: ${totalVisits} visits over 24 hours (${visitsPerUnit.toFixed(4)} visits per ${timePeriod})`);
     } catch (error) {
       console.error('Error starting visit distribution:', error);
-      alert('❌ Failed to start visit distribution');
+      alert('âŒ Failed to start visit distribution');
     }
   };
 
@@ -703,10 +703,10 @@ export default function AdminUsers() {
         delete (window as any).visitDistributionTimers[userId];
       }
       
-      alert('✅ Automatic visit distribution stopped');
+      alert('âœ… Automatic visit distribution stopped');
     } catch (error) {
       console.error('Error stopping visit distribution:', error);
-      alert('❌ Failed to stop visit distribution');
+      alert('âŒ Failed to stop visit distribution');
     }
   };
 
@@ -853,10 +853,10 @@ export default function AdminUsers() {
         })
         .eq('user_id', userId);
 
-      alert(`✅ Added ${visitsToAdd} visits successfully!`);
+      alert(`âœ… Added ${visitsToAdd} visits successfully!`);
     } catch (error) {
       console.error('Error adding visits:', error);
-      alert('❌ Failed to add visits');
+      alert('âŒ Failed to add visits');
     }
   };
 
@@ -926,7 +926,7 @@ export default function AdminUsers() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                🔍 Search Users
+                ðŸ” Search Users
               </label>
               <input
                 type="text"
@@ -939,17 +939,17 @@ export default function AdminUsers() {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                📋 Filter by Type
+                ðŸ“‹ Filter by Type
               </label>
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value as UserTypeEnum | 'all')}
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:focus:ring-amber-400 dark:focus:border-amber-400 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-all"
               >
-                <option value="all">👥 All Types</option>
-                <option value="customer">🛒 Customers</option>
-                <option value="partner">🏪 Partners</option>
-                <option value="admin">⚙️ Admins</option>
+                <option value="all">ðŸ‘¥ All Types</option>
+                <option value="customer">ðŸ›’ Customers</option>
+                <option value="partner">ðŸª Partners</option>
+                <option value="admin">âš™ï¸ Admins</option>
               </select>
             </div>
             
@@ -958,7 +958,7 @@ export default function AdminUsers() {
                 onClick={loadUsers}
                 className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               >
-                🔄 Refresh Users
+                ðŸ”„ Refresh Users
               </button>
             </div>
           </div>
@@ -969,7 +969,7 @@ export default function AdminUsers() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 p-3 rounded-xl">
-                <span className="text-2xl">👥</span>
+                <span className="text-2xl">ðŸ‘¥</span>
               </div>
               <div className="text-blue-600 dark:text-blue-400 text-sm font-semibold">Total</div>
             </div>
@@ -980,7 +980,7 @@ export default function AdminUsers() {
           <div className="bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/30 rounded-2xl shadow-md border border-amber-200 dark:border-amber-700/50 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-gradient-to-br from-amber-200 to-amber-300 dark:from-amber-600 dark:to-amber-500 p-3 rounded-xl">
-                <span className="text-2xl">💰</span>
+                <span className="text-2xl">ðŸ’°</span>
               </div>
               <div className="text-amber-600 dark:text-amber-400 text-sm font-semibold">Revenue</div>
             </div>
@@ -993,7 +993,7 @@ export default function AdminUsers() {
           <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-2xl shadow-md border border-green-200 dark:border-green-700/50 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-gradient-to-br from-green-200 to-green-300 dark:from-green-600 dark:to-green-500 p-3 rounded-xl">
-                <span className="text-2xl">🏪</span>
+                <span className="text-2xl">ðŸª</span>
               </div>
               <div className="text-green-600 dark:text-green-400 text-sm font-semibold">Partners</div>
             </div>
@@ -1006,7 +1006,7 @@ export default function AdminUsers() {
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/30 rounded-2xl shadow-md border border-yellow-200 dark:border-yellow-700/50 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
             <div className="flex items-center justify-between mb-4">
               <div className="bg-gradient-to-br from-yellow-200 to-yellow-300 dark:from-yellow-600 dark:to-yellow-500 p-3 rounded-xl">
-                <span className="text-2xl">⏳</span>
+                <span className="text-2xl">â³</span>
               </div>
               <div className="text-yellow-600 dark:text-yellow-400 text-sm font-semibold">Pending</div>
             </div>
@@ -1026,7 +1026,7 @@ export default function AdminUsers() {
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="p-8 text-center">
-              <span className="text-4xl mb-4 block">👥</span>
+              <span className="text-4xl mb-4 block">ðŸ‘¥</span>
               <p className="text-gray-600 dark:text-gray-400">No users found</p>
             </div>
           ) : (
@@ -1035,19 +1035,19 @@ export default function AdminUsers() {
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      👤 User
+                      ðŸ‘¤ User
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      📊 Type & Status
+                      ðŸ“Š Type & Status
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      💰 Wallet Balance
+                      ðŸ’° Wallet Balance
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      📅 Joined
+                      ðŸ“… Joined
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      ⚡ Actions
+                      âš¡ Actions
                     </th>
                   </tr>
                 </thead>
@@ -1072,17 +1072,17 @@ export default function AdminUsers() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex flex-col space-y-2">
                             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getBadgeColor('user_type', user.user_type)}`}>
-                              {user.user_type === 'admin' && '⚙️ '}
-                              {user.user_type === 'partner' && '🏪 '}
-                              {user.user_type === 'user' && '🛒 '}
+                              {user.user_type === 'admin' && 'âš™ï¸ '}
+                              {user.user_type === 'partner' && 'ðŸª '}
+                              {user.user_type === 'user' && 'ðŸ›’ '}
                               {user.user_type}
                             </span>
                             {user.user_type === 'partner' && (
                               <span className={`px-2 py-1 text-xs font-semibold rounded-full ${getBadgeColor('partner_status', user.partner_status)}`}>
-                                {user.partner_status === 'approved' && '✅ '}
-                                {user.partner_status === 'pending' && '⏳ '}
-                                {user.partner_status === 'rejected' && '❌ '}
-                                {user.partner_status === 'suspended' && '🚫 '}
+                                {user.partner_status === 'approved' && 'âœ… '}
+                                {user.partner_status === 'pending' && 'â³ '}
+                                {user.partner_status === 'rejected' && 'âŒ '}
+                                {user.partner_status === 'suspended' && 'ðŸš« '}
                                 {user.partner_status}
                               </span>
                             )}
@@ -1105,27 +1105,27 @@ export default function AdminUsers() {
                               onClick={() => openUserModal(user)}
                               className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
-                              ✏️ Edit Info
+                              âœï¸ Edit Info
                             </button>
                             <button
                               onClick={() => openBalanceModal(user)}
                               className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
-                              💰 Adjust Balance
+                              ðŸ’° Adjust Balance
                             </button>
                             {user.user_type === 'partner' && (
                               <button
                                 onClick={() => openPartnerMetricsModal(user)}
                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-left font-medium flex items-center gap-1 transition-colors"
                               >
-                                📊 Partner Metrics
+                                ðŸ“Š Partner Metrics
                               </button>
                             )}
                             <button
                               onClick={() => deleteUser(user.id)}
                               className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
-                              🗑️ Delete User
+                              ðŸ—‘ï¸ Delete User
                             </button>
                           </div>
                         </td>
@@ -1152,7 +1152,7 @@ export default function AdminUsers() {
                   onClick={() => setShowUserModal(false)}
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
               
@@ -1247,7 +1247,7 @@ export default function AdminUsers() {
                   onClick={() => setShowBalanceModal(false)}
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
               
@@ -1357,7 +1357,7 @@ export default function AdminUsers() {
                   onClick={() => setShowPartnerMetricsModal(false)}
                   className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
                 >
-                  ✕
+                  âœ•
                 </button>
               </div>
 
@@ -1588,7 +1588,7 @@ export default function AdminUsers() {
                           </div>
                         ))}
                         <div className="text-xs text-gray-500 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800">
-                          💡 Product counts are fetched from the partner's actual inventory at https://www.athub.store/partner/dashboard/inventory
+                          ðŸ’¡ Product counts are fetched from the partner's actual inventory at https://www.athub.store/partner/dashboard/inventory
                         </div>
                       </div>
                     </div>
@@ -1690,11 +1690,11 @@ export default function AdminUsers() {
                           </span>
                         )}
                       </div>
-　　　　　　　　　　
+ã€€ã€€ã€€ã€€ã€€ã€€ã€€ã€€ã€€ã€€
                       {visitDistribution[selectedUser.id]?.isActive ? (
                         <div className="space-y-2">
                           <p className="text-xs text-amber-700 dark:text-amber-300">
-                            🔄 Currently distributing {visitDistribution[selectedUser.id].totalVisits} visits over 24 hours
+                            ðŸ”„ Currently distributing {visitDistribution[selectedUser.id].totalVisits} visits over 24 hours
                           </p>
                           <p className="text-xs text-amber-600 dark:text-amber-400">
                             Rate: {visitDistribution[selectedUser.id].visitsPerUnit.toFixed(4)} visits per {visitDistribution[selectedUser.id].timePeriod}
@@ -1710,7 +1710,7 @@ export default function AdminUsers() {
                       ) : (
                         <div className="space-y-2">
                           <p className="text-xs text-amber-700 dark:text-amber-300">
-                            📊 Distribute today's visits ({partnerMetrics[selectedUser.id]?.storeVisits?.today || 0}) automatically over 24 hours
+                            ðŸ“Š Distribute today's visits ({partnerMetrics[selectedUser.id]?.storeVisits?.today || 0}) automatically over 24 hours
                           </p>
                           <div className="grid grid-cols-3 gap-2">
                             <button
@@ -1776,3 +1776,4 @@ export default function AdminUsers() {
       </AdminLayout>
   );
 }
+
