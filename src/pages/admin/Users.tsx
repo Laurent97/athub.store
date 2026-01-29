@@ -331,6 +331,44 @@ export default function AdminUsers() {
     }
   };
 
+  const stopVisitDistribution = async (userId: string) => {
+    try {
+      // Update database to stop distribution
+      const { error } = await supabase
+        .from('visit_distribution')
+        .update({
+          is_active: false,
+          end_time: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('partner_id', userId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      // Update local state
+      setVisitDistribution(prev => ({
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          isActive: false,
+          endTime: new Date().toISOString()
+        }
+      }));
+
+      // Stop the timer
+      if ((window as any).visitDistributionTimers && (window as any).visitDistributionTimers[userId]) {
+        clearInterval((window as any).visitDistributionTimers[userId]);
+        delete (window as any).visitDistributionTimers[userId];
+      }
+      
+      alert('✅ Visit distribution stopped');
+    } catch (error) {
+      console.error('Error stopping visit distribution:', error);
+      alert('❌ Failed to stop visit distribution');
+    }
+  };
+
   const startVisitDistribution = async (userId: string, totalVisits: number, timePeriod: 'hour' | 'minute' | 'second') => {
     const visitsPerUnit = totalVisits / 24; // Default to 24 hours distribution
     
@@ -393,44 +431,6 @@ export default function AdminUsers() {
     }
   };
 
-  const stopVisitDistribution = async (userId: string) => {
-    try {
-      // Update database to stop distribution
-      const { error } = await supabase
-        .from('visit_distribution')
-        .update({
-          is_active: false,
-          end_time: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('partner_id', userId)
-        .eq('is_active', true);
-
-      if (error) throw error;
-
-      // Update local state
-      setVisitDistribution(prev => ({
-        ...prev,
-        [userId]: {
-          ...prev[userId],
-          isActive: false,
-          endTime: new Date().toISOString()
-        }
-      }));
-
-      // Stop the timer
-      if ((window as any).visitDistributionTimers && (window as any).visitDistributionTimers[userId]) {
-        clearInterval((window as any).visitDistributionTimers[userId]);
-        delete (window as any).visitDistributionTimers[userId];
-      }
-      
-      alert('✅ Visit distribution stopped');
-    } catch (error) {
-      console.error('Error stopping visit distribution:', error);
-      alert('❌ Failed to stop visit distribution');
-    }
-  };
-
   const startDistributionTimer = (userId: string, config: any) => {
     const intervalMs = config.timePeriod === 'hour' ? 60 * 60 * 1000 : 
                        config.timePeriod === 'minute' ? 60 * 1000 : 
@@ -439,8 +439,28 @@ export default function AdminUsers() {
     let accumulatedVisits = 0;
     let totalDistributed = config.totalDistributed || 0;
 
+    console.log(`Starting distribution timer for user ${userId}:`, {
+      totalVisits: config.totalVisits,
+      visitsPerUnit: config.visitsPerUnit,
+      intervalMs: intervalMs
+    });
+
     const timer = setInterval(async () => {
       try {
+        // Check if distribution is still active
+        const { data: currentDistribution } = await supabase
+          .from('visit_distribution')
+          .select('*')
+          .eq('partner_id', userId)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!currentDistribution) {
+          console.log('Distribution no longer active, stopping timer');
+          clearInterval(timer);
+          return;
+        }
+
         accumulatedVisits += config.visitsPerUnit;
         
         const wholeVisitsToAdd = Math.floor(accumulatedVisits);
@@ -448,6 +468,8 @@ export default function AdminUsers() {
         if (wholeVisitsToAdd > 0) {
           accumulatedVisits -= wholeVisitsToAdd;
           totalDistributed += wholeVisitsToAdd;
+          
+          console.log(`Adding ${wholeVisitsToAdd} visits to user ${userId} (Total: ${totalDistributed})`);
           
           // Insert visits into store_visits table
           const visitRecords = Array.from({ length: wholeVisitsToAdd }, (_, i) => ({
@@ -458,12 +480,17 @@ export default function AdminUsers() {
             created_at: new Date().toISOString()
           }));
 
-          await supabase
+          const { error: insertError } = await supabase
             .from('store_visits')
             .insert(visitRecords);
 
+          if (insertError) {
+            console.error('Error inserting visits:', insertError);
+            return;
+          }
+
           // Update distribution tracking
-          await supabase
+          const { error: updateError } = await supabase
             .from('visit_distribution')
             .update({
               total_distributed: totalDistributed,
@@ -472,6 +499,11 @@ export default function AdminUsers() {
             })
             .eq('partner_id', userId)
             .eq('is_active', true);
+
+          if (updateError) {
+            console.error('Error updating distribution:', updateError);
+            return;
+          }
 
           // Update local state
           setVisitDistribution(prev => ({
@@ -483,11 +515,15 @@ export default function AdminUsers() {
             }
           }));
 
-          console.log(`Added ${wholeVisitsToAdd} visits to partner ${userId} (Total: ${totalDistributed})`);
+          console.log(`Successfully distributed ${wholeVisitsToAdd} visits. Total distributed: ${totalDistributed}`);
         }
         
+        // Check if we've reached the target
         if (totalDistributed >= config.totalVisits) {
+          console.log(`Distribution completed for user ${userId}. Total: ${totalDistributed}`);
           clearInterval(timer);
+          
+          // Mark distribution as complete
           await supabase
             .from('visit_distribution')
             .update({
@@ -496,17 +532,6 @@ export default function AdminUsers() {
               updated_at: new Date().toISOString()
             })
             .eq('partner_id', userId);
-          
-          setVisitDistribution(prev => ({
-            ...prev,
-            [userId]: {
-              ...prev[userId],
-              isActive: false,
-              endTime: new Date().toISOString()
-            }
-          }));
-          
-          console.log(`Distribution completed for partner ${userId}. Total: ${totalDistributed}`);
         }
       } catch (error) {
         console.error('Error in distribution timer:', error);
@@ -516,6 +541,8 @@ export default function AdminUsers() {
     // Store timer reference for cleanup
     (window as any).visitDistributionTimers = (window as any).visitDistributionTimers || {};
     (window as any).visitDistributionTimers[userId] = timer;
+    
+    console.log(`Distribution timer started for user ${userId}`);
   };
 
   // Fix: Safe getter for store visits
