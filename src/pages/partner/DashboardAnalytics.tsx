@@ -30,6 +30,7 @@ import {
   AlertCircle,
   CheckCircle,
   Zap,
+  Star,
   TrendingUp as TrendingIcon,
   Play,
   Pause
