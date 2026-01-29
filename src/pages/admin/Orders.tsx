@@ -663,28 +663,32 @@ export default function AdminOrders() {
     }
 
     try {
-      // Update order_tracking table
+      // Get the order_number and partner_id to use in order_tracking table
+      const { data: orderData } = await supabase
+        .from('orders')
+        .select('order_number, partner_id')
+        .eq('id', selectedOrder.id)
+        .single();
+
+      if (!orderData?.order_number) {
+        throw new Error('Order number not found');
+      }
+
+      // Update order_tracking table using order_number as order_id
       const { error } = await supabase
         .from('order_tracking')
         .upsert({
-          order_id: selectedOrder.id,
+          order_id: orderData.order_number, // Use order_number instead of UUID
           carrier: logisticsForm.carrier,
           tracking_number: logisticsForm.tracking_number,
           estimated_delivery: logisticsForm.estimated_delivery,
-          status: logisticsForm.current_status, // Map current_status to status column
+          status: logisticsForm.current_status,
           updated_at: new Date().toISOString()
         }, {
           onConflict: 'order_id'
         });
 
       if (error) throw error;
-
-      // Also update new order_tracking table for partner dashboard
-      const { data: orderData } = await supabase
-        .from('orders')
-        .select('partner_id, order_number')
-        .eq('id', selectedOrder.id)
-        .single();
 
       if (orderData?.partner_id) {
         try {
