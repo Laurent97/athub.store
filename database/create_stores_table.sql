@@ -100,7 +100,10 @@ CREATE TRIGGER update_stores_updated_at
     EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert sample data for testing (optional - remove in production)
+-- Note: Uncomment and update with valid user IDs after running the migration
+/*
 INSERT INTO stores (name, slug, description, contact_email, is_active, rating, total_products, active_products, owner_id) VALUES
-('Auto Parts Store', 'auto-parts-store', 'Your one-stop shop for quality auto parts and accessories', 'contact@autoparts.com', true, 4.5, 150, 120, '33235e84-d175-4d35-a260-1037ca5cfd0c'),
-('Electronics Hub', 'electronics-hub', 'Latest electronics and gadgets at competitive prices', 'info@electronicshub.com', true, 4.2, 200, 180, '33235e84-d175-4d35-a260-1037ca5cfd0c'),
-('Performance Motors', 'performance-motors', 'High-performance automotive parts and accessories', 'sales@performancemotors.com', true, 4.8, 100, 85, '33235e84-d175-4d35-a260-1037ca5cfd0c');
+('Auto Parts Store', 'auto-parts-store', 'Your one-stop shop for quality auto parts and accessories', 'contact@autoparts.com', true, 4.5, 150, 120, 'VALID_USER_ID_HERE'),
+('Electronics Hub', 'electronics-hub', 'Latest electronics and gadgets at competitive prices', 'info@electronicshub.com', true, 4.2, 200, 180, 'VALID_USER_ID_HERE'),
+('Performance Motors', 'performance-motors', 'High-performance automotive parts and accessories', 'sales@performancemotors.com', true, 4.8, 100, 85, 'VALID_USER_ID_HERE');
+*/
