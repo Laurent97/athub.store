@@ -1,0 +1,253 @@
+// Updated Partner Metrics Modal with auto-calculation and database fetching
+// This will replace the existing modal in Users.tsx
+
+{/* Partner Metrics Modal */}
+{showPartnerMetricsModal && selectedUser && (
+  <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center p-4 z-50">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="p-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Partner Metrics: {selectedUser.email}
+          </h2>
+          <button
+            onClick={() => setShowPartnerMetricsModal(false)}
+            className="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 text-2xl"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Store Visits */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Store Visits</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Today (Manual Input)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.storeVisits?.today || ''}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value) || 0;
+                    const currentMetrics = partnerMetrics[selectedUser.id]?.storeVisits || {};
+                    const oldValue = currentMetrics.today || 0;
+                    const diff = value - oldValue;
+                    
+                    setPartnerMetrics(prev => ({
+                      ...prev,
+                      [selectedUser.id]: {
+                        ...prev[selectedUser.id],
+                        storeVisits: {
+                          ...currentMetrics,
+                          today: value,
+                          // Auto-calculate other periods based on the difference
+                          thisWeek: (currentMetrics.thisWeek || 0) + diff,
+                          thisMonth: (currentMetrics.thisMonth || 0) + diff,
+                          allTime: (currentMetrics.allTime || 0) + diff
+                        }
+                      }
+                    }));
+                  }}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">This Week (Auto-calculated)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.storeVisits?.thisWeek || 0}
+                  disabled
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">This Month (Auto-calculated)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.storeVisits?.thisMonth || 0}
+                  disabled
+                  readOnly
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">All Time (Auto-calculated)</label>
+                <input
+                  type="number"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.storeVisits?.allTime || 0}
+                  disabled
+                  readOnly
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Store Performance - Database Fetched */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Store Performance</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Credit Score (From Database)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="1000"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="750"
+                  value={partnerMetrics[selectedUser.id]?.storeCreditScore || 0}
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Fetched from database</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Store Rating (From Database)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="5"
+                  step="0.1"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="4.5"
+                  value={partnerMetrics[selectedUser.id]?.storeRating || 0}
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Fetched from database</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Commission Rate (%)</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+                  placeholder="10.00"
+                  value={(partnerMetrics[selectedUser.id]?.commissionRate || 0) * 100}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 0;
+                    setPartnerMetrics(prev => ({
+                      ...prev,
+                      [selectedUser.id]: {
+                        ...prev[selectedUser.id],
+                        commissionRate: value / 100
+                      }
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Products - Database Fetched */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Products</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Total Products (From Database)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.totalProducts || 0}
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Fetched from database</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Active Products (From Database)</label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  placeholder="0"
+                  value={partnerMetrics[selectedUser.id]?.activeProducts || 0}
+                  disabled
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Fetched from database</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Status</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    checked={partnerMetrics[selectedUser.id]?.isVerified || false}
+                    onChange={(e) => {
+                      setPartnerMetrics(prev => ({
+                        ...prev,
+                        [selectedUser.id]: {
+                          ...prev[selectedUser.id],
+                          isVerified: e.target.checked
+                        }
+                      }));
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Verified Partner</span>
+                </label>
+              </div>
+              <div>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    checked={partnerMetrics[selectedUser.id]?.isActive || false}
+                    onChange={(e) => {
+                      setPartnerMetrics(prev => ({
+                        ...prev,
+                        [selectedUser.id]: {
+                          ...prev[selectedUser.id],
+                          isActive: e.target.checked
+                        }
+                      }));
+                    }}
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active Partner</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-6">
+          <button
+            onClick={() => setShowPartnerMetricsModal(false)}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              const metrics = partnerMetrics[selectedUser.id];
+              if (metrics) {
+                updatePartnerMetrics(selectedUser.id, metrics);
+              } else {
+                alert('Please make some changes before saving');
+              }
+            }}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          >
+            Update Metrics
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}

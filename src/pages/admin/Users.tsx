@@ -436,8 +436,46 @@ export default function AdminUsers() {
     setShowUserModal(true);
   };
 
-  const openPartnerMetricsModal = (user: UserType) => {
+  const openPartnerMetricsModal = async (user: UserType) => {
     setSelectedUser(user);
+    
+    // Fetch current partner metrics from database
+    try {
+      const { data: partnerProfile, error } = await supabase
+        .from('partner_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "not found" error
+        console.error('Error fetching partner profile:', error);
+      }
+
+      if (partnerProfile) {
+        // Update local state with database values
+        setPartnerMetrics(prev => ({
+          ...prev,
+          [user.id]: {
+            storeVisits: partnerProfile.store_visits || {
+              today: 0,
+              thisWeek: 0,
+              thisMonth: 0,
+              allTime: 0
+            },
+            storeCreditScore: partnerProfile.store_credit_score || 750,
+            storeRating: partnerProfile.store_rating || 0,
+            totalProducts: partnerProfile.total_products || 0,
+            activeProducts: partnerProfile.active_products || 0,
+            commissionRate: partnerProfile.commission_rate || 0.10,
+            isVerified: partnerProfile.is_verified || false,
+            isActive: partnerProfile.is_active !== false // default to true
+          }
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading partner metrics:', error);
+    }
+    
     setShowPartnerMetricsModal(true);
   };
 
@@ -1182,7 +1220,7 @@ return (
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Store Visits</h3>
                   <div className="space-y-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Today</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Today (Manual Input)</label>
                       <input
                         type="number"
                         className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
