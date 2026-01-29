@@ -341,7 +341,7 @@ export default function DashboardAnalytics() {
       });
 
       // Set comprehensive analytics data with real values
-      setAnalytics({
+      const finalAnalytics = {
         partnerInfo: {
           name: partnerProfile?.store_name,
           rating: partnerProfile?.store_rating,
@@ -383,7 +383,19 @@ export default function DashboardAnalytics() {
           weeklyData: weeklyData,
           monthlyEarnings: monthlyEarnings || []
         }
-      });
+      };
+
+      console.log('=== DEBUGGING ANALYTICS DATA ===');
+      console.log('Final analytics metrics:', finalAnalytics.metrics);
+      console.log('Today earnings:', todayEarnings);
+      console.log('Last 7 days earnings:', last7DaysEarnings);
+      console.log('Wallet balance:', walletBalance);
+      console.log('Pending balance:', pendingBalance);
+      console.log('Total orders:', allOrders.length);
+      console.log('Completed orders:', completedOrders.length);
+      console.log('=== END DEBUGGING ===');
+
+      setAnalytics(finalAnalytics);
 
       // Set monthly data for charts
       if (monthlyEarnings) {
@@ -950,6 +962,9 @@ export default function DashboardAnalytics() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-blue-700 dark:text-blue-300">
                     <Zap className="w-3 h-3 inline mr-1" />
+                    Auto-visits active: {visitDistribution.total_visits || 0} visits
+                  </span>
+                  <span className="text-xs text-muted-foreground">
                     {visitDistribution.time_period === 'second' ? 'Per Second' :
                      visitDistribution.time_period === 'minute' ? 'Per Minute' : 'Per Hour'}
                   </span>
