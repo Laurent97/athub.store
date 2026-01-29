@@ -454,6 +454,57 @@ export default function AdminUsers() {
     setShowUserModal(true);
   };
 
+  // Fix: Add a safe way to access storeVisits
+  const getStoreVisits = (userId: string, period: keyof any) => {
+    const metrics = partnerMetrics[userId];
+    if (!metrics || !metrics.storeVisits) return 0;
+    
+    // Handle both object and number formats
+    if (typeof metrics.storeVisits === 'object') {
+      return metrics.storeVisits[period] || 0;
+    }
+    
+    return metrics.storeVisits || 0;
+  };
+
+  // Fix: Add a function to safely update storeVisits
+  const updateStoreVisits = (userId: string, period: string, value: number) => {
+    setPartnerMetrics(prev => {
+      const currentMetrics = prev[userId] || {};
+      const currentStoreVisits = currentMetrics.storeVisits || { today: 0, thisWeek: 0, thisMonth: 0, allTime: 0 };
+      
+      // Ensure storeVisits is an object
+      const storeVisits = typeof currentStoreVisits === 'object' 
+        ? { ...currentStoreVisits }
+        : { today: 0, thisWeek: 0, thisMonth: 0, allTime: 0 };
+      
+      // Calculate the difference
+      const oldValue = storeVisits[period] || 0;
+      const difference = value - oldValue;
+      
+      // Update all periods
+      const updatedStoreVisits = {
+        ...storeVisits,
+        [period]: value
+      };
+      
+      // Cascade update to other periods
+      if (period === 'today') {
+        updatedStoreVisits.thisWeek = (storeVisits.thisWeek || 0) + difference;
+        updatedStoreVisits.thisMonth = (storeVisits.thisMonth || 0) + difference;
+        updatedStoreVisits.allTime = (storeVisits.allTime || 0) + difference;
+      }
+      
+      return {
+        ...prev,
+        [userId]: {
+          ...currentMetrics,
+          storeVisits: updatedStoreVisits
+        }
+      };
+    });
+  };
+
   const openPartnerMetricsModal = async (user: UserType) => {
     setSelectedUser(user);
     
@@ -1400,26 +1451,10 @@ export default function AdminUsers() {
                           <input
                             type="number"
                             min="0"
-                            value={String(partnerMetrics[selectedUser.id]?.storeVisits?.today || 0)}
+                            value={getStoreVisits(selectedUser.id, 'today')}
                             onChange={(e) => {
                               const value = parseInt(e.target.value) || 0;
-                              const currentMetrics = partnerMetrics[selectedUser.id];
-                              
-                              // Calculate week/month based on today's change
-                              const todayChange = value - (currentMetrics?.storeVisits?.today || 0);
-                              
-                              setPartnerMetrics(prev => ({
-                                ...prev,
-                                [selectedUser.id]: {
-                                  ...prev[selectedUser.id],
-                                  storeVisits: {
-                                    today: value,
-                                    thisWeek: (prev[selectedUser.id]?.storeVisits?.thisWeek || 0) + todayChange,
-                                    thisMonth: (prev[selectedUser.id]?.storeVisits?.thisMonth || 0) + todayChange,
-                                    allTime: (prev[selectedUser.id]?.storeVisits?.allTime || 0) + todayChange
-                                  }
-                                }
-                              }));
+                              updateStoreVisits(selectedUser.id, 'today', value);
                             }}
                             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                           />
@@ -1442,7 +1477,7 @@ export default function AdminUsers() {
                               <input
                                 type="number"
                                 readOnly
-                                value={String(partnerMetrics[selectedUser.id]?.storeVisits?.[key] || 0)}
+                                value={getStoreVisits(selectedUser.id, key)}
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 cursor-not-allowed"
                               />
                               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent dark:via-gray-800/5 rounded-lg pointer-events-none" />
@@ -1701,23 +1736,23 @@ export default function AdminUsers() {
                     ) : (
                       <div className="space-y-2">
                         <p className="text-xs text-amber-700 dark:text-amber-300">
-                          📊 Distribute today's visits ({String(partnerMetrics[selectedUser.id]?.storeVisits?.today || 0)}) automatically over 24 hours
+                          📊 Distribute today's visits ({getStoreVisits(selectedUser.id, 'today')}) automatically over 24 hours
                         </p>
                         <div className="grid grid-cols-3 gap-2">
                           <button
-                            onClick={() => startVisitDistribution(selectedUser.id, Number(partnerMetrics[selectedUser.id]?.storeVisits?.today || 0), 'hour')}
+                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'hour')}
                             className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
                           >
                             Per Hour
                           </button>
                           <button
-                            onClick={() => startVisitDistribution(selectedUser.id, Number(partnerMetrics[selectedUser.id]?.storeVisits?.today || 0), 'minute')}
+                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'minute')}
                             className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
                           >
                             Per Minute
                           </button>
                           <button
-                            onClick={() => startVisitDistribution(selectedUser.id, Number(partnerMetrics[selectedUser.id]?.storeVisits?.today || 0), 'second')}
+                            onClick={() => startVisitDistribution(selectedUser.id, getStoreVisits(selectedUser.id, 'today'), 'second')}
                             className="px-2 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded-lg transition-colors"
                           >
                             Per Second
