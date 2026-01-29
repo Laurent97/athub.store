@@ -6,6 +6,13 @@ import { User as UserType, UserType as UserTypeEnum, PartnerStatus } from '../..
 import { NotificationService } from '../../lib/supabase/notification-service';
 import { getPartnerProductsWithDetails } from '../../services/partnerProductsService';
 import AdminLayout from '../../components/Admin/AdminLayout';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Users,
   DollarSign,
@@ -137,6 +144,22 @@ export default function AdminUsers() {
 
     loadUsers();
   }, [userProfile, navigate]);
+
+  // Populate edit form when user is selected
+  useEffect(() => {
+    if (selectedUser) {
+      setEditForm({
+        full_name: selectedUser.full_name || '',
+        phone: selectedUser.phone || '',
+        user_type: selectedUser.user_type || 'user',
+        partner_status: selectedUser.partner_status || 'pending'
+      });
+      setBalanceUpdate(prev => ({
+        ...prev,
+        userId: selectedUser.id
+      }));
+    }
+  }, [selectedUser]);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -609,7 +632,278 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* ... rest of your modals (Edit User Modal, Balance Update Modal, Partner Metrics Modal) ... */}
+      {/* Edit User Modal */}
+      <Dialog open={showUserModal} onOpenChange={setShowUserModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit User Information</DialogTitle>
+            <DialogDescription>
+              Update the user's details and permissions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="full_name" className="text-right">
+                Full Name
+              </Label>
+              <Input
+                id="full_name"
+                value={editForm.full_name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, full_name: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="phone" className="text-right">
+                Phone
+              </Label>
+              <Input
+                id="phone"
+                value={editForm.phone}
+                onChange={(e) => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="user_type" className="text-right">
+                User Type
+              </Label>
+              <Select value={editForm.user_type} onValueChange={(value: UserTypeEnum) => setEditForm(prev => ({ ...prev, user_type: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Customer</SelectItem>
+                  <SelectItem value="partner">Partner</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {editForm.user_type === 'partner' && (
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="partner_status" className="text-right">
+                  Partner Status
+                </Label>
+                <Select value={editForm.partner_status} onValueChange={(value: PartnerStatus) => setEditForm(prev => ({ ...prev, partner_status: value }))}>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="approved">Approved</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="suspended">Suspended</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowUserModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!selectedUser) return;
+              try {
+                const { error } = await supabase
+                  .from('users')
+                  .update({
+                    full_name: editForm.full_name,
+                    phone: editForm.phone,
+                    user_type: editForm.user_type,
+                    partner_status: editForm.user_type === 'partner' ? editForm.partner_status : null
+                  })
+                  .eq('id', selectedUser.id);
+                
+                if (error) throw error;
+                
+                await loadUsers();
+                setShowUserModal(false);
+              } catch (error) {
+                console.error('Error updating user:', error);
+              }
+            }}>
+              Save Changes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Balance Update Modal */}
+      <Dialog open={showBalanceModal} onOpenChange={setShowBalanceModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Adjust User Balance</DialogTitle>
+            <DialogDescription>
+              Add or subtract funds from the user's wallet balance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="amount" className="text-right">
+                Amount
+              </Label>
+              <Input
+                id="amount"
+                type="number"
+                value={balanceUpdate.amount}
+                onChange={(e) => setBalanceUpdate(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="type" className="text-right">
+                Type
+              </Label>
+              <Select value={balanceUpdate.type} onValueChange={(value: 'add' | 'subtract') => setBalanceUpdate(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="add">Add Funds</SelectItem>
+                  <SelectItem value="subtract">Subtract Funds</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="reason" className="text-right">
+                Reason
+              </Label>
+              <Input
+                id="reason"
+                value={balanceUpdate.reason}
+                onChange={(e) => setBalanceUpdate(prev => ({ ...prev, reason: e.target.value }))}
+                className="col-span-3"
+                placeholder="Reason for adjustment"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setShowBalanceModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={async () => {
+              if (!selectedUser) return;
+              try {
+                const currentBalance = userBalances[selectedUser.id]?.balance || 0;
+                const newBalance = balanceUpdate.type === 'add' 
+                  ? currentBalance + balanceUpdate.amount
+                  : currentBalance - balanceUpdate.amount;
+
+                const { error } = await supabase
+                  .from('wallet_balances')
+                  .upsert({
+                    user_id: selectedUser.id,
+                    balance: newBalance,
+                    currency: 'USD',
+                    updated_at: new Date().toISOString()
+                  });
+                
+                if (error) throw error;
+                
+                await loadUsers();
+                setShowBalanceModal(false);
+              } catch (error) {
+                console.error('Error updating balance:', error);
+              }
+            }}>
+              Update Balance
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Partner Metrics Modal */}
+      <Dialog open={showPartnerMetricsModal} onOpenChange={setShowPartnerMetricsModal}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Partner Metrics</DialogTitle>
+            <DialogDescription>
+              View detailed performance metrics for this partner.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedUser && partnerMetrics[selectedUser.id] && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Store Visits</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {partnerMetrics[selectedUser.id]?.storeVisits?.allTime || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">All time</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Store Rating</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {partnerMetrics[selectedUser.id]?.storeRating || 0} ⭐
+                    </div>
+                    <p className="text-xs text-muted-foreground">Out of 5</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Total Products</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {partnerMetrics[selectedUser.id]?.totalProducts || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {partnerMetrics[selectedUser.id]?.activeProducts || 0} active
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm">Credit Score</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {partnerMetrics[selectedUser.id]?.storeCreditScore || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Store credit</p>
+                  </CardContent>
+                </Card>
+              </div>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Visit Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Today:</span>
+                      <span>{partnerMetrics[selectedUser.id]?.storeVisits?.today || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>This Week:</span>
+                      <span>{partnerMetrics[selectedUser.id]?.storeVisits?.thisWeek || 0}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>This Month:</span>
+                      <span>{partnerMetrics[selectedUser.id]?.storeVisits?.thisMonth || 0}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setShowPartnerMetricsModal(false)}>
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
