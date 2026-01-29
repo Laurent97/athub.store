@@ -461,10 +461,12 @@ export default function AdminUsers() {
     
     // Handle both object and number formats
     if (typeof metrics.storeVisits === 'object') {
-      return metrics.storeVisits[period] || 0;
+      const value = metrics.storeVisits[period];
+      return typeof value === 'number' ? value : 0;
     }
     
-    return metrics.storeVisits || 0;
+    // If it's a number, return it (for backward compatibility)
+    return typeof metrics.storeVisits === 'number' ? metrics.storeVisits : 0;
   };
 
   // Fix: Add a function to safely update storeVisits
@@ -1451,7 +1453,7 @@ export default function AdminUsers() {
                           <input
                             type="number"
                             min="0"
-                            value={getStoreVisits(selectedUser.id, 'today')}
+                            value={String(getStoreVisits(selectedUser.id, 'today'))}
                             onChange={(e) => {
                               const value = parseInt(e.target.value) || 0;
                               updateStoreVisits(selectedUser.id, 'today', value);
@@ -1477,7 +1479,7 @@ export default function AdminUsers() {
                               <input
                                 type="number"
                                 readOnly
-                                value={getStoreVisits(selectedUser.id, key)}
+                                value={String(getStoreVisits(selectedUser.id, key))}
                                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900/50 text-gray-700 dark:text-gray-300 cursor-not-allowed"
                               />
                               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent dark:via-gray-800/5 rounded-lg pointer-events-none" />
@@ -1736,7 +1738,7 @@ export default function AdminUsers() {
                     ) : (
                       <div className="space-y-2">
                         <p className="text-xs text-amber-700 dark:text-amber-300">
-                          📊 Distribute today's visits ({getStoreVisits(selectedUser.id, 'today')}) automatically over 24 hours
+                          📊 Distribute today's visits ({String(getStoreVisits(selectedUser.id, 'today'))}) automatically over 24 hours
                         </p>
                         <div className="grid grid-cols-3 gap-2">
                           <button
