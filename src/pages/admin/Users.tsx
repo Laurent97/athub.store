@@ -293,7 +293,43 @@ export default function AdminUsers() {
     }
   };
 
-  // ... rest of your functions (updateUser, updateUserBalance, deleteUser, etc.) ...
+  const openBalanceModal = (user: UserType) => {
+    setSelectedUser(user);
+    setBalanceUpdate({
+      userId: user.id,
+      amount: 0,
+      type: 'add',
+      reason: ''
+    });
+    setShowBalanceModal(true);
+  };
+
+  const manuallyAddVisits = async (userId: string, visitsToAdd: number) => {
+    try {
+      // Insert visits into the store_visits table
+      const visitRecords = Array.from({ length: visitsToAdd }, (_, i) => ({
+        partner_id: userId,
+        visitor_id: `manual_${Date.now()}_${i}`,
+        page_visited: '/store',
+        session_duration: Math.floor(Math.random() * 300) + 60, // 1-5 minutes
+        created_at: new Date().toISOString()
+      }));
+
+      const { error } = await supabase
+        .from('store_visits')
+        .insert(visitRecords);
+
+      if (error) throw error;
+
+      // Refresh the data to show updated counts
+      await loadUsers();
+      
+      alert(`✅ Added ${visitsToAdd} visits successfully!`);
+    } catch (error) {
+      console.error('Error adding visits:', error);
+      alert(`❌ Failed to add visits: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   // Fix: Safe getter for store visits
   const getStoreVisitValue = (userId: string, key: string): number => {
@@ -897,10 +933,47 @@ export default function AdminUsers() {
                   </div>
                 </CardContent>
               </Card>
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Manual Visit Management</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Number of visits"
+                        min="1"
+                        max="1000"
+                        className="flex-1"
+                        id="visitsToAdd"
+                      />
+                      <Button
+                        onClick={() => {
+                          const input = document.getElementById('visitsToAdd') as HTMLInputElement;
+                          const visitsToAdd = parseInt(input?.value || '0');
+                          if (visitsToAdd > 0 && selectedUser) {
+                            manuallyAddVisits(selectedUser.id, visitsToAdd);
+                            input.value = '';
+                          }
+                        }}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        size="sm"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Visits
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Manually add visits to the store_visits table for this partner
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
-          <div className="flex justify-end">
-            <Button onClick={() => setShowPartnerMetricsModal(false)}>
+          <div className="flex justify-end gap-2">
+            <Button onClick={() => setShowPartnerMetricsModal(false)} variant="outline">
               Close
             </Button>
           </div>
@@ -908,4 +981,3 @@ export default function AdminUsers() {
       </Dialog>
     </AdminLayout>
   );
-}
