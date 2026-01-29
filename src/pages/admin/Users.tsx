@@ -331,6 +331,193 @@ export default function AdminUsers() {
     }
   };
 
+  const startVisitDistribution = async (userId: string, totalVisits: number, timePeriod: 'hour' | 'minute' | 'second') => {
+    const visitsPerUnit = totalVisits / 24; // Default to 24 hours distribution
+    
+    try {
+      // Create distribution record in database
+      const startTime = new Date();
+      const endTime = new Date(startTime.getTime() + (24 * 60 * 60 * 1000)); // 24 hours from now
+
+      const { data: distributionData, error } = await supabase
+        .from('visit_distribution')
+        .insert({
+          partner_id: userId,
+          total_visits: totalVisits,
+          time_period: timePeriod,
+          visits_per_unit: visitsPerUnit,
+          is_active: true,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          total_distributed: 0,
+          last_distribution: startTime.toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Update local state
+      setVisitDistribution(prev => ({
+        ...prev,
+        [userId]: {
+          totalVisits,
+          timePeriod,
+          visitsPerUnit,
+          isActive: true,
+          lastDistribution: startTime.toISOString(),
+          totalDistributed: 0,
+          startTime: startTime.toISOString(),
+          endTime: endTime.toISOString()
+        }
+      }));
+
+      // Start the distribution process
+      startDistributionTimer(userId, {
+        totalVisits,
+        timePeriod,
+        visitsPerUnit,
+        isActive: true,
+        lastDistribution: startTime.toISOString(),
+        totalDistributed: 0,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString()
+      });
+      
+      alert(`✅ Started distributing ${totalVisits} visits over 24 hours (${visitsPerUnit.toFixed(2)} visits per ${timePeriod})`);
+    } catch (error) {
+      console.error('Error starting visit distribution:', error);
+      alert('❌ Failed to start visit distribution');
+    }
+  };
+
+  const stopVisitDistribution = async (userId: string) => {
+    try {
+      // Update database to stop distribution
+      const { error } = await supabase
+        .from('visit_distribution')
+        .update({
+          is_active: false,
+          end_time: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('partner_id', userId)
+        .eq('is_active', true);
+
+      if (error) throw error;
+
+      // Update local state
+      setVisitDistribution(prev => ({
+        ...prev,
+        [userId]: {
+          ...prev[userId],
+          isActive: false,
+          endTime: new Date().toISOString()
+        }
+      }));
+
+      // Stop the timer
+      if ((window as any).visitDistributionTimers && (window as any).visitDistributionTimers[userId]) {
+        clearInterval((window as any).visitDistributionTimers[userId]);
+        delete (window as any).visitDistributionTimers[userId];
+      }
+      
+      alert('✅ Visit distribution stopped');
+    } catch (error) {
+      console.error('Error stopping visit distribution:', error);
+      alert('❌ Failed to stop visit distribution');
+    }
+  };
+
+  const startDistributionTimer = (userId: string, config: any) => {
+    const intervalMs = config.timePeriod === 'hour' ? 60 * 60 * 1000 : 
+                       config.timePeriod === 'minute' ? 60 * 1000 : 
+                       1000; // seconds
+
+    let accumulatedVisits = 0;
+    let totalDistributed = config.totalDistributed || 0;
+
+    const timer = setInterval(async () => {
+      try {
+        accumulatedVisits += config.visitsPerUnit;
+        
+        const wholeVisitsToAdd = Math.floor(accumulatedVisits);
+        
+        if (wholeVisitsToAdd > 0) {
+          accumulatedVisits -= wholeVisitsToAdd;
+          totalDistributed += wholeVisitsToAdd;
+          
+          // Insert visits into store_visits table
+          const visitRecords = Array.from({ length: wholeVisitsToAdd }, (_, i) => ({
+            partner_id: userId,
+            visitor_id: `auto_${Date.now()}_${i}`,
+            page_visited: '/store',
+            session_duration: Math.floor(Math.random() * 300) + 60,
+            created_at: new Date().toISOString()
+          }));
+
+          await supabase
+            .from('store_visits')
+            .insert(visitRecords);
+
+          // Update distribution tracking
+          await supabase
+            .from('visit_distribution')
+            .update({
+              total_distributed: totalDistributed,
+              last_distribution: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('partner_id', userId)
+            .eq('is_active', true);
+
+          // Update local state
+          setVisitDistribution(prev => ({
+            ...prev,
+            [userId]: {
+              ...prev[userId],
+              totalDistributed: totalDistributed,
+              lastDistribution: new Date().toISOString()
+            }
+          }));
+
+          console.log(`Added ${wholeVisitsToAdd} visits to partner ${userId} (Total: ${totalDistributed})`);
+        }
+        
+        if (totalDistributed >= config.totalVisits) {
+          clearInterval(timer);
+          await supabase
+            .from('visit_distribution')
+            .update({
+              is_active: false,
+              end_time: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .eq('partner_id', userId);
+          
+          setVisitDistribution(prev => ({
+            ...prev,
+            [userId]: {
+              ...prev[userId],
+              isActive: false,
+              endTime: new Date().toISOString()
+            }
+          }));
+          
+          console.log(`Distribution completed for partner ${userId}. Total: ${totalDistributed}`);
+        }
+      } catch (error) {
+        console.error('Error in distribution timer:', error);
+      }
+    }, intervalMs);
+
+    // Store timer reference for cleanup
+    (window as any).visitDistributionTimers = (window as any).visitDistributionTimers || {};
+    (window as any).visitDistributionTimers[userId] = timer;
+  };
+
   // Fix: Safe getter for store visits
   const getStoreVisitValue = (userId: string, key: string): number => {
     const metrics = partnerMetrics[userId];
@@ -944,7 +1131,7 @@ export default function AdminUsers() {
                         type="number"
                         placeholder="Number of visits"
                         min="1"
-                        max="1000"
+                        max="10000"
                         className="flex-1"
                         id="visitsToAdd"
                       />
@@ -966,6 +1153,86 @@ export default function AdminUsers() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Manually add visits to the store_visits table for this partner
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Visit Distribution */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm">Visit Distribution</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        placeholder="Total visits"
+                        min="1"
+                        max="50000"
+                        className="col-span-1"
+                        id="totalVisits"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Hours"
+                        min="1"
+                        max="168"
+                        className="col-span-1"
+                        id="distributionHours"
+                      />
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Select defaultValue="hour">
+                        <SelectTrigger className="col-span-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="hour">Per Hour</SelectItem>
+                          <SelectItem value="minute">Per Minute</SelectItem>
+                          <SelectItem value="second">Per Second</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        onClick={() => {
+                          const totalVisitsInput = document.getElementById('totalVisits') as HTMLInputElement;
+                          const hoursInput = document.getElementById('distributionHours') as HTMLInputElement;
+                          const totalVisits = parseInt(totalVisitsInput?.value || '0');
+                          const hours = parseInt(hoursInput?.value || '0');
+                          
+                          if (totalVisits > 0 && hours > 0 && selectedUser) {
+                            startVisitDistribution(selectedUser.id, totalVisits, 'hour');
+                            totalVisitsInput.value = '';
+                            hoursInput.value = '';
+                          }
+                        }}
+                        className="bg-green-600 hover:bg-green-700 col-span-2"
+                        size="sm"
+                      >
+                        <Activity className="w-4 h-4 mr-1" />
+                        Start Distribution
+                      </Button>
+                    </div>
+                    {visitDistribution[selectedUser.id]?.isActive && (
+                      <div className="bg-green-50 dark:bg-green-900/20 p-2 rounded border border-green-200 dark:border-green-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-green-700 dark:text-green-300">
+                            🔄 Active: {visitDistribution[selectedUser.id].visitsPerUnit.toFixed(2)} visits/hour
+                          </span>
+                          <Button
+                            onClick={() => selectedUser && stopVisitDistribution(selectedUser.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                          >
+                            Stop
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Distribute visits over time (e.g., 1000 visits over 10 hours = 100 visitors/hour)
                     </p>
                   </div>
                 </CardContent>
