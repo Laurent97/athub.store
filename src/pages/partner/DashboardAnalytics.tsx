@@ -313,7 +313,7 @@ export default function DashboardAnalytics() {
         .from('partner_profiles')
         .select('store_visits, updated_at')
         .eq('user_id', userProfile.id)
-        .single();
+        .maybeSingle();
       
       if (!error && partnerProfile) {
         setRealtimeVisits({
@@ -323,7 +323,7 @@ export default function DashboardAnalytics() {
         setLastUpdate(new Date());
       }
     } catch (err) {
-      console.error('Error loading realtime visits:', err);
+      console.warn('Error loading realtime visits:', err);
     }
   };
 
