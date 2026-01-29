@@ -557,27 +557,36 @@ export default function AdminUsers() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex flex-col space-y-2">
                             <button
-                              onClick={() => openUserModal(user)}
+                              onClick={() => {
+  setSelectedUser(user);
+  setShowUserModal(true);
+}}
                               className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
                               ✏️ Edit Info
                             </button>
                             <button
-                              onClick={() => openBalanceModal(user)}
+                              onClick={() => setShowBalanceModal(true)}
                               className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
                               💰 Adjust Balance
                             </button>
                             {user.user_type === 'partner' && (
                               <button
-                                onClick={() => openPartnerMetricsModal(user)}
+                                onClick={() => setShowPartnerMetricsModal(true)}
                                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-left font-medium flex items-center gap-1 transition-colors"
                               >
                                 📊 Partner Metrics
                               </button>
                             )}
                             <button
-                              onClick={() => deleteUser(user.id)}
+                              onClick={() => {
+  if (window.confirm(`Are you sure you want to delete user ${user.email}?`)) {
+    setSelectedUser(user);
+    // TODO: Implement actual delete functionality
+    console.log('Delete user:', user.id);
+  }
+}}
                               className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-left font-medium flex items-center gap-1 transition-colors"
                             >
                               🗑️ Delete User
