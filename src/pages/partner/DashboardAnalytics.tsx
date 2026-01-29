@@ -90,7 +90,7 @@ export default function DashboardAnalytics() {
         .from('partner_profiles')
         .select('*')
         .eq('user_id', userProfile.id)
-        .single();
+        .maybeSingle();
 
       if (profileError && profileError.code !== 'PGRST116') {
         throw new Error(`Failed to load partner profile: ${profileError.message}`);
