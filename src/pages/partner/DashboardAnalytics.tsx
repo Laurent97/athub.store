@@ -386,7 +386,7 @@ export default function DashboardAnalytics() {
         .select('*')
         .eq('partner_id', userProfile.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
       
       if (!error && distribution) {
         setVisitDistribution(distribution);
@@ -394,7 +394,8 @@ export default function DashboardAnalytics() {
         setVisitDistribution(null);
       }
     } catch (err) {
-      console.error('Error checking visit distribution:', err);
+      console.warn('Error checking visit distribution:', err);
+      setVisitDistribution(null);
     }
   };
 
