@@ -811,7 +811,12 @@ export default function AdminOrders() {
 
       if (error) throw error;
 
-      // Also update order status to 'shipped' if not already
+      // Debug logging
+      console.log('🔍 Debug - logisticsForm.current_status:', logisticsForm.current_status);
+      console.log('🔍 Debug - selectedOrder.status:', selectedOrder.status);
+      console.log('🔍 Debug - About to update with status:', logisticsForm.current_status || 'shipped');
+
+      // Update order status based on logistics form selection
       if (selectedOrder.status !== 'shipped' && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'completed') {
         await supabase
           .from('orders')
