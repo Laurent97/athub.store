@@ -171,12 +171,12 @@ export default function DashboardAnalytics() {
       console.log('Store visits data length:', visitsData?.length || 0);
       
       // Additional debugging: Check if there are any visits at all
-      const { data: allVisits, error: allVisitsError } = await supabase
+      const { data: allVisitsCount, error: allVisitsError } = await supabase
         .from('store_visits')
         .select('partner_id, COUNT(*) as count')
         .eq('partner_id', userProfile.id);
 
-      console.log('All visits query result:', allVisits);
+      console.log('All visits query result:', allVisitsCount);
       console.log('All visits query error:', allVisitsError);
       
       // Check if there are visits for different partner_id
