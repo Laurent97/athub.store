@@ -852,7 +852,8 @@ export default function AdminOrders() {
     if (!selectedOrder) return;
 
     try {
-      const { error } = await supabase
+      // First update the order_tracking table
+      const { error: trackingError } = await supabase
         .from('order_tracking')
         .upsert({
           order_id: selectedOrder.order_number, // Use order_number (text) instead of id (UUID)
@@ -860,11 +861,14 @@ export default function AdminOrders() {
           carrier: logisticsForm.carrier,
           tracking_number: logisticsForm.tracking_number,
           estimated_delivery: logisticsForm.estimated_delivery,
-          current_status: logisticsForm.current_status,
+          status: logisticsForm.current_status, // Use status field, not current_status
           updated_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (trackingError) {
+        console.error('❌ Error updating order_tracking:', trackingError);
+        throw trackingError;
+      }
 
       // Debug logging
       console.log('🔍 Debug - logisticsForm.current_status:', logisticsForm.current_status);
@@ -874,18 +878,46 @@ export default function AdminOrders() {
       const mappedOrderStatus = mapToOrderStatus(logisticsForm.current_status);
       console.log('🔍 Debug - Mapped order status:', mappedOrderStatus);
 
-      // Update order status based on logistics form selection
-      if (selectedOrder.status !== 'delivered' && selectedOrder.status !== 'completed') {
-        await supabase
-          .from('orders')
-          .update({
-            status: mappedOrderStatus,
-            shipping_status: logisticsForm.current_status, // Store detailed shipping status
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', selectedOrder.id);
+      // Update orders table with both main status and shipping status
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          status: mappedOrderStatus,
+          shipping_status: logisticsForm.current_status, // Store detailed shipping status for partner dashboard
+          shipping_tracking_number: logisticsForm.tracking_number,
+          shipping_provider: logisticsForm.carrier,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedOrder.id);
+
+      if (orderError) {
+        console.error('❌ Error updating orders table:', orderError);
+        throw orderError;
       }
 
+      // Also create a tracking update entry for history
+      if (logisticsForm.tracking_number) {
+        const { data: trackingRecord } = await supabase
+          .from('order_tracking')
+          .select('id')
+          .eq('tracking_number', logisticsForm.tracking_number)
+          .single();
+
+        if (trackingRecord) {
+          await supabase
+            .from('tracking_updates')
+            .insert({
+              tracking_id: trackingRecord.id,
+              status: logisticsForm.current_status,
+              description: `Status updated to ${logisticsForm.current_status}`,
+              location: 'Distribution Center',
+              updated_by: userProfile?.id,
+              timestamp: new Date().toISOString()
+            });
+        }
+      }
+
+      console.log('✅ Logistics info saved successfully - both tables updated');
       alert('✅ Shipping information saved successfully!');
       setShowLogisticsModal(false);
       loadOrders();

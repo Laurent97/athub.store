@@ -192,7 +192,7 @@ export default function DashboardOrders() {
           if (tracking.orderId) trackingMap[tracking.orderId] = tracking;
         });
         
-        // Also fetch from orders table directly for shipping info
+        // Also fetch from orders table directly for shipping info (as fallback)
         if (orderNumbers && orderNumbers.length > 0) {
           // Filter out any invalid order numbers and log for debugging
           const validOrderNumbers = orderNumbers.filter(num => num && typeof num === 'string' && num.trim() !== '');
@@ -220,20 +220,33 @@ export default function DashboardOrders() {
             
           if (ordersWithTracking) {
             ordersWithTracking.forEach(order => {
-              if (order.shipping_tracking_number) {
-                trackingMap[order.order_number] = {
-                  ...trackingMap[order.order_number],
+              const orderNumber = order.order_number;
+              
+              // Only use orders table data if we don't have tracking data from order_tracking table
+              if (!trackingMap[orderNumber] && order.shipping_tracking_number) {
+                trackingMap[orderNumber] = {
                   tracking_number: order.shipping_tracking_number,
                   provider: order.shipping_provider,
                   status: order.shipping_status,
                   order_id: order.id,
-                  order_number: order.order_number
+                  order_number: order.order_number,
+                  source: 'orders_table' // Mark source for debugging
+                };
+              } else if (trackingMap[orderNumber] && order.shipping_tracking_number) {
+                // Update existing tracking with orders table info if missing
+                const existing = trackingMap[orderNumber];
+                trackingMap[orderNumber] = {
+                  ...existing,
+                  tracking_number: existing.tracking_number || order.shipping_tracking_number,
+                  provider: existing.provider || order.shipping_provider,
+                  source: 'order_tracking_table' // Mark source for debugging
                 };
               }
             });
           }
         }
         
+        console.log('🔍 Final tracking map:', trackingMap);
         setTrackingData(trackingMap);
       }
     } catch (err) {
