@@ -946,11 +946,11 @@ export default function AdminOrders() {
       // Also create a tracking update entry for history
       if (logisticsForm.tracking_number) {
         try {
-          // Find the tracking record for this specific order using order_id
+          // Find the tracking record for this specific order using both UUID and tracking number
           const { data: trackingRecords, error: fetchError } = await supabase
             .from('order_tracking')
             .select('id, order_id, created_at')
-            .eq('order_id', selectedOrder.order_number) // Use order_id to find the correct tracking record
+            .eq('order_id', selectedOrder.id) // Use UUID order_id to find the correct tracking record
             .eq('tracking_number', logisticsForm.tracking_number) // Also match tracking number
             .order('created_at', { ascending: false }); // Get the most recent first
 
@@ -958,10 +958,10 @@ export default function AdminOrders() {
             console.warn('⚠️ Could not fetch tracking records for updates:', fetchError);
             // Don't fail the entire operation if we can't create tracking updates
           } else if (trackingRecords && trackingRecords.length > 0) {
-            // Use the most recent tracking record for this order
+            // Use the most recent tracking record
             const mostRecentRecord = trackingRecords[0];
             
-            console.log(`📊 Found ${trackingRecords.length} tracking records for order ${selectedOrder.order_number}, using most recent: ${mostRecentRecord.id}`);
+            console.log(`📊 Found ${trackingRecords.length} tracking records for ${logisticsForm.tracking_number}, using most recent: ${mostRecentRecord.id}`);
             
             await supabase
               .from('tracking_updates')
@@ -976,7 +976,7 @@ export default function AdminOrders() {
             
             console.log('✅ Tracking update created successfully');
           } else {
-            console.warn('⚠️ No tracking records found for order:', selectedOrder.order_number);
+            console.warn('⚠️ No tracking records found for tracking number:', logisticsForm.tracking_number);
           }
         } catch (updateError) {
           console.warn('⚠️ Failed to create tracking update:', updateError);
