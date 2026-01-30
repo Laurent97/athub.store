@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import { Order, PartnerProfile, OrderStatus, PaymentStatus } from '../../lib/types/database';
 import { NotificationService } from '../../lib/supabase/notification-service';
 import { adminService } from '../../lib/supabase/admin-service';
+import { payoutService } from '../../lib/supabase/payout-service';
 import { 
   getStatusConfig, 
   PROFESSIONAL_ORDER_STATUSES, 
@@ -36,6 +37,9 @@ interface OrderWithDetails extends Order {
   };
   partner?: PartnerProfile;
   logistics?: any;
+  paid_out?: boolean;
+  payout_amount?: number;
+  payout_date?: string;
 }
 
 interface PartnerProduct {
@@ -97,6 +101,29 @@ export default function AdminOrders() {
   const [loadingPartnerProducts, setLoadingPartnerProducts] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
+
+  // Add filteredOrders calculation using useMemo
+  const filteredOrders = useMemo(() => {
+    if (!orders || !Array.isArray(orders)) return [];
+    
+    return orders.filter(order => {
+      // Search filter
+      const matchesSearch = 
+        (order.order_number || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Status filter
+      let matchesStatus = true;
+      if (filterStatus !== 'all') {
+        if (filterStatus === 'active') {
+          matchesStatus = !['cancelled', 'completed', 'delivered'].includes(order.status);
+        } else {
+          matchesStatus = order.status === filterStatus;
+        }
+      }
+      
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, searchTerm, filterStatus]);
 
   useEffect(() => {
     if (userProfile?.user_type !== 'admin') {
@@ -624,6 +651,189 @@ export default function AdminOrders() {
     }
   };
 
+  const handleCompleteOrder = async (order: OrderWithDetails) => {
+    const confirmComplete = window.confirm(
+      `✅ Complete Order #${order.order_number || order.id}?\n\n` +
+      `Amount: $${order.total_amount.toFixed(2)}\n` +
+      `This will:\n` +
+      `1. Mark the order as delivered and finalize the transaction\n` +
+      `2. Pay the partner their commission ($${(order.total_amount * 0.10).toFixed(2)})\n` +
+      `3. Add funds to the partner's wallet\n\n` +
+      `Continue?` 
+    );
+    
+    if (!confirmComplete) return;
+    
+    try {
+      // 1. Update order status to completed
+      const { error: statusError } = await supabase
+        .from('orders')
+        .update({
+          status: 'completed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
+
+      if (statusError) throw statusError;
+
+      // 2. Process partner payout
+      const payoutResult = await payoutService.processOrderPayout(order.id);
+      
+      if (!payoutResult.success) {
+        throw new Error(`Payout failed: ${payoutResult.error}`);
+      }
+
+      // 3. Send notification to partner
+      if (order.partner_id) {
+        await NotificationService.create({
+          user_id: order.partner_id,
+          title: 'Order Completed & Paid!',
+          message: `Order #${order.order_number} has is completed. Your profit has been added to your wallet.`,
+          type: 'payment'
+        });
+      }
+
+      alert(`✅ Order #${order.order_number || order.id} completed!\n` +
+            `💰 Partner paid: $${payoutResult.data?.partnerEarnings?.toFixed(2)}`);
+
+      // Refresh data
+      loadOrders();
+      if (orderDetails?.id === order.id) {
+        loadOrderDetails(order.id);
+      }
+    } catch (error: any) {
+      console.error('Error completing order:', error);
+      alert(`❌ Failed to complete order: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleManualPayout = async (order: OrderWithDetails) => {
+    const confirmPayout = window.confirm(
+      `💰 Pay Partner for Order #${order.order_number || order.id}?\n\n` +
+      `Amount: $${order.total_amount.toFixed(2)}\n` +
+      `Commission: $${(order.total_amount * 0.10).toFixed(2)} (10%)\n\n` +
+      `This will add funds to the partner's wallet. Continue?` 
+    );
+    
+    if (!confirmPayout) return;
+    
+    try {
+      const result = await payoutService.processOrderPayout(order.id);
+      
+      if (result.success) {
+        alert(`✅ Partner paid successfully!\n` +
+              `Amount: $${result.data?.partnerEarnings?.toFixed(2)}`);
+        
+        loadOrders();
+        if (orderDetails?.id === order.id) {
+          loadOrderDetails(order.id);
+        }
+      } else {
+        alert(`❌ Payment failed: ${result.error}`);
+      }
+    } catch (error: any) {
+      console.error('Error processing manual payout:', error);
+      alert(`❌ Failed to process payment: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleMarkAsShipped = async (order: OrderWithDetails) => {
+    const confirmShipped = window.confirm(
+      `🚚 Mark Order #${order.order_number || order.id} as Shipped?\n\nThis will update the order status to 'shipped'.`
+    );
+    
+    if (!confirmShipped) return;
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: 'shipped',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
+
+      if (error) throw error;
+
+      alert(`✅ Order #${order.order_number || order.id} marked as shipped successfully!`);
+      loadOrders();
+      if (orderDetails?.id === order.id) {
+        loadOrderDetails(order.id);
+      }
+    } catch (error) {
+      console.error('Error marking order as shipped:', error);
+      alert('Failed to mark order as shipped');
+    }
+  };
+
+  const openOrderModal = async (order: OrderWithDetails) => {
+    setSelectedOrder(order);
+    setShowOrderModal(true);
+    await loadOrderDetails(order.id);
+  };
+
+  const openLogisticsModal = async (order: OrderWithDetails) => {
+    setSelectedOrder(order);
+    setShowLogisticsModal(true);
+    await loadOrderDetails(order.id);
+    
+    // Pre-fill form with existing logistics data
+    if (orderDetails?.logistics) {
+      setLogisticsForm({
+        carrier: orderDetails.logistics.carrier || '',
+        tracking_number: orderDetails.logistics.tracking_number || '',
+        estimated_delivery: orderDetails.logistics.estimated_delivery || '',
+        current_status: orderDetails.logistics.current_status || 'processing'
+      });
+    }
+  };
+
+  const saveLogisticsInfo = async () => {
+    if (!selectedOrder) return;
+
+    try {
+      const { error } = await supabase
+        .from('order_tracking')
+        .upsert({
+          order_id: selectedOrder.id,
+          carrier: logisticsForm.carrier,
+          tracking_number: logisticsForm.tracking_number,
+          estimated_delivery: logisticsForm.estimated_delivery,
+          current_status: logisticsForm.current_status,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+
+      // Also update order status to 'shipped' if not already
+      if (selectedOrder.status !== 'shipped' && selectedOrder.status !== 'delivered' && selectedOrder.status !== 'completed') {
+        await supabase
+          .from('orders')
+          .update({
+            status: 'shipped',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedOrder.id);
+      }
+
+      alert('✅ Shipping information saved successfully!');
+      setShowLogisticsModal(false);
+      loadOrders();
+      if (orderDetails?.id === selectedOrder.id) {
+        loadOrderDetails(selectedOrder.id);
+      }
+    } catch (error) {
+      console.error('Error saving logistics info:', error);
+      alert('Failed to save shipping information');
+    }
+  };
+
+  const formatDateForInput = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0];
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
@@ -698,7 +908,7 @@ export default function AdminOrders() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
                 <div className="bg-card rounded-2xl shadow-md border border-border p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
                   <div className="flex items-center justify-between mb-4">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 p-3 rounded-xl">
@@ -707,7 +917,7 @@ export default function AdminOrders() {
                     <div className="text-blue-600 dark:text-blue-400 text-sm font-semibold">Total</div>
                   </div>
                   <div className="text-sm text-muted-foreground mb-1">Total Orders</div>
-                  <div className="text-3xl font-bold text-foreground">{(orders || []).length}</div>
+                  <div className="text-3xl font-bold text-foreground">{orders.length}</div>
                 </div>
                 
                 <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/20 dark:to-primary/10 rounded-2xl shadow-md border border-primary/20 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
@@ -719,7 +929,7 @@ export default function AdminOrders() {
                   </div>
                   <div className="text-sm text-muted-foreground mb-1">Total Revenue</div>
                   <div className="text-3xl font-bold text-foreground">
-                    ${(orders || []).reduce((sum, o) => sum + o.total_amount, 0).toLocaleString()}
+                    ${orders.reduce((sum, o) => sum + o.total_amount, 0).toLocaleString()}
                   </div>
                 </div>
                 
@@ -732,7 +942,7 @@ export default function AdminOrders() {
                   </div>
                   <div className="text-sm text-muted-foreground mb-1">Pending Orders</div>
                   <div className="text-3xl font-bold text-foreground">
-                    {(orders || []).filter(o => o.status === 'pending').length}
+                    {orders.filter(o => o.status === 'pending').length}
                   </div>
                 </div>
                 
@@ -745,7 +955,27 @@ export default function AdminOrders() {
                   </div>
                   <div className="text-sm text-muted-foreground mb-1">Awaiting Shipment</div>
                   <div className="text-3xl font-bold text-foreground">
-                    {(orders || []).filter(o => o.status === 'confirmed' || o.status === 'processing').length}
+                    {orders.filter(o => o.status === 'confirmed' || o.status === 'processing').length}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-2xl shadow-md border border-emerald-200 dark:border-emerald-800/30 p-6 animate-fade-in hover:shadow-lg transition-shadow hover:scale-105 transform">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="bg-gradient-to-br from-emerald-200 to-green-300 dark:from-emerald-800/40 dark:to-green-700/40 p-3 rounded-xl">
+                      <span className="text-2xl">💰</span>
+                    </div>
+                    <div className="text-emerald-600 dark:text-emerald-400 text-sm font-semibold">Payouts</div>
+                  </div>
+                  <div className="text-sm text-muted-foreground mb-1">Total Payouts</div>
+                  <div className="text-3xl font-bold text-foreground">
+                    ${orders
+                      .filter(o => o.paid_out && o.payout_amount)
+                      .reduce((sum, o) => sum + (o.payout_amount || 0), 0)
+                      .toLocaleString()
+                    }
+                  </div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    {orders.filter(o => o.paid_out).length} orders paid
                   </div>
                 </div>
               </div>
@@ -780,7 +1010,10 @@ export default function AdminOrders() {
                             💳 Payment
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                            📅 Date
+                            💰 Payout
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                            � Date
                           </th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                             ⚡ Actions
@@ -813,6 +1046,26 @@ export default function AdminOrders() {
                                 {order.payment_status === 'paid' ? '💳 ' : '⏰ '}
                                 {order.payment_status}
                               </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              {order.status === 'completed' ? (
+                                <div className="flex flex-col gap-1">
+                                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                    order.paid_out 
+                                      ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
+                                      : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                                  }`}>
+                                    {order.paid_out ? '✅ Paid' : '⏳ Pay Pending'}
+                                  </span>
+                                  {order.payout_amount && (
+                                    <span className="text-xs text-muted-foreground">
+                                      ${order.payout_amount.toFixed(2)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                               {new Date(order.created_at).toLocaleDateString()}
@@ -865,7 +1118,15 @@ export default function AdminOrders() {
                                     onClick={() => handleCompleteOrder(order)}
                                     className="text-green-600 hover:text-green-800 text-left font-medium flex items-center gap-1 transition-colors"
                                   >
-                                    ✅ Complete Order
+                                    💰 Complete & Pay Partner
+                                  </button>
+                                )}
+                                {order.status === 'completed' && !order.paid_out && (
+                                  <button
+                                    onClick={() => handleManualPayout(order)}
+                                    className="text-green-600 hover:text-green-800 text-left font-medium flex items-center gap-1 transition-colors"
+                                  >
+                                    💰 Pay Partner Now
                                   </button>
                                 )}
                                 <button
@@ -998,6 +1259,40 @@ export default function AdminOrders() {
                     </div>
                   </div>
                 </div>
+
+                {/* Payout Status */}
+                {orderDetails.status === 'completed' && (
+                  <div className="mt-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg border border-green-200 dark:border-green-800/30">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">💰</span>
+                        <div>
+                          <div className="font-medium text-green-800 dark:text-green-300">
+                            Partner Payment Status
+                          </div>
+                          <div className="text-sm text-green-700 dark:text-green-400">
+                            {orderDetails.paid_out 
+                              ? `Paid on ${new Date(orderDetails.payout_date).toLocaleDateString()}` 
+                              : 'Pending payment'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        orderDetails.paid_out 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300' 
+                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                      }`}>
+                        {orderDetails.paid_out ? '✅ Paid' : '⏳ Pending'}
+                      </span>
+                    </div>
+                    {orderDetails.paid_out && orderDetails.payout_amount && (
+                      <div className="mt-2 text-sm text-green-700 dark:text-green-400">
+                        Amount paid: <span className="font-bold">${orderDetails.payout_amount.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Professional Tracking Information */}
                 <div>
@@ -1447,7 +1742,7 @@ export default function AdminOrders() {
                   disabled={!logisticsForm.carrier || !logisticsForm.tracking_number || !logisticsForm.estimated_delivery}
                   className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
-                  � Save Tracking Information
+                  💾 Save Tracking Information
                 </button>
               </div>
             </div>
