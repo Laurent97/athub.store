@@ -86,20 +86,20 @@ const orderStatusMapping = {
   'arrived_at_destination': 'in_transit',
   
   // Delivery
-  'out_for_delivery': 'out_for_delivery',
-  'delivery_attempted': 'delivery_attempted',
+  'out_for_delivery': 'shipped',
+  'delivery_attempted': 'shipped',
   'delivered': 'delivered',
   
   // Exceptions
-  'delayed': 'delayed',
-  'weather_delay': 'delayed',
-  'mechanical_delay': 'delayed',
-  'address_issue': 'issue',
-  'customer_unavailable': 'issue',
-  'security_delay': 'delayed',
-  'customs_hold': 'hold',
-  'damaged': 'issue',
-  'lost': 'lost'
+  'delayed': 'shipped',
+  'weather_delay': 'shipped',
+  'mechanical_delay': 'shipped',
+  'address_issue': 'shipped',
+  'customer_unavailable': 'shipped',
+  'security_delay': 'shipped',
+  'customs_hold': 'processing',
+  'damaged': 'shipped',
+  'lost': 'processing'
 };
 
 // Function to map detailed logistics status to main order status
@@ -874,8 +874,8 @@ export default function AdminOrders() {
           'DEPARTED_SORT': 'in_transit',
           'ARRIVED_AT_DESTINATION': 'in_transit',
           
-          'OUT_FOR_DELIVERY': 'out_for_delivery',
-          'DELIVERY_ATTEMPTED': 'out_for_delivery',
+          'OUT_FOR_DELIVERY': 'shipped', // Keep as 'shipped' since 'out_for_delivery' is not allowed in orders.status
+          'DELIVERY_ATTEMPTED': 'shipped', // Keep as 'shipped' since 'delivery_attempted' is not allowed in orders.status
           
           'DELIVERED': 'delivered',
           'DELAYED': 'in_transit',
@@ -885,8 +885,8 @@ export default function AdminOrders() {
           'CUSTOMS_HOLD': 'in_transit',
           'DAMAGED': 'in_transit',
           'LOST': 'in_transit',
-          'ADDRESS_ISSUE': 'out_for_delivery',
-          'CUSTOMER_UNAVAILABLE': 'out_for_delivery'
+          'ADDRESS_ISSUE': 'shipped', // Keep as 'shipped' since 'out_for_delivery' is not allowed in orders.status
+          'CUSTOMER_UNAVAILABLE': 'shipped' // Keep as 'shipped' since 'out_for_delivery' is not allowed in orders.status
         };
         
         return statusMapping[detailedStatus as keyof typeof statusMapping] || 'processing';
