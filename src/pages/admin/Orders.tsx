@@ -598,57 +598,11 @@ export default function AdminOrders() {
     const confirmMarkPaid = window.confirm(
       `💳 Mark Order #${order.order_number || order.id} as Paid?\n\nAmount: $${order.total_amount.toFixed(2)}\n\nThis will update the payment status to 'paid' and order status to 'confirmed'.`
     );
-    
-    if (!confirmMarkPaid) return;
-    
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          payment_status: 'paid',
-          status: 'confirmed',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', order.id);
 
-      if (error) throw error;
-
-      alert(`✅ Order #${order.order_number || order.id} marked as paid successfully!`);
-      loadOrders();
-      if (orderDetails?.id === order.id) {
-        loadOrderDetails(order.id);
-      }
-    } catch (error) {
-      console.error('Error marking order as paid:', error);
-      alert('Failed to mark order as paid');
-    }
-  };
-
-  const handleMarkAsShipped = (order: OrderWithDetails) => {
-    setSelectedOrderForShipping(order);
-    setShowShippingModal(true);
-  };
-
-  const handleCompleteOrder = async (order: OrderWithDetails) => {
-    const confirmComplete = window.confirm(
-      `✅ Complete Order #${order.order_number || order.id}?\n\nThis will mark the order as delivered and finalize the transaction.`
-    );
-    
-    if (!confirmComplete) return;
-    
-    try {
-      const result = await adminService.completeOrder(order.id);
-      
-      if (result.success) {
-        alert(`✅ Order #${order.order_number || order.id} marked as completed!`);
-        loadOrders();
-        if (orderDetails?.id === order.id) {
-          loadOrderDetails(order.id);
-        }
-      } else {
-        alert(`❌ Error: ${result.error}`);
-      }
-    } catch (error) {
+    let result;
+    if (existingTracking) {
+      // Update existing tracking
+      result = await supabase
         .from('order_tracking')
         .update(trackingData)
         .eq('order_id', selectedOrder.id);
@@ -667,34 +621,19 @@ export default function AdminOrders() {
         throw new Error('Tracking information already exists for this order. Please update instead.');
       }
       throw result.error;
-    await loadOrderDetails(order.id);
-    setShowOrderModal(true);
-  };
-
-  const openLogisticsModal = (order: Order) => {
-    const orderWithDetails = order as OrderWithDetails;
-    setSelectedOrder(orderWithDetails);
-    if (orderDetails?.logistics) {
-      setLogisticsForm({
-        carrier: orderDetails.logistics.carrier || '',
-        tracking_number: orderDetails.logistics.tracking_number || '',
-        estimated_delivery: orderDetails.logistics.estimated_delivery || '',
-        current_status: orderDetails.logistics.current_status || 'processing'
-      });
-    } else {
-      setLogisticsForm({
-        carrier: '',
-        tracking_number: '',
-        estimated_delivery: '',
-        current_status: 'processing'
-      });
     }
-    setShowLogisticsModal(true);
-  };
 
-  const filteredOrders = (orders || []).filter(order => {
-    const matchesSearch = 
-      (order.order_number || '').toLowerCase().includes(searchTerm.toLowerCase());
+    // Also update the order's shipping fields and status to shipped
+    const { error: orderError } = await supabase
+      .from('orders')
+      .update({
+        shipping_tracking_number: logisticsForm.tracking_number,
+        shipping_provider: logisticsForm.carrier,
+        shipping_status: logisticsForm.current_status,
+        status: 'shipped',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', selectedOrder.id);
     
     const matchesStatus = filterStatus === 'all' || 
       filterStatus === 'active' ? !['cancelled', 'completed'].includes(order.status) : 
