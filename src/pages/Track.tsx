@@ -71,7 +71,8 @@ export default function Track() {
       blue: 'bg-blue-100 text-blue-800',
       yellow: 'bg-yellow-100 text-yellow-800',
       orange: 'bg-orange-100 text-orange-800',
-      green: 'bg-green-100 text-green-800'
+      green: 'bg-green-100 text-green-800',
+      red: 'bg-red-100 text-red-800'
     };
 
     return (
@@ -83,20 +84,66 @@ export default function Track() {
 
   const getStatusDescription = (status: string) => {
     const descriptions = {
+      // Basic statuses
       processing: 'Order is being prepared for shipment',
       shipped: 'Package has been shipped and is in transit',
       in_transit: 'Package is currently in transit to destination',
       out_for_delivery: 'Package is out for delivery today',
       delivered: 'Package has been successfully delivered',
       pending: 'Order is pending processing',
-      completed: 'Order has been completed'
+      completed: 'Order has been completed',
+      
+      // Pre-shipment statuses
+      order_received: 'Order has been received and is being processed',
+      order_verified: 'Order has been verified and confirmed',
+      inventory_allocated: 'Inventory has been allocated for this order',
+      order_processing: 'Order is currently being processed',
+      picking_started: 'Items are being picked from inventory',
+      picking_completed: 'All items have been picked successfully',
+      packing_started: 'Items are being packed for shipment',
+      packing_completed: 'Items have been packed and are ready for shipment',
+      ready_to_ship: 'Order is ready to be shipped',
+      
+      // Shipping statuses
+      carrier_pickup_scheduled: 'Carrier pickup has been scheduled',
+      picked_up: 'Package has been picked up by carrier',
+      arrived_at_origin: 'Package has arrived at origin facility',
+      departed_origin: 'Package has departed from origin facility',
+      arrived_at_sort: 'Package has arrived at sorting facility',
+      processed_at_sort: 'Package has been processed at sorting facility',
+      departed_sort: 'Package has departed from sorting facility',
+      arrived_at_destination: 'Package has arrived at destination facility',
+      
+      // Delivery statuses
+      delivery_attempted: 'Delivery was attempted but unsuccessful',
+      
+      // Exception statuses
+      delayed: 'Package delivery has been delayed',
+      weather_delay: 'Package delayed due to weather conditions',
+      mechanical_delay: 'Package delayed due to mechanical issues',
+      security_delay: 'Package delayed due to security concerns',
+      customs_hold: 'Package is being held by customs',
+      damaged: 'Package has been damaged during transit',
+      lost: 'Package has been lost during transit',
+      address_issue: 'Delivery issue with provided address',
+      customer_unavailable: 'Customer was unavailable for delivery'
     };
     
     return descriptions[status as keyof typeof descriptions] || 'Status update';
   };
 
   const getTrackingTimeline = (trackingData: any) => {
-    const statusOrder = ['processing', 'shipped', 'in_transit', 'out_for_delivery', 'delivered'];
+    // Comprehensive status order for full logistics workflow
+    const statusOrder = [
+      'pending', 'order_received', 'order_verified', 'inventory_allocated', 
+      'order_processing', 'picking_started', 'picking_completed', 
+      'packing_started', 'packing_completed', 'ready_to_ship',
+      'carrier_pickup_scheduled', 'picked_up', 'shipped', 
+      'arrived_at_origin', 'departed_origin', 'arrived_at_sort', 
+      'processed_at_sort', 'departed_sort', 'arrived_at_destination',
+      'in_transit', 'out_for_delivery', 'delivery_attempted', 'delivered', 'completed'
+    ];
+    
     const currentStatusIndex = statusOrder.indexOf(trackingData.status);
     
     // Start with actual tracking updates
@@ -115,20 +162,20 @@ export default function Track() {
       const isCurrent = index === currentStatusIndex;
       
       let timestamp = null;
-      let description = statusConfig.label;
+      let description = statusConfig?.label || status;
       let location = null;
       
       // Use actual update if available
       const actualUpdate = updateMap.get(status);
       if (actualUpdate) {
         timestamp = actualUpdate.timestamp;
-        description = actualUpdate.description || statusConfig.label;
+        description = actualUpdate.description || statusConfig?.label || status;
         location = actualUpdate.location;
       } else if (isCompleted || isCurrent) {
         // For completed/current status without update, use tracking timestamps
-        if (status === 'processing' && trackingData.created_at) {
+        if (status === 'pending' && trackingData.created_at) {
           timestamp = trackingData.created_at;
-          description = 'Order processed and ready for shipment';
+          description = 'Order received and processing started';
         } else if (status === 'delivered' && trackingData.actual_delivery) {
           timestamp = trackingData.actual_delivery;
           description = 'Package delivered successfully';
@@ -149,7 +196,7 @@ export default function Track() {
       
       return {
         status,
-        label: statusConfig.label,
+        label: statusConfig?.label || status,
         description,
         location,
         timestamp,
@@ -360,6 +407,12 @@ export default function Track() {
                                     {milestone.location}
                                   </span>
                                 )}
+                                {/* Show status badge for current status */}
+                                {milestone.current && trackingData.status && (
+                                  <span className="ml-auto">
+                                    {getStatusBadge(trackingData.status)}
+                                  </span>
+                                )}
                               </div>
                               <p className="text-muted-foreground mb-2">{milestone.description}</p>
                               <p className="text-xs text-muted-foreground">
@@ -368,6 +421,12 @@ export default function Track() {
                                   : milestone.estimatedText
                                 }
                               </p>
+                              {/* Show if this has actual tracking update */}
+                              {milestone.hasActualUpdate && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                  ✓ Actual tracking update
+                                </p>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -390,6 +449,7 @@ export default function Track() {
                                 <div className="pb-4 flex-1">
                                   <div className="flex items-center gap-2 mb-1">
                                     <h5 className="font-semibold">{update.status}</h5>
+                                    {getStatusBadge(update.status)}
                                     {update.location && (
                                       <span className="text-sm text-muted-foreground flex items-center gap-1">
                                         <MapPin className="w-3 h-3" />
