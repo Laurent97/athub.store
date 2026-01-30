@@ -901,19 +901,49 @@ export default function AdminOrders() {
         database: databaseStatus
       });
 
-      // First update the order_tracking table
-      const { error: trackingError } = await supabase
+      // First check if tracking record exists for this order
+      const { data: existingTracking, error: fetchError } = await supabase
         .from('order_tracking')
-        .upsert({
-          order_id: selectedOrder.id, // Use UUID
-          partner_id: selectedOrder.partner_id,
-          carrier: logisticsForm.carrier,
-          tracking_number: logisticsForm.tracking_number,
-          estimated_delivery: logisticsForm.estimated_delivery,
-          current_status: logisticsForm.current_status, // Store detailed status
-          status: databaseStatus, // Use mapped status for database constraint
-          updated_at: new Date().toISOString()
-        });
+        .select('id')
+        .eq('order_id', selectedOrder.id)
+        .single();
+
+      let trackingError;
+      
+      if (existingTracking) {
+        // Update existing record
+        const { error } = await supabase
+          .from('order_tracking')
+          .update({
+            partner_id: selectedOrder.partner_id,
+            carrier: logisticsForm.carrier,
+            tracking_number: logisticsForm.tracking_number,
+            estimated_delivery: logisticsForm.estimated_delivery,
+            current_status: logisticsForm.current_status, // Store detailed status
+            status: databaseStatus, // Use mapped status for database constraint
+            updated_at: new Date().toISOString()
+          })
+          .eq('order_id', selectedOrder.id);
+        
+        trackingError = error;
+      } else {
+        // Insert new record
+        const { error } = await supabase
+          .from('order_tracking')
+          .insert({
+            order_id: selectedOrder.id, // Use UUID
+            partner_id: selectedOrder.partner_id,
+            carrier: logisticsForm.carrier,
+            tracking_number: logisticsForm.tracking_number,
+            estimated_delivery: logisticsForm.estimated_delivery,
+            current_status: logisticsForm.current_status, // Store detailed status
+            status: databaseStatus, // Use mapped status for database constraint
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        
+        trackingError = error;
+      }
 
       if (trackingError) {
         console.error('❌ Error updating order_tracking:', trackingError);
