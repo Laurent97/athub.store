@@ -852,6 +852,54 @@ export default function AdminOrders() {
     if (!selectedOrder) return;
 
     try {
+      // Map detailed logistics status to allowed database status
+      const mapToDatabaseStatus = (detailedStatus: string) => {
+        const statusMapping = {
+          'PROCESSING': 'processing',
+          'ORDER_RECEIVED': 'processing',
+          'ORDER_VERIFIED': 'processing',
+          'INVENTORY_ALLOCATED': 'processing',
+          'ORDER_PROCESSING': 'processing',
+          'PICKING_STARTED': 'processing',
+          'PICKING_COMPLETED': 'processing',
+          'PACKING_STARTED': 'processing',
+          'PACKING_COMPLETED': 'processing',
+          'READY_TO_SHIP': 'processing',
+          
+          'CARRIER_PICKUP_SCHEDULED': 'shipped',
+          'PICKED_UP': 'shipped',
+          'ARRIVED_AT_ORIGIN': 'shipped',
+          'DEPARTED_ORIGIN': 'in_transit',
+          'ARRIVED_AT_SORT': 'in_transit',
+          'PROCESSED_AT_SORT': 'in_transit',
+          'DEPARTED_SORT': 'in_transit',
+          'ARRIVED_AT_DESTINATION': 'in_transit',
+          
+          'OUT_FOR_DELIVERY': 'out_for_delivery',
+          'DELIVERY_ATTEMPTED': 'out_for_delivery',
+          
+          'DELIVERED': 'delivered',
+          'DELAYED': 'in_transit',
+          'WEATHER_DELAY': 'in_transit',
+          'MECHANICAL_DELAY': 'in_transit',
+          'SECURITY_DELAY': 'in_transit',
+          'CUSTOMS_HOLD': 'in_transit',
+          'DAMAGED': 'in_transit',
+          'LOST': 'in_transit',
+          'ADDRESS_ISSUE': 'out_for_delivery',
+          'CUSTOMER_UNAVAILABLE': 'out_for_delivery'
+        };
+        
+        return statusMapping[detailedStatus as keyof typeof statusMapping] || 'processing';
+      };
+
+      const databaseStatus = mapToDatabaseStatus(logisticsForm.current_status);
+      
+      console.log('🔍 Status mapping:', {
+        detailed: logisticsForm.current_status,
+        database: databaseStatus
+      });
+
       // First update the order_tracking table
       const { error: trackingError } = await supabase
         .from('order_tracking')
@@ -861,7 +909,7 @@ export default function AdminOrders() {
           carrier: logisticsForm.carrier,
           tracking_number: logisticsForm.tracking_number,
           estimated_delivery: logisticsForm.estimated_delivery,
-          status: logisticsForm.current_status, // Use status field, not current_status
+          status: databaseStatus, // Use mapped status that complies with database constraint
           updated_at: new Date().toISOString()
         });
 
@@ -872,6 +920,7 @@ export default function AdminOrders() {
 
       // Debug logging
       console.log('🔍 Debug - logisticsForm.current_status:', logisticsForm.current_status);
+      console.log('🔍 Debug - databaseStatus:', databaseStatus);
       console.log('🔍 Debug - selectedOrder.status:', selectedOrder.status);
       
       // Map detailed logistics status to main order status
@@ -908,7 +957,7 @@ export default function AdminOrders() {
             .from('tracking_updates')
             .insert({
               tracking_id: trackingRecord.id,
-              status: logisticsForm.current_status,
+              status: logisticsForm.current_status, // Store detailed status in updates
               description: `Status updated to ${logisticsForm.current_status}`,
               location: 'Distribution Center',
               updated_by: userProfile?.id,
