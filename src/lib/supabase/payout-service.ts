@@ -53,12 +53,7 @@ export const payoutService = {
           type: 'commission',
           amount: partnerEarnings,
           status: 'completed',
-          description: `Commission from Order #${order.order_number}`,
-          metadata: {
-            order_number: order.order_number,
-            total_amount: order.total_amount,
-            commission_rate: commissionRate
-          }
+          description: `Commission from Order #${order.order_number} - Amount: $${order.total_amount}, Rate: ${(commissionRate * 100).toFixed(0)}%`
         })
         .select()
         .single();
