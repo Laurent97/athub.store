@@ -123,6 +123,12 @@ export default function DashboardAnalytics() {
         .eq('partner_id', userProfile.id)
         .order('created_at', { ascending: false });
 
+      console.log('=== DEBUGGING ORDERS DATA ===');
+      console.log('OrdersData from direct query:', ordersData);
+      console.log('OrdersData length:', ordersData?.length || 0);
+      console.log('OrdersData error:', ordersError);
+      console.log('=== END ORDERS DEBUG ===');
+
       if (ordersError && ordersError.code !== 'PGRST116') {
         throw new Error(`Failed to load orders: ${ordersError.message}`);
       }
@@ -249,6 +255,14 @@ export default function DashboardAnalytics() {
 
       // 6. Get partner stats
       const partnerStats = await partnerService.getPartnerStats(userProfile.id);
+      
+      console.log('=== DEBUGGING PARTNER STATS ===');
+      console.log('PartnerStats from service:', partnerStats);
+      console.log('PartnerStats totalOrders:', partnerStats?.totalOrders);
+      console.log('PartnerStats totalRevenue:', partnerStats?.totalRevenue);
+      console.log('OrdersData length:', ordersData?.length);
+      console.log('OrdersData totalRevenue:', ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0));
+      console.log('=== END PARTNER STATS DEBUG ===');
       
       // 7. Get monthly earnings
       const monthlyEarnings = await earningsService.getMonthlyEarnings(userProfile.id);
