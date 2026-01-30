@@ -685,12 +685,17 @@ export default function AdminOrders() {
 
       // 3. Send notification to partner
       if (order.partner_id) {
-        await NotificationService.create({
-          user_id: order.partner_id,
-          title: 'Order Completed & Paid!',
-          message: `Order #${order.order_number} has is completed. Your profit has been added to your wallet.`,
-          type: 'payment'
-        });
+        try {
+          await NotificationService.create({
+            user_id: order.partner_id,
+            title: 'Order Completed & Paid!',
+            message: `Order #${order.order_number} has been completed. Your commission has been added to your wallet.`,
+            type: 'payment'
+          });
+        } catch (notificationError) {
+          console.warn('Failed to create notification:', notificationError);
+          // Don't fail the entire payout if notification fails
+        }
       }
 
       alert(`✅ Order #${order.order_number || order.id} completed!\n` +
