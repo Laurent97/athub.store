@@ -801,6 +801,7 @@ export default function AdminOrders() {
         .from('order_tracking')
         .upsert({
           order_id: selectedOrder.id,
+          partner_id: selectedOrder.partner_id, // Add partner_id so partners can see tracking
           carrier: logisticsForm.carrier,
           tracking_number: logisticsForm.tracking_number,
           estimated_delivery: logisticsForm.estimated_delivery,
