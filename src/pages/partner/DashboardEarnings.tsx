@@ -137,19 +137,45 @@ export default function DashboardEarnings() {
         .from('partner_profiles')
         .select('*')
         .eq('user_id', userProfile.id)
-        .single();
+        .maybeSingle();
+
+      console.log('=== DEBUG: User ID:', userProfile.id);
+      console.log('=== DEBUG: Partner Profile:', partnerProfile);
+      console.log('=== DEBUG: Partner Profile ID:', partnerProfile?.id);
 
       if (profileError && profileError.code !== 'PGRST116') {
         console.warn('Partner profile error:', profileError);
       }
 
-      // 2. Get real orders data - FIXED to include revenue-eligible orders
+      if (!partnerProfile) {
+        console.warn('No partner profile found for user:', userProfile.id);
+        // Set empty earnings and return
+        setEarnings({
+          thisMonth: 0,
+          lastMonth: 0,
+          thisYear: 0,
+          allTime: 0,
+          availableBalance: 0,
+          pendingBalance: 0,
+          commissionEarned: 0,
+          totalOrders: 0,
+          averageOrderValue: 0,
+          storeRating: 0,
+          storeCreditScore: 0,
+          commissionRate: 0.10
+        });
+        setLoading(false);
+        return;
+      }
+
+      // 2. Get real orders data - FIXED: Use partnerProfile.id, not userProfile.id
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*, order_items(*, products(*))')
-        .eq('partner_id', userProfile.id)
+        .eq('partner_id', partnerProfile.id) // ← CRITICAL FIX!
         .order('created_at', { ascending: false });
 
+      console.log('=== DEBUG: Orders query partner_id:', partnerProfile.id);
       console.log('=== EARNINGS DEBUGGING ORDERS DATA ===');
       console.log('OrdersData from direct query:', ordersData);
       console.log('OrdersData length:', ordersData?.length || 0);

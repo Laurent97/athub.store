@@ -165,6 +165,12 @@ export default function DashboardAnalytics() {
         console.warn('Partner profile error:', profileError);
       }
 
+      if (!partnerProfile) {
+        console.warn('No partner profile found for user:', userProfile.id);
+        setLoading(false);
+        return;
+      }
+
       // 2. Load wallet balance concurrently
       let walletBalance = 0;
       let pendingBalance = 0;
@@ -177,32 +183,32 @@ export default function DashboardAnalytics() {
         console.warn('Wallet balance error:', err);
       });
 
-      // 3. Load orders data
+      // 3. Load orders data - FIXED: Use partnerProfile.id, not userProfile.id
       const { data: ordersData, error: ordersError } = await supabase
         .from('orders')
         .select('*, order_items(*, products(*))')
-        .eq('partner_id', userProfile.id)
+        .eq('partner_id', partnerProfile.id) // ← CRITICAL FIX!
         .order('created_at', { ascending: false });
 
-      if (ordersError) {
-        console.warn('Orders error:', ordersError);
-      }
+      console.log('=== DEBUG: Orders query partner_id:', partnerProfile.id);
+      console.log('=== DEBUG: Orders Data:', ordersData);
+      console.log('=== DEBUG: Orders count:', ordersData?.length || 0);
 
-      // 4. Load products count
+      // 4. Load products count - FIXED: Use partnerProfile.id
       const { data: productsData, error: productsError } = await supabase
         .from('partner_products')
         .select('id, is_active')
-        .eq('partner_id', userProfile.id);
+        .eq('partner_id', partnerProfile.id); // ← CRITICAL FIX!
 
       if (productsError) {
         console.warn('Products error:', productsError);
       }
 
-      // 5. Load store visits
+      // 5. Load store visits - FIXED: Use partnerProfile.id
       const { data: visitsData, error: visitsError } = await supabase
         .from('store_visits')
         .select('id, partner_id, created_at')
-        .eq('partner_id', userProfile.id);
+        .eq('partner_id', partnerProfile.id); // ← CRITICAL FIX!
 
       if (visitsError) {
         console.warn('Store visits error:', visitsError);
