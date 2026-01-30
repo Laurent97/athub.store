@@ -945,23 +945,34 @@ export default function AdminOrders() {
 
       // Also create a tracking update entry for history
       if (logisticsForm.tracking_number) {
-        const { data: trackingRecord } = await supabase
-          .from('order_tracking')
-          .select('id')
-          .eq('tracking_number', logisticsForm.tracking_number)
-          .single();
+        try {
+          // First try to get the tracking record we just created/updated
+          const { data: trackingRecord, error: fetchError } = await supabase
+            .from('order_tracking')
+            .select('id')
+            .eq('tracking_number', logisticsForm.tracking_number)
+            .single();
 
-        if (trackingRecord) {
-          await supabase
-            .from('tracking_updates')
-            .insert({
-              tracking_id: trackingRecord.id,
-              status: logisticsForm.current_status, // Store detailed status in updates
-              description: `Status updated to ${logisticsForm.current_status}`,
-              location: 'Distribution Center',
-              updated_by: userProfile?.id,
-              timestamp: new Date().toISOString()
-            });
+          if (fetchError) {
+            console.warn('⚠️ Could not fetch tracking record for updates:', fetchError);
+            // Don't fail the entire operation if we can't create tracking updates
+          } else if (trackingRecord) {
+            await supabase
+              .from('tracking_updates')
+              .insert({
+                tracking_id: trackingRecord.id,
+                status: logisticsForm.current_status, // Store detailed status in updates
+                description: `Status updated to ${logisticsForm.current_status}`,
+                location: 'Distribution Center',
+                updated_by: userProfile?.id,
+                timestamp: new Date().toISOString()
+              });
+            
+            console.log('✅ Tracking update created successfully');
+          }
+        } catch (updateError) {
+          console.warn('⚠️ Failed to create tracking update:', updateError);
+          // Don't fail the entire operation if tracking updates fail
         }
       }
 
