@@ -598,61 +598,29 @@ export default function AdminOrders() {
     const confirmMarkPaid = window.confirm(
       `💳 Mark Order #${order.order_number || order.id} as Paid?\n\nAmount: $${order.total_amount.toFixed(2)}\n\nThis will update the payment status to 'paid' and order status to 'confirmed'.`
     );
+    
+    if (!confirmMarkPaid) return;
+    
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          payment_status: 'paid',
+          status: 'confirmed',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', order.id);
 
-    let result;
-    if (existingTracking) {
-      // Update existing tracking
-      result = await supabase
-        .from('order_tracking')
-        .update(trackingData)
-        .eq('order_id', selectedOrder.id);
-    } else {
-      // Insert new tracking - use upsert to handle conflicts
-      result = await supabase
-        .from('order_tracking')
-        .upsert(trackingData, {
-          onConflict: 'order_id'
-        });
-    }
+      if (error) throw error;
 
-    if (result.error) {
-      // Handle unique constraint violation (409 error)
-      if (result.error.code === '23505') {
-        throw new Error('Tracking information already exists for this order. Please update instead.');
+      alert(`✅ Order #${order.order_number || order.id} marked as paid successfully!`);
+      loadOrders();
+      if (orderDetails?.id === order.id) {
+        loadOrderDetails(order.id);
       }
-      throw result.error;
-    }
-
-    // Also update the order's shipping fields and status to shipped
-    const { error: orderError } = await supabase
-      .from('orders')
-      .update({
-        shipping_tracking_number: logisticsForm.tracking_number,
-        shipping_provider: logisticsForm.carrier,
-        shipping_status: logisticsForm.current_status,
-        status: 'shipped',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', selectedOrder.id);
-    
-    const matchesStatus = filterStatus === 'all' || 
-      filterStatus === 'active' ? !['cancelled', 'completed'].includes(order.status) : 
-      order.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-      case 'delivered': return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
-      case 'processing':
-      case 'shipped': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300';
-      case 'waiting_confirmation': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300';
-      case 'pending':
-      case 'confirmed': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300';
-      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300';
+    } catch (error) {
+      console.error('Error marking order as paid:', error);
+      alert('Failed to mark order as paid');
     }
   };
 
