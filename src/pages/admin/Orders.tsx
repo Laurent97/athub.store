@@ -922,7 +922,6 @@ export default function AdminOrders() {
       console.log('🔍 Debug - logisticsForm.current_status:', logisticsForm.current_status);
       console.log('🔍 Debug - databaseStatus:', databaseStatus);
       console.log('🔍 Debug - selectedOrder.status:', selectedOrder.status);
-      
       // Map detailed logistics status to main order status
       const mappedOrderStatus = mapToOrderStatus(logisticsForm.current_status);
       console.log('🔍 Debug - Mapped order status:', mappedOrderStatus);
@@ -933,8 +932,6 @@ export default function AdminOrders() {
         .update({
           status: mappedOrderStatus,
           shipping_status: logisticsForm.current_status, // Store detailed shipping status for partner dashboard
-          shipping_tracking_number: logisticsForm.tracking_number,
-          shipping_provider: logisticsForm.carrier,
           updated_at: new Date().toISOString()
         })
         .eq('id', selectedOrder.id);
