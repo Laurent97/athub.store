@@ -868,27 +868,26 @@ export default function AdminOrders() {
           
           'CARRIER_PICKUP_SCHEDULED': 'shipped',
           'PICKED_UP': 'shipped',
-          'IN_TRANSIT': 'in_transit',
-          'ARRIVED_AT_ORIGIN': 'in_transit',
-          'DEPARTED_ORIGIN': 'in_transit',
-          'ARRIVED_AT_SORT': 'in_transit',
-          'PROCESSED_AT_SORT': 'in_transit',
-          'DEPARTED_SORT': 'in_transit',
-          'ARRIVED_AT_DESTINATION': 'in_transit',
-          
-          'OUT_FOR_DELIVERY': 'out_for_delivery',
-          'DELIVERY_ATTEMPTED': 'out_for_delivery',
+          'IN_TRANSIT': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'ARRIVED_AT_ORIGIN': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'DEPARTED_ORIGIN': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'ARRIVED_AT_SORT': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'PROCESSED_AT_SORT': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'DEPARTED_SORT': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'ARRIVED_AT_DESTINATION': 'shipped', // Map to 'shipped' since 'in_transit' is not allowed in orders.status
+          'OUT_FOR_DELIVERY': 'shipped', // Map to 'shipped' since 'out_for_delivery' is not allowed in orders.status
+          'DELIVERY_ATTEMPTED': 'shipped', // Map to 'shipped' since 'delivery_attempted' is not allowed in orders.status
           
           'DELIVERED': 'delivered',
-          'DELAYED': 'in_transit',
-          'WEATHER_DELAY': 'in_transit',
-          'MECHANICAL_DELAY': 'in_transit',
-          'SECURITY_DELAY': 'in_transit',
-          'CUSTOMS_HOLD': 'in_transit',
-          'DAMAGED': 'in_transit',
-          'LOST': 'in_transit',
-          'ADDRESS_ISSUE': 'out_for_delivery',
-          'CUSTOMER_UNAVAILABLE': 'out_for_delivery'
+          'DELAYED': 'shipped', // Map to 'shipped' since 'delayed' is not allowed in orders.status
+          'WEATHER_DELAY': 'shipped', // Map to 'shipped' since 'weather_delay' is not allowed in orders.status
+          'MECHANICAL_DELAY': 'shipped', // Map to 'shipped' since 'mechanical_delay' is not allowed in orders.status
+          'SECURITY_DELAY': 'shipped', // Map to 'shipped' since 'security_delay' is not allowed in orders.status
+          'CUSTOMS_HOLD': 'shipped', // Map to 'shipped' since 'customs_hold' is not allowed in orders.status
+          'DAMAGED': 'shipped', // Map to 'shipped' since 'damaged' is not allowed in orders.status
+          'LOST': 'shipped', // Map to 'shipped' since 'lost' is not allowed in orders.status
+          'ADDRESS_ISSUE': 'shipped', // Map to 'shipped' since 'address_issue' is not allowed in orders.status
+          'CUSTOMER_UNAVAILABLE': 'shipped' // Map to 'shipped' since 'customer_unavailable' is not allowed in orders.status
         };
         
         return statusMapping[detailedStatus as keyof typeof statusMapping] || 'processing';

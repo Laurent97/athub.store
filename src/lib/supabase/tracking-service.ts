@@ -72,7 +72,7 @@ export class TrackingService {
       // First try to find in order_tracking table
       const { data: trackingData, error: trackingError } = await supabase
         .from('order_tracking')
-        .select('*')
+        .select('*, current_status')
         .eq('tracking_number', trackingNumber)
         .single();
 
@@ -119,6 +119,18 @@ export class TrackingService {
         if (!updatesError) {
           updates = updatesData || [];
         }
+      }
+
+      // If we have current_status field, add it as an update
+      if (tracking.current_status && updates.length === 0) {
+        updates = [{
+          id: tracking.id,
+          tracking_id: tracking.id,
+          status: tracking.current_status,
+          description: `Current status: ${tracking.current_status}`,
+          location: 'Current Location',
+          timestamp: tracking.updated_at || tracking.created_at
+        }];
       }
 
       return {
