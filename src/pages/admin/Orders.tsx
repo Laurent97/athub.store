@@ -663,15 +663,14 @@ export default function AdminOrders() {
     }
 
     try {
-      // Update order_tracking table using the correct structure
-      // The database constraint now accepts all logistics status values directly
+      // Update logistics information in order_tracking table
       const { error } = await supabase
         .from('order_tracking')
         .upsert({
           order_id: selectedOrder.id, // Use UUID order_id as foreign key
           carrier: logisticsForm.carrier,
           tracking_number: logisticsForm.tracking_number,
-          estimated_delivery: logisticsForm.estimated_delivery,
+          estimated_delivery: logisticsForm.estimated_delivery, // Already in yyyy-MM-dd format from date input
           status: logisticsForm.current_status, // Use status directly - database constraint now supports all logistics statuses
           updated_at: new Date().toISOString()
         }, {
@@ -680,7 +679,6 @@ export default function AdminOrders() {
 
       if (error) throw error;
 
-      // Only update tracking information, don't change order status
       // The order status will be managed separately through the status update buttons
       
       setShowLogisticsModal(false);
