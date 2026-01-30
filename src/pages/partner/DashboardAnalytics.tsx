@@ -173,16 +173,17 @@ export default function DashboardAnalytics() {
       // Additional debugging: Check if there are any visits at all
       const { data: allVisitsCount, error: allVisitsError } = await supabase
         .from('store_visits')
-        .select('partner_id, COUNT(*) as count')
+        .select('partner_id')
         .eq('partner_id', userProfile.id);
 
       console.log('All visits query result:', allVisitsCount);
       console.log('All visits query error:', allVisitsError);
+      console.log('All visits count:', allVisitsCount?.length || 0);
       
       // Check if there are visits for different partner_id
       const { data: anyVisits, error: anyVisitsError } = await supabase
         .from('store_visits')
-        .select('partner_id, COUNT(*) as count')
+        .select('partner_id')
         .limit(5);
 
       console.log('Any visits in database:', anyVisits);
@@ -258,8 +259,8 @@ export default function DashboardAnalytics() {
       
       console.log('=== DEBUGGING PARTNER STATS ===');
       console.log('PartnerStats from service:', partnerStats);
-      console.log('PartnerStats totalOrders:', partnerStats?.totalOrders);
-      console.log('PartnerStats totalRevenue:', partnerStats?.totalRevenue);
+      console.log('PartnerStats totalOrders:', partnerStats?.data?.totalOrders);
+      console.log('PartnerStats totalRevenue:', partnerStats?.data?.totalRevenue);
       console.log('OrdersData length:', ordersData?.length);
       console.log('OrdersData totalRevenue:', ordersData?.reduce((sum, order) => sum + (order.total_amount || 0), 0));
       console.log('=== END PARTNER STATS DEBUG ===');
