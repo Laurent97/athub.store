@@ -4,7 +4,7 @@ export type UserType = 'user' | 'partner' | 'admin';
 export type PartnerStatus = 'pending' | 'approved' | 'rejected' | 'suspended';
 export type ProductCategory = 'car' | 'part' | 'accessory';
 export type Condition = 'new' | 'used' | 'reconditioned';
-export type OrderStatus = 'pending' | 'waiting_confirmation' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'waiting_confirmation' | 'confirmed' | 'processing' | 'shipped' | 'in_transit' | 'out_for_delivery' | 'delivered' | 'completed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type EarningsStatus = 'pending' | 'released' | 'hold';
 
