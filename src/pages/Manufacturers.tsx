@@ -403,18 +403,23 @@ export default function Manufacturers() {
   console.log('Final filtered shops count:', filteredShops?.length || 0);
 
   // Determine which shops to display
-  const hasActiveFilters = searchTerm.trim() !== '' || categoryFilter !== 'all' || countryFilter !== 'all';
+  const hasSearchTerm = searchTerm.trim() !== '';
+  const hasActiveFilters = categoryFilter !== 'all' || countryFilter !== 'all';
   let displayedShops = filteredShops;
 
-  if (!hasActiveFilters && filteredShops.length > 15) {
-    // No search or filters active: show only 15 shuffled stores
-    displayedShops = shuffleArray(filteredShops).slice(0, 15);
+  if (!hasSearchTerm && !hasActiveFilters) {
+    // No search or filters: show only 15 shuffled stores
+    if (filteredShops.length > 15) {
+      displayedShops = shuffleArray(filteredShops).slice(0, 15);
+    } else {
+      displayedShops = shuffleArray(filteredShops);
+    }
+  } else if (hasSearchTerm && !hasActiveFilters) {
+    // Search only: show only exact matching searched stores
+    displayedShops = filteredShops; // Already filtered by search
   } else if (hasActiveFilters) {
-    // Search or filters active: show all matching results
+    // Filters active: show all filtered results
     displayedShops = filteredShops;
-  } else {
-    // Less than 15 total stores: show all, but shuffled
-    displayedShops = shuffleArray(filteredShops);
   }
 
   return (
@@ -452,9 +457,11 @@ export default function Manufacturers() {
           <div className="mb-6 flex items-center justify-between">
             <p className="text-muted-foreground">
               {loading ? 'Loading...' : (
-                hasActiveFilters 
-                  ? `Showing ${displayedShops?.length || 0} of ${shops?.length || 0} shops`
-                  : `Showing ${displayedShops?.length || 0} featured shops${(shops?.length || 0) > 15 ? ` (search to see all ${shops?.length || 0})` : ''}`
+                hasSearchTerm
+                  ? `Found ${displayedShops?.length || 0} shop${(displayedShops?.length || 0) !== 1 ? 's' : ''} for "${searchTerm}"`
+                  : hasActiveFilters
+                  ? `Showing ${displayedShops?.length || 0} filtered shops`
+                  : `Showing ${displayedShops?.length || 0} featured shops${(shops?.length || 0) > 15 ? ` (search to discover more)` : ''}`
               )}
             </p>
             <div className="flex items-center gap-4">
