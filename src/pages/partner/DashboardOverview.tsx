@@ -91,21 +91,6 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      <div className="bg-blue-50 dark:bg-blue-900/30 p-4 sm:p-6 rounded-lg border border-blue-200 dark:border-blue-700/50">
-        <h3 className="text-base sm:text-lg font-semibold text-blue-800 dark:text-blue-300 mb-2">
-          Getting Started
-        </h3>
-        <p className="text-blue-700 dark:text-blue-400 mb-4 text-sm sm:text-base">
-          Welcome to your partner dashboard! Here's what you can do:
-        </p>
-        <ul className="list-disc list-inside text-blue-700 dark:text-blue-400 space-y-2">
-          <li>Browse and select products from our catalog</li>
-          <li>Set custom prices for your store</li>
-          <li>Track your orders and earnings</li>
-          <li>View analytics and performance metrics</li>
-        </ul>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-gray-50 dark:bg-gray-700/50 p-6 rounded-lg border border-gray-200 dark:border-gray-600">
           <h4 className="font-semibold mb-3 text-gray-900 dark:text-white">Quick Actions</h4>

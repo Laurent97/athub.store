@@ -372,19 +372,6 @@ export default function PartnerDashboard() {
               </CardContent>
             </Card>
 
-            {/* Conversion Rate */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.conversionRate.toFixed(1)}%</div>
-                <p className="text-xs text-muted-foreground">
-                  Visit to order ratio
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Store Performance Section */}
