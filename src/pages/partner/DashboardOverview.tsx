@@ -9,15 +9,22 @@ export default function DashboardOverview() {
   const navigate = useNavigate();
   const { stats: parentStats, partner } = useOutletContext<{ stats: any, partner: any, refreshData: () => void }>();
   
+  // Debug: Log what we receive from parent
+  console.log('=== DEBUG: DashboardOverview ===');
+  console.log('Parent Stats:', parentStats);
+  console.log('Partner Data:', partner);
+  console.log('Parent Stats type:', typeof parentStats);
+  console.log('Parent Stats keys:', parentStats ? Object.keys(parentStats) : 'null/undefined');
+  
   // Transform parent stats to match our component's needs
   const stats = {
-    totalRevenue: parentStats?.totalEarnings || 0,
+    totalRevenue: parentStats?.totalEarnings || parentStats?.totalRevenue || 0,
     totalOrders: parentStats?.totalOrders || 0,
-    avgOrderValue: parentStats?.averageOrderValue || 0,
+    avgOrderValue: parentStats?.averageOrderValue || parentStats?.avgOrderValue || 0,
     profitTrend: parentStats?.lastMonthRevenue > 0 
       ? ((parentStats?.monthlyRevenue - parentStats?.lastMonthRevenue) / parentStats?.lastMonthRevenue) * 100 
       : 0,
-    monthlyRevenue: parentStats?.monthlyRevenue || 0,
+    monthlyRevenue: parentStats?.monthlyRevenue || parentStats?.thisMonthRevenue || 0,
     lastMonthRevenue: parentStats?.lastMonthRevenue || 0,
     pendingOrders: parentStats?.pendingOrders || 0,
     conversionRate: parentStats?.conversionRate || 0,
@@ -27,6 +34,9 @@ export default function DashboardOverview() {
     creditScore: partner?.store_credit_score || 750,
     commissionRate: partner?.commission_rate || 10
   };
+  
+  console.log('Transformed Stats for DashboardOverview:', stats);
+  console.log('=== END DEBUG DashboardOverview ===');
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
