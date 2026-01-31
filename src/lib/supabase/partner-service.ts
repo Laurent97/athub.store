@@ -443,9 +443,14 @@ export const partnerService = {
         availableBalance = wallet.balance;
       }
 
-      // Calculate stats
+      // Calculate stats - Use revenue-eligible orders for consistency
       const totalOrders = orders?.length || 0;
-      const totalRevenue = orders?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+      const revenueOrders = orders?.filter(order => 
+        ['completed', 'paid', 'processing'].includes(order.status) && 
+        ['paid', 'completed'].includes(order.payment_status)
+      ) || [];
+      
+      const totalRevenue = revenueOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       const paidOrders = orders?.filter(o => o.payment_status === 'paid').length || 0;
       const pendingOrders = orders?.filter(o => o.status === 'pending').length || 0;
       const processingOrders = orders?.filter(o => o.status === 'processing').length || 0;
@@ -453,17 +458,17 @@ export const partnerService = {
       const completedOrders = orders?.filter(o => o.status === 'completed').length || 0;
       const cancelledOrders = orders?.filter(o => o.status === 'CANCELLED' || o.status === 'cancelled').length || 0;
 
-      // Calculate time-based revenue
+      // Calculate time-based revenue using revenue-eligible orders (consistent with orders page)
       const now = new Date();
       const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
       
-      const thisMonthRevenue = orders
+      const thisMonthRevenue = revenueOrders
         ?.filter(order => new Date(order.created_at) >= thisMonthStart)
         .reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
       
-      const lastMonthRevenue = orders
+      const lastMonthRevenue = revenueOrders
         ?.filter(order => new Date(order.created_at) >= lastMonthStart && new Date(order.created_at) <= lastMonthEnd)
         .reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
 
@@ -482,7 +487,7 @@ export const partnerService = {
         totalEarnings: totalRevenue * commissionRate, // Use actual commission rate
         pendingBalance: 0,
         commissionRate: commissionRate * 100, // Store as percentage for display
-        averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+        averageOrderValue: revenueOrders.length > 0 ? totalRevenue / revenueOrders.length : 0,
         totalSales: totalRevenue // Map totalRevenue to totalSales for compatibility
       };
 

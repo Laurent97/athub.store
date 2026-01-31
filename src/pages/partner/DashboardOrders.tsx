@@ -433,6 +433,11 @@ ${order.shipping_address ? JSON.stringify(order.shipping_address, null, 2) : 'No
       ));
 
   // Calculate statistics - FIXED to include revenue-eligible orders
+  const revenueOrders = orders.filter(order => 
+    ['completed', 'paid', 'processing'].includes(order.status) && 
+    ['paid', 'completed'].includes(order.payment_status)
+  );
+  
   const stats = {
     total: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
@@ -441,21 +446,12 @@ ${order.shipping_address ? JSON.stringify(order.shipping_address, null, 2) : 'No
     completed: orders.filter(o => o.status === 'completed').length,
     cancelled: orders.filter(o => o.status === 'cancelled').length,
     
-    // Revenue calculations using revenue-eligible orders
-    revenueOrders: orders.filter(order => 
-      ['completed', 'paid', 'processing'].includes(order.status) && 
-      ['paid', 'completed'].includes(order.payment_status)
-    ).length,
-    
-    totalRevenue: orders.filter(order => 
-      ['completed', 'paid', 'processing'].includes(order.status) && 
-      ['paid', 'completed'].includes(order.payment_status)
-    ).reduce((sum, o) => sum + (o.total_amount || 0), 0),
+    totalRevenue: revenueOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0),
     
     pendingRevenue: orders.filter(o => o.status === 'pending').reduce((sum, o) => sum + (o.total_amount || 0), 0),
     
-    averageOrderValue: orders.length > 0 
-      ? orders.reduce((sum, o) => sum + (o.total_amount || 0), 0) / orders.length 
+    averageOrderValue: revenueOrders.length > 0 
+      ? revenueOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0) / revenueOrders.length 
       : 0
   };
 
