@@ -283,7 +283,8 @@ export default function DashboardAnalytics() {
       const paidOrders = allOrders.filter(order => order.payment_status === 'paid');
 
       // Calculate commission
-      const commissionRate = partnerProfile?.commission_rate || 0.10;
+      // Convert percentage to decimal (15% -> 0.15) for calculation
+      const commissionRate = (partnerProfile?.commission_rate || 10) / 100;
       const totalRevenue = revenueOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
       const commissionEarned = totalRevenue * commissionRate;
       const avgOrderValue = revenueOrders.length > 0 ? totalRevenue / revenueOrders.length : 0;
