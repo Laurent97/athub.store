@@ -442,6 +442,16 @@ export const partnerService = {
       const completedOrders = orders?.filter(o => o.status === 'completed').length || 0;
       const cancelledOrders = orders?.filter(o => o.status === 'CANCELLED' || o.status === 'cancelled').length || 0;
 
+      // Get partner profile to get actual commission rate
+      const { data: partnerProfile } = await supabase
+        .from('partner_profiles')
+        .select('commission_rate')
+        .eq('user_id', partnerId)
+        .single();
+
+      // Convert percentage to decimal (15% -> 0.15) for calculation
+      const commissionRate = (partnerProfile?.commission_rate || 10) / 100;
+
       const stats = {
         totalOrders,
         totalRevenue,
@@ -452,8 +462,9 @@ export const partnerService = {
         completedOrders,
         cancelledOrders,
         availableBalance,
-        totalEarnings: totalRevenue * 0.1, // 10% commission
-        pendingBalance: 0
+        totalEarnings: totalRevenue * commissionRate, // Use actual commission rate
+        pendingBalance: 0,
+        commissionRate: commissionRate * 100 // Store as percentage for display
       };
 
       console.log('✅ Stats loaded:', stats);
