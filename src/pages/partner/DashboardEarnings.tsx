@@ -287,6 +287,7 @@ export default function DashboardEarnings() {
         commissionRate: (partnerProfile?.commission_rate || 10) // Store as percentage for display
       };
       setEarnings(finalEarnings);
+      setLoading(false); // ← CRITICAL FIX: Stop loading state
     } catch (err) {
       console.error('Failed to load earnings:', err);
       setError(err instanceof Error ? err.message : 'Failed to load earnings');

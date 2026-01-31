@@ -322,6 +322,49 @@ export default function PartnerDashboard() {
           </div>
         </div>
 
+        {/* Partner Metrics Bar */}
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="container mx-auto px-4 py-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {/* Total Orders */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalOrders}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Total Orders</div>
+              </div>
+              
+              {/* Available Balance */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600 dark:text-green-400">${stats.walletBalance.toLocaleString()}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Available Balance</div>
+              </div>
+              
+              {/* Commission Rate */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.commissionRate.toFixed(1)}%</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Commission Rate</div>
+              </div>
+              
+              {/* Monthly Revenue */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">${stats.monthlyRevenue.toLocaleString()}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Monthly Revenue</div>
+              </div>
+              
+              {/* Store Rating */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.storeRating.toFixed(1)}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Store Rating</div>
+              </div>
+              
+              {/* Active Products */}
+              <div className="text-center">
+                <div className="text-2xl font-bold text-teal-600 dark:text-teal-400">{stats.activeProducts}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">Active Products</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Main Content */}
         <div className="container mx-auto px-4 py-8">
           {/* Dashboard Content */}
