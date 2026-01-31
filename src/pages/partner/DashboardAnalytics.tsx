@@ -213,7 +213,7 @@ export default function DashboardAnalytics() {
       const { data: manualVisits, error: manualVisitsError } = await supabase
         .from('store_visits')
         .select('created_at')
-        .eq('partner_id', userProfile.id) // Use user_id since store_visits references users table
+        .eq('partner_id', userProfile.id) // Use the actual user ID since store_visits references users table
         .order('created_at', { ascending: false })
         .limit(1000);
 

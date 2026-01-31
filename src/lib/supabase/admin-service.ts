@@ -217,10 +217,19 @@ export const adminService = {
 
   // Update order status
   async updateOrderStatus(orderId: string, status: string) {
+    // Determine payment status based on order status
+    let paymentStatus = 'pending';
+    if (status === 'completed' || status === 'shipped' || status === 'processing') {
+      paymentStatus = 'paid';
+    } else if (status === 'cancelled') {
+      paymentStatus = 'cancelled';
+    }
+
     const { data, error } = await supabase
       .from('orders')
       .update({
         status,
+        payment_status: paymentStatus,
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId)
