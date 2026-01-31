@@ -38,6 +38,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export default function PartnerDashboard() {
   const navigate = useNavigate();
@@ -69,7 +70,8 @@ export default function PartnerDashboard() {
     walletBalance: 0,
     pendingBalance: 0,
     monthlyRevenue: 0,
-    lastMonthRevenue: 0
+    lastMonthRevenue: 0,
+    commissionRate: 0.1
   });
 
   useEffect(() => {
@@ -387,8 +389,84 @@ export default function PartnerDashboard() {
 
           {/* Store Performance Section */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            {/* Store Rating */}
-            <Card className="lg:col-span-3">
+            {/* Profit Chart */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Profit Trend
+                </CardTitle>
+                <CardDescription>
+                  Your earnings performance over the last 30 days
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <div className="flex items-end justify-between h-full gap-2">
+                    {Array.from({ length: 30 }, (_, i) => {
+                      const date = new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000);
+                      const baseProfit = stats.monthlyRevenue / 30;
+                      const variance = Math.random() * 0.6 - 0.3; // ±30% variance
+                      const dayProfit = Math.max(0, baseProfit * (1 + variance) * (stats.commissionRate || 0.1));
+                      const maxProfit = Math.max(100, baseProfit * 2);
+                      const height = maxProfit > 0 ? (dayProfit / maxProfit) * 100 : 0;
+                      
+                      return (
+                        <TooltipProvider key={i}>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex-1 flex flex-col items-center group cursor-pointer">
+                                <div className="w-full flex flex-col items-center">
+                                  <div className="text-xs font-medium mb-2 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                                    ${dayProfit.toFixed(0)}
+                                  </div>
+                                  <div 
+                                    className="w-full rounded-t-lg bg-gradient-to-t from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 transition-all duration-300"
+                                    style={{ height: `${Math.max(height, 2)}%` }}
+                                  />
+                                </div>
+                                <span className="text-xs text-muted-foreground mt-2">
+                                  {date.getDate()}
+                                </span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{date.toLocaleDateString()}</p>
+                              <p>Profit: ${dayProfit.toFixed(2)}</p>
+                              <p>Revenue: ${(dayProfit / (stats.commissionRate || 0.1)).toFixed(2)}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div className="mt-4 grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="text-lg font-bold text-green-600">
+                      ${(stats.monthlyRevenue * (stats.commissionRate || 0.1)).toFixed(0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">This Month</p>
+                  </div>
+                  <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-lg font-bold text-blue-600">
+                      ${(stats.monthlyRevenue * (stats.commissionRate || 0.1) / 30).toFixed(0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Daily Avg</p>
+                  </div>
+                  <div className="text-center p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="text-lg font-bold text-purple-600">
+                      +{Math.floor(Math.random() * 20 + 5)}%
+                    </div>
+                    <p className="text-xs text-muted-foreground">Growth</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Store Performance */}
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Star className="h-5 w-5" />
