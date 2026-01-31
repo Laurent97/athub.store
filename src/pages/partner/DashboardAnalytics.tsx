@@ -934,10 +934,11 @@ export default function DashboardAnalytics() {
                           Math.floor((analytics.visitData.visitDistribution.total_visits || 0) / 14) : 0;
                         
                         const totalDayVisits = dayVisits + automatedDayVisits;
-                        const maxVisits = Math.max(50, ...analytics.visitData.manualVisits.map(v => {
-                          const visitDate = v.created_at.split('T')[0];
-                          return analytics.visitData.manualVisits.filter(visit => visit.created_at.startsWith(visitDate)).length;
-                        }));
+                        const maxVisits = analytics.visitData.manualVisits.length > 0 ? 
+                          Math.max(50, ...analytics.visitData.manualVisits.map(v => {
+                            const visitDate = v.created_at.split('T')[0];
+                            return analytics.visitData.manualVisits.filter(visit => visit.created_at.startsWith(visitDate)).length;
+                          })) : 50;
                         const height = maxVisits > 0 ? Math.max((totalDayVisits / maxVisits) * 100, 2) : 2;
                         
                         return (
