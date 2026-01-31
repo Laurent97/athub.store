@@ -38,7 +38,7 @@ export function LikedItemsPage({ className }: LikedItemsPageProps) {
 
   // Determine which items to display
   const displayItems = useMemo(() => {
-    let itemsToProcess = searchQuery ? (searchResults?.items || []) : items;
+    const itemsToProcess = searchQuery ? (searchResults?.items || []) : items;
 
     // Apply sorting
     return itemsToProcess.sort((a, b) => {

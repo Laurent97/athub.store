@@ -353,7 +353,7 @@ export default function ProductsEnhanced() {
       
       if (result.data && result.data.length > 0) {
         // Apply filters client-side for now
-        let filtered = result.data.filter((product: any) => {
+        const filtered = result.data.filter((product: any) => {
           // Filter by main category - exact category matching
           if (categoryFilter !== "all") {
             const productType = product.category_path?.product_type;
@@ -421,7 +421,7 @@ export default function ProductsEnhanced() {
         setTotal(filtered.length);
       } else {
         // Fallback to demo data
-        let filtered = fallbackProducts.filter((product: any) => {
+        const filtered = fallbackProducts.filter((product: any) => {
           // Filter by main category - exact category matching
           if (categoryFilter !== "all") {
             const productType = product.category_path?.product_type;

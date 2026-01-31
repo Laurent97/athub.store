@@ -34,7 +34,7 @@ export function CategoryDebug() {
         });
         
         // Apply the same filtering logic as the frontend
-        let filtered = result.data.filter((product: any) => {
+        const filtered = result.data.filter((product: any) => {
           if (categoryFilter !== "all" && product.category_path?.product_type !== categoryFilter) {
             addLog(`❌ Filtered out: ${product.title} (product_type: ${product.category_path?.product_type} != ${categoryFilter})`);
             return false;

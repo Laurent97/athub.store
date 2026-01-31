@@ -363,7 +363,7 @@ const PartnerRegistrationForm: React.FC = () => {
   // Handle form submission
   // Generate unique store slug
   const generateUniqueSlug = async (storeName: string): Promise<string> => {
-    let baseSlug = storeName.toLowerCase()
+    const baseSlug = storeName.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '');
     

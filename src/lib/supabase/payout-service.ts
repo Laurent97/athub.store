@@ -34,8 +34,8 @@ export const payoutService = {
       }
 
       // 2. Calculate partner's earnings
-      // For now, let's use commission rate. Adjust based on your business logic
-      const commissionRate = order.partner?.commission_rate || 0.10; // 10% default
+      // Convert commission rate from percentage to decimal (15% -> 0.15)
+      const commissionRate = (order.partner?.commission_rate || 10) / 100; // 10% default
       const partnerEarnings = order.total_amount * commissionRate;
       
       console.log(`💰 Partner earnings calculation:`, {

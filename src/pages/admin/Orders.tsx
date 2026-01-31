@@ -6,6 +6,7 @@ import { Order, PartnerProfile, OrderStatus, PaymentStatus } from '../../lib/typ
 import { NotificationService } from '../../lib/supabase/notification-service';
 import { adminService } from '../../lib/supabase/admin-service';
 import { payoutService } from '../../lib/supabase/payout-service';
+import { partnerTransactionService } from '../../lib/supabase/partner-transaction-service';
 import { 
   getStatusConfig, 
   PROFESSIONAL_ORDER_STATUSES, 
@@ -565,7 +566,7 @@ export default function AdminOrders() {
       if (updateError) throw updateError;
 
       // 2. Process partner payment (base cost)
-      const { partnerTransactionService } = await import('../../lib/supabase/partner-transaction-service');
+      const partnerTransactionService = await import('../../lib/supabase/partner-transaction-service');
       const paymentResult = await partnerTransactionService.processPartnerPayment(orderId, partnerId);
 
       if (!paymentResult.success) {

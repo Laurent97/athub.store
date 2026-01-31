@@ -493,7 +493,7 @@ const Payments: React.FC = () => {
       console.log('✅ Pending payment updated successfully');
 
       // Find the corresponding order with multiple fallback strategies
-      let orderUpdateResult = { error: null as any };
+      const orderUpdateResult = { error: null as any };
       let matchedOrder = null;
 
       // Strategy 1: Try exact order_number match

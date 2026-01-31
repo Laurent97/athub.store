@@ -113,7 +113,7 @@ export default function DashboardInventory() {
   };
 
   const filterProducts = () => {
-    let filtered = products.filter(product => {
+    const filtered = products.filter(product => {
       const matchesSearch = 
         (product.product?.make?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (product.product?.model?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||

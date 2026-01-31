@@ -17,4 +17,13 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'partner-transaction-service': ['./src/lib/supabase/partner-transaction-service'],
+        },
+      },
+    },
+  },
 }));

@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { partnerTransactionService } from './partner-transaction-service';
 
 export const adminService = {
   // Get all users with their details
@@ -240,7 +241,6 @@ export const adminService = {
     if ((status === 'delivered' || status === 'completed') && data?.partner_id) {
       try {
         console.log(`💰 Processing partner commission for order ${orderId} with status ${status}`);
-        const { partnerTransactionService } = await import('./partner-transaction-service');
         const payoutResult = await partnerTransactionService.processPartnerPayout(orderId, data.partner_id);
         
         if (payoutResult.success) {
