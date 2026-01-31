@@ -71,7 +71,7 @@ export default function PartnerDashboard() {
     pendingBalance: 0,
     monthlyRevenue: 0,
     lastMonthRevenue: 0,
-    commissionRate: 0.1
+    commissionRate: 10 // Store as percentage (10% = 10)
   });
 
   useEffect(() => {
@@ -166,7 +166,7 @@ export default function PartnerDashboard() {
             pendingBalance: pendingBalance, // Use calculated pending balance
             monthlyRevenue: stats.thisMonthRevenue || 0,
             lastMonthRevenue: stats.lastMonthRevenue || 0,
-            commissionRate: partnerData.commission_rate || 0.1
+            commissionRate: partnerData.commission_rate || 10 // Store as percentage
           });
         }
       } else {
@@ -193,7 +193,7 @@ export default function PartnerDashboard() {
           pendingBalance: 0,
           monthlyRevenue: 0,
           lastMonthRevenue: 0,
-          commissionRate: 0.1
+          commissionRate: 10 // Store as percentage
         });
       }
     } catch (error) {
@@ -515,12 +515,12 @@ export default function PartnerDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Commission Rate</span>
-                    <span className="text-sm text-muted-foreground">{(stats.commissionRate * 100).toFixed(1)}%</span>
+                    <span className="text-sm text-muted-foreground">{stats.commissionRate.toFixed(1)}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${stats.commissionRate * 100}%` }}
+                      style={{ width: `${stats.commissionRate}%` }}
                     />
                   </div>
                 </div>
