@@ -134,91 +134,43 @@ export default function Track() {
   };
 
   const getTrackingTimeline = (trackingData: any) => {
-    // Define all order status categories matching the logistics workflow
-    const statusOrder = [
-      // Pre-Shipment
-      'order_received', 'payment_authorized', 'order_verified', 'inventory_allocated',
-      
-      // Fulfillment
-      'order_processing', 'picking_started', 'picking_completed', 
-      'packing_started', 'packing_completed', 'ready_to_ship',
-      
-      // Shipping
-      'carrier_pickup_scheduled', 'picked_up', 'shipped', 'in_transit',
-      'arrived_at_origin', 'departed_origin', 'arrived_at_sort', 
-      'processed_at_sort', 'departed_sort', 'arrived_at_destination',
-      
-      // Delivery
-      'out_for_delivery', 'delivery_attempted', 'delivered',
-      
-      // Exceptions (shown at the end if they occur)
-      'delayed', 'weather_delay', 'mechanical_delay', 'address_issue',
-      'customer_unavailable', 'security_delay', 'customs_hold',
-      'damaged', 'lost'
-    ];
+    const currentStatus = trackingData.status;
+    const statusConfig = TRACKING_STATUSES[currentStatus as keyof typeof TRACKING_STATUSES];
     
-    const currentStatusIndex = statusOrder.indexOf(trackingData.status);
-    
-    // Start with actual tracking updates
     const actualUpdates = trackingData.updates || [];
     
-    // Create a map of status to actual update
-    const updateMap = new Map();
-    actualUpdates.forEach((update: any) => {
-      updateMap.set(update.status, update);
-    });
+    const currentUpdate = actualUpdates.find((update: any) => update.status === currentStatus);
     
-    // Build timeline combining actual updates and milestones
-    return statusOrder.map((status, index) => {
-      const statusConfig = TRACKING_STATUSES[status as keyof typeof TRACKING_STATUSES];
-      const isCompleted = index < currentStatusIndex;
-      const isCurrent = index === currentStatusIndex;
-      
-      let timestamp = null;
-      let description = statusConfig?.label || status;
-      let location = null;
-      
-      // Use actual update if available
-      const actualUpdate = updateMap.get(status);
-      if (actualUpdate) {
-        timestamp = actualUpdate.timestamp;
-        description = actualUpdate.description || statusConfig?.label || status;
-        location = actualUpdate.location;
-      } else if (isCompleted || isCurrent) {
-        // For completed/current status without update, use tracking timestamps
-        if (status === 'order_received' && trackingData.created_at) {
-          timestamp = trackingData.created_at;
-          description = 'Order received and processing started';
-        } else if (status === 'delivered' && trackingData.actual_delivery) {
-          timestamp = trackingData.actual_delivery;
-          description = 'Package delivered successfully';
-        } else if (trackingData.updated_at && (isCompleted || isCurrent)) {
-          timestamp = trackingData.updated_at;
-        }
+    let timestamp = null;
+    let description = statusConfig?.label || currentStatus;
+    let location = null;
+    
+    if (currentUpdate) {
+      timestamp = currentUpdate.timestamp;
+      description = currentUpdate.description || statusConfig?.label || currentStatus;
+      location = currentUpdate.location;
+    } else {
+      if (currentStatus === 'order_received' && trackingData.created_at) {
+        timestamp = trackingData.created_at;
+        description = 'Order received and processing started';
+      } else if (currentStatus === 'delivered' && trackingData.actual_delivery) {
+        timestamp = trackingData.actual_delivery;
+        description = 'Package delivered successfully';
+      } else if (trackingData.updated_at) {
+        timestamp = trackingData.updated_at;
       }
-      
-      // Only show estimated text for future milestones
-      let estimatedText = null;
-      if (!isCompleted && !isCurrent) {
-        if (trackingData.estimated_delivery) {
-          estimatedText = `Estimated by ${format(new Date(trackingData.estimated_delivery), 'MMMM dd, yyyy')}`;
-        } else {
-          estimatedText = 'Pending';
-        }
-      }
-      
-      return {
-        status,
-        label: statusConfig?.label || status,
-        description,
-        location,
-        timestamp,
-        estimatedText,
-        completed: isCompleted,
-        current: isCurrent,
-        hasActualUpdate: !!actualUpdate
-      };
-    });
+    }
+    
+    return [{
+      status: currentStatus,
+      label: statusConfig?.label || currentStatus,
+      description,
+      location,
+      timestamp,
+      completed: true,
+      isCurrent: true,
+      estimatedText: null
+    }];
   };
 
   return (
@@ -388,13 +340,13 @@ export default function Track() {
                               <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
                                 milestone.completed 
                                   ? 'bg-green-100 text-green-600' 
-                                  : milestone.current 
+                                  : milestone.isCurrent
                                   ? 'bg-blue-100 text-blue-600'
                                   : 'bg-gray-100 text-gray-400'
                               }`}>
                                 {milestone.completed ? (
                                   <CheckCircle className="w-6 h-6" />
-                                ) : milestone.current ? (
+                                ) : milestone.isCurrent ? (
                                   <Truck className="w-6 h-6" />
                                 ) : (
                                   <Clock className="w-6 h-6" />
@@ -410,7 +362,7 @@ export default function Track() {
                               <div className="flex items-center gap-2 mb-1">
                                 <h4 className={`font-bold text-lg ${
                                   milestone.completed ? 'text-green-600' : 
-                                  milestone.current ? 'text-blue-600' : 'text-gray-400'
+                                  milestone.isCurrent ? 'text-blue-600' : 'text-gray-400'
                                 }`}>
                                   {milestone.label}
                                 </h4>
@@ -421,7 +373,7 @@ export default function Track() {
                                   </span>
                                 )}
                                 {/* Show status badge for current status */}
-                                {milestone.current && trackingData.status && (
+                                {milestone.isCurrent && trackingData.status && (
                                   <span className="ml-auto">
                                     {getStatusBadge(trackingData.status)}
                                   </span>
