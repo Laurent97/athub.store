@@ -781,7 +781,7 @@ export default function DashboardAnalytics() {
                         );
                         const value = chartType === 'profit' ? day.profit : 
                                      chartType === 'revenue' ? day.revenue : day.orders;
-                        const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
+                        const height = maxValue > 0 ? Math.max((value / maxValue) * 100, 2) : 2;
                         const color = chartType === 'profit' ? 'from-green-500 to-emerald-400' :
                                      chartType === 'revenue' ? 'from-blue-500 to-cyan-400' :
                                      'from-purple-500 to-violet-400';
@@ -938,7 +938,7 @@ export default function DashboardAnalytics() {
                           const visitDate = v.created_at.split('T')[0];
                           return analytics.visitData.manualVisits.filter(visit => visit.created_at.startsWith(visitDate)).length;
                         }));
-                        const height = maxVisits > 0 ? (totalDayVisits / maxVisits) * 100 : 0;
+                        const height = maxVisits > 0 ? Math.max((totalDayVisits / maxVisits) * 100, 2) : 2;
                         
                         return (
                           <TooltipProvider key={i}>
