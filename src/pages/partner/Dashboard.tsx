@@ -420,7 +420,7 @@ export default function PartnerDashboard() {
                             <TooltipContent>
                               <p>{date.toLocaleDateString()}</p>
                               <p>Profit: ${dayProfit.toFixed(2)}</p>
-                              <p>Revenue: ${(dayProfit / ((stats.commissionRate || 10) / 100)).toFixed(2)}</p>
+                              <p>Revenue: ${(dayProfit / (stats.commissionRate / 100)).toFixed(2)}</p>
                             </TooltipContent>
                           </Tooltip>
                         </TooltipProvider>
@@ -432,13 +432,13 @@ export default function PartnerDashboard() {
                 <div className="mt-4 grid grid-cols-3 gap-4">
                   <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
                     <div className="text-lg font-bold text-green-600">
-                      ${(stats.monthlyRevenue * ((stats.commissionRate || 10) / 100)).toFixed(0)}
+                      ${(stats.monthlyRevenue * (stats.commissionRate / 100)).toFixed(0)}
                     </div>
                     <p className="text-xs text-muted-foreground">This Month</p>
                   </div>
                   <div className="text-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                     <div className="text-lg font-bold text-blue-600">
-                      ${(stats.monthlyRevenue * ((stats.commissionRate || 10) / 100) / 30).toFixed(0)}
+                      ${(stats.monthlyRevenue * (stats.commissionRate / 100) / 30).toFixed(0)}
                     </div>
                     <p className="text-xs text-muted-foreground">Daily Avg</p>
                   </div>

@@ -411,16 +411,27 @@ export const partnerService = {
       // Get orders
       const { data: orders, error: ordersError } = await supabase
         .from('orders')
-        .select('id, order_number, total_amount, status, payment_status')
+        .select('id, order_number, total_amount, status, payment_status, created_at')
         .eq('partner_id', partnerId);
 
       if (ordersError) throw ordersError;
 
-      // Get wallet balance
+      // Get partner profile to get actual commission rate and user_id
+      const { data: partnerProfile } = await supabase
+        .from('partner_profiles')
+        .select('commission_rate, user_id')
+        .eq('id', partnerId)
+        .single();
+
+      // Convert percentage to decimal (15% -> 0.15) for calculation
+      const commissionRate = (partnerProfile?.commission_rate || 10) / 100;
+      const userId = partnerProfile?.user_id || partnerId; // Fallback to partnerId if user_id not found
+
+      // Get wallet balance using user_id
       const { data: wallet, error: walletError } = await supabase
         .from('wallet_balances')
         .select('balance')
-        .eq('user_id', partnerId)
+        .eq('user_id', userId)
         .single();
 
       let availableBalance = 0;
@@ -442,19 +453,25 @@ export const partnerService = {
       const completedOrders = orders?.filter(o => o.status === 'completed').length || 0;
       const cancelledOrders = orders?.filter(o => o.status === 'CANCELLED' || o.status === 'cancelled').length || 0;
 
-      // Get partner profile to get actual commission rate
-      const { data: partnerProfile } = await supabase
-        .from('partner_profiles')
-        .select('commission_rate')
-        .eq('user_id', partnerId)
-        .single();
-
-      // Convert percentage to decimal (15% -> 0.15) for calculation
-      const commissionRate = (partnerProfile?.commission_rate || 10) / 100;
+      // Calculate time-based revenue
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      
+      const thisMonthRevenue = orders
+        ?.filter(order => new Date(order.created_at) >= thisMonthStart)
+        .reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
+      
+      const lastMonthRevenue = orders
+        ?.filter(order => new Date(order.created_at) >= lastMonthStart && new Date(order.created_at) <= lastMonthEnd)
+        .reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0;
 
       const stats = {
         totalOrders,
         totalRevenue,
+        thisMonthRevenue,
+        lastMonthRevenue,
         paidOrders,
         pendingOrders,
         processingOrders,
@@ -464,7 +481,9 @@ export const partnerService = {
         availableBalance,
         totalEarnings: totalRevenue * commissionRate, // Use actual commission rate
         pendingBalance: 0,
-        commissionRate: commissionRate * 100 // Store as percentage for display
+        commissionRate: commissionRate * 100, // Store as percentage for display
+        averageOrderValue: totalOrders > 0 ? totalRevenue / totalOrders : 0,
+        totalSales: totalRevenue // Map totalRevenue to totalSales for compatibility
       };
 
       console.log('✅ Stats loaded:', stats);
