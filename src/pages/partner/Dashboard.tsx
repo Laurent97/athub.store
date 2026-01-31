@@ -112,10 +112,16 @@ export default function PartnerDashboard() {
       }
 
       if (partnerData) {
-        // Load partner analytics
+        console.log('=== DEBUG: PartnerDashboard Loading Stats ===');
+        console.log('Partner ID:', partnerData.id);
+        console.log('Partner Data:', partnerData);
+        
         const { success, data: partnerStats } = await partnerService.getPartnerStats(partnerData.id);
         
+        console.log('Stats API Response:', { success, data: partnerStats });
+        
         if (success && partnerStats) {
+          console.log('✅ Setting stats from API:', partnerStats);
           setStats({
             ...DEFAULT_STATS,
             totalSales: partnerStats.totalSales || 0,
@@ -141,8 +147,14 @@ export default function PartnerDashboard() {
             lastMonthRevenue: partnerStats.lastMonthRevenue || 0,
             commissionRate: partnerStats.commissionRate || 10
           });
+        } else {
+          console.log('❌ Stats API failed or returned null');
+          console.log('Using DEFAULT_STATS instead');
+          setStats(DEFAULT_STATS);
         }
+        console.log('=== END DEBUG PartnerDashboard ===');
       } else {
+        console.log('❌ No partner data found, using DEFAULT_STATS');
         setStats(DEFAULT_STATS);
       }
     } catch (error) {
