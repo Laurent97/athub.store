@@ -548,7 +548,10 @@ export default function AdminOrders() {
     }
 
     try {
-      const { error } = await supabase
+      console.log('Assigning order to partner:', { orderId, partnerId });
+
+      // 1. Update order with partner assignment
+      const { error: updateError } = await supabase
         .from('orders')
         .update({ 
           partner_id: partnerId,
@@ -557,9 +560,27 @@ export default function AdminOrders() {
         })
         .eq('id', orderId);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
-      // Send notification to partner
+      // 2. Process partner payment (base cost)
+      const { partnerTransactionService } = await import('../../lib/supabase/partner-transaction-service');
+      const paymentResult = await partnerTransactionService.processPartnerPayment(orderId, partnerId);
+
+      if (!paymentResult.success) {
+        // Rollback order assignment if payment fails
+        await supabase
+          .from('orders')
+          .update({ 
+            partner_id: null,
+            status: 'pending',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', orderId);
+
+        throw new Error(`Payment failed: ${paymentResult.error}`);
+      }
+
+      // 3. Send notification to partner
       await NotificationService.notifyOrderAssigned(orderId, partnerId);
 
       setShowAssignModal(false);
@@ -568,10 +589,12 @@ export default function AdminOrders() {
       if (orderDetails?.id === orderId) {
         loadOrderDetails(orderId);
       }
-      alert('Order assigned to partner successfully!');
+
+      const paymentAmount = paymentResult.transaction?.amount || 0;
+      alert(`✅ Order assigned to partner successfully!\n💳 Partner payment processed: $${paymentAmount.toFixed(2)}`);
     } catch (error) {
       console.error('Error assigning order:', error);
-      alert('Failed to assign order to partner');
+      alert(`Failed to assign order to partner: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -712,7 +735,7 @@ export default function AdminOrders() {
       `Amount: $${order.total_amount.toFixed(2)}\n` +
       `This will:\n` +
       `1. Mark the order as delivered and finalize the transaction\n` +
-      `2. Pay the partner their commission ($${(order.total_amount * 0.10).toFixed(2)})\n` +
+      `2. Pay the partner the full selling price\n` +
       `3. Add funds to the partner's wallet\n\n` +
       `Continue?` 
     );
@@ -731,30 +754,35 @@ export default function AdminOrders() {
 
       if (statusError) throw statusError;
 
-      // 2. Process partner payout
-      const payoutResult = await payoutService.processOrderPayout(order.id);
-      
-      if (!payoutResult.success) {
-        throw new Error(`Payout failed: ${payoutResult.error}`);
-      }
-
-      // 3. Send notification to partner
+      // 2. Process partner payout (full selling price)
       if (order.partner_id) {
+        const { partnerTransactionService } = await import('../../lib/supabase/partner-transaction-service');
+        const payoutResult = await partnerTransactionService.processPartnerPayout(order.id, order.partner_id);
+        
+        if (!payoutResult.success) {
+          throw new Error(`Payout failed: ${payoutResult.error}`);
+        }
+
+        // 3. Send notification to partner
         try {
           await NotificationService.create({
             user_id: order.partner_id,
             title: 'Order Completed & Paid!',
-            message: `Order #${order.order_number} has been completed. Your commission has been added to your wallet.`,
+            message: `Order #${order.order_number} has been completed. Your payout has been added to your wallet.`,
             type: 'payment'
           });
         } catch (notificationError) {
           console.warn('Failed to create notification:', notificationError);
           // Don't fail the entire payout if notification fails
         }
-      }
 
-      alert(`✅ Order #${order.order_number || order.id} completed!\n` +
-            `💰 Partner paid: $${payoutResult.data?.partnerEarnings?.toFixed(2)}`);
+        const payoutAmount = payoutResult.transaction?.amount || 0;
+        alert(`✅ Order #${order.order_number || order.id} completed!\n` +
+              `💰 Partner paid: $${payoutAmount.toFixed(2)}`);
+      } else {
+        alert(`✅ Order #${order.order_number || order.id} completed!\n` +
+              `⚠️ No partner assigned - no payout processed`);
+      }
 
       // Refresh data
       loadOrders();
