@@ -8,6 +8,16 @@ import { supabase } from "@/lib/supabase/client";
 import { SimpleLikeButton } from "@/components/liked-items/LikeButton";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Shuffle function to randomize array
+const shuffleArray = (array: any[]) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 const ProductCard = ({ product }: { product: any }) => {
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -223,13 +233,14 @@ const FeaturedProducts = () => {
           break;
 
         case 'suppliers':
-          // Get products from top suppliers
+          // Get products from top suppliers (manufacturer stores) - randomly selected
           result = await productService.getProducts(1);
           if (result.data) {
             const supplierProducts = result.data
-              .filter((p: any) => p.verified || p.supplier_rating >= 4)
-              .slice(0, 6);
-            setProducts(supplierProducts);
+              .filter((p: any) => p.verified || p.supplier_rating >= 4);
+            // Shuffle and take first 6 for random selection
+            const randomSupplierProducts = shuffleArray(supplierProducts).slice(0, 6);
+            setProducts(randomSupplierProducts);
           }
           break;
       }
