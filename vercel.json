@@ -39,10 +39,5 @@
         { "key": "Content-Type", "value": "application/javascript" }
       ]
     }
-  ],
-  "functions": {
-    "src/**/*.{js,ts,jsx,tsx}": {
-      "runtime": "@nodejs18.x"
-    }
-  }
+  ]
 }
