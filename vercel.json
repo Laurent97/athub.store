@@ -42,7 +42,7 @@
   ],
   "functions": {
     "src/**/*.{js,ts,jsx,tsx}": {
-      "runtime": "nodejs18.x"
+      "runtime": "@nodejs18.x"
     }
   }
 }
