@@ -32,7 +32,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showPending, setShowPending] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
-  const [pollingMessage, setPollingMessage] = useState('Waiting for admin review...');
+  const [pollingMessage, setPollingMessage] = useState('Waiting for confirmation...');
 
   useEffect(() => {
     if (!showPending || !pendingPaymentId) return;
@@ -157,7 +157,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
             <div>
               <AlertDescription className="text-blue-800">
                 <p className="font-semibold mb-2">
-                  Waiting for Admin Review
+                  Waiting for Confirmation
                 </p>
                 <p className="text-sm mb-3">
                   {pollingMessage}
@@ -175,7 +175,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
           <AlertDescription className="text-gray-700 text-sm">
             <strong>What happens next:</strong>
             <ul className="mt-2 ml-4 space-y-1 list-disc">
-              <li>Admin will review your payment in the admin dashboard</li>
+              <li>Your payment will be reviewed and confirmed</li>
               <li>Your order will be confirmed upon approval</li>
               <li>You'll be redirected automatically when approved</li>
               <li>This typically takes a few minutes</li>
@@ -201,7 +201,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
             <strong>What happens next:</strong>
           </p>
           <ul className="text-sm text-gray-600 mt-1 space-y-1">
-            <li>• Admin will review your payment details</li>
+            <li>• Your payment will be reviewed and confirmed</li>
             <li>• You'll receive an email notification once approved</li>
             <li>• Your order will be processed after payment verification</li>
           </ul>

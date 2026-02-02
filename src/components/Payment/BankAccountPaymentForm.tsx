@@ -542,7 +542,7 @@ export const BankAccountPaymentForm: React.FC<BankAccountPaymentFormProps> = ({
         Payment Submitted for Approval
       </h3>
       <p className="text-gray-600 dark:text-gray-400 mb-4">
-        Your bank transfer payment has been submitted and is pending admin verification.
+        Your bank transfer payment has been submitted and is pending confirmation.
         You will be notified once the payment has been reviewed and approved.
       </p>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4">

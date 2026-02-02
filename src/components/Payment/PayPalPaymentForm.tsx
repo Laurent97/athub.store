@@ -183,7 +183,7 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">What happens next?</h4>
         <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-          <li>• Admin will review your payment details</li>
+          <li>• Your payment will be reviewed and confirmed</li>
           <li>• You'll receive an email notification once approved</li>
           <li>• Your order will be processed after payment verification</li>
           <li>• You can check your order status in your account</li>
@@ -253,7 +253,7 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
         Payment Submitted for Approval
       </h3>
       <p className="text-gray-600 dark:text-gray-400 mb-4">
-        Your PayPal payment has been submitted and is pending admin verification.
+        Your PayPal payment has been submitted and is pending confirmation.
         You will be notified once the payment has been reviewed and approved.
       </p>
       <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4 space-y-2">
