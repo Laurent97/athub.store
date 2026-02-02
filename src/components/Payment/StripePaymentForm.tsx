@@ -193,19 +193,6 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
         </AlertDescription>
       </Alert>
     );
-        
-        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-          <p className="text-sm text-gray-600">
-            <strong>What happens next:</strong>
-          </p>
-          <ul className="text-sm text-gray-600 mt-1 space-y-1">
-            <li>• Your payment will be reviewed and confirmed</li>
-            <li>• You'll receive an email notification once approved</li>
-            <li>• Your order will be processed after payment verification</li>
-          </ul>
-        </div>
-      </div>
-    );
   }
 
   return (
