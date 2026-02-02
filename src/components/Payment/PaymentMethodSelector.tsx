@@ -10,9 +10,10 @@ import StripeDataCollection from './StripeDataCollection';
 import PayPalPaymentForm from './PayPalPaymentForm';
 import CryptoPaymentForm from './CryptoPaymentForm';
 import WalletPayment from './WalletPayment';
-import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle, User } from 'lucide-react';
+import BankAccountPaymentForm from './BankAccountPaymentForm';
+import { CreditCard, Mail, Bitcoin, Wallet, AlertTriangle, User, Building } from 'lucide-react';
 
-export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet';
+export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet' | 'bank';
 
 interface PaymentMethodSelectorProps {
   orderId: string;
@@ -87,6 +88,15 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           description: 'Use your account wallet balance',
           available: canUse
         };
+      case 'bank':
+        return {
+          id: method,
+          name: 'Bank Transfer',
+          icon: <Building className="h-5 w-5" />,
+          description: 'International wire transfer',
+          available: canUse,
+          requiresConfirmation: true
+        };
       default:
         return {
           id: method,
@@ -150,6 +160,15 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
             onError={onPaymentError}
           />
         );
+      case 'bank':
+        return (
+          <BankAccountPaymentForm
+            orderId={orderId}
+            amount={amount}
+            onSuccess={onPaymentSuccess}
+            onError={onPaymentError}
+          />
+        );
       default:
         return null;
     }
@@ -187,7 +206,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
 
       {!selectedMethod && (
         <div className="grid gap-4 md:grid-cols-2">
-          {(['stripe', 'paypal', 'crypto', 'wallet'] as PaymentMethod[]).map((method) => {
+          {(['stripe', 'paypal', 'crypto', 'wallet', 'bank'] as PaymentMethod[]).map((method) => {
             const methodInfo = getPaymentMethodInfo(method);
             
             if (!methodInfo.available && method !== 'stripe') {
@@ -209,6 +228,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                         method === 'stripe' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' :
                         method === 'paypal' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' :
                         method === 'crypto' ? 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400' :
+                        method === 'bank' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400' :
                         'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400'
                       }`}>
                         {methodInfo.icon}
@@ -262,6 +282,7 @@ export const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
                 selectedMethod === 'stripe' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' :
                 selectedMethod === 'paypal' ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400' :
                 selectedMethod === 'crypto' ? 'bg-orange-100 dark:bg-orange-900 text-orange-600 dark:text-orange-400' :
+                selectedMethod === 'bank' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400' :
                 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-400'
               }`}>
                 {getPaymentMethodInfo(selectedMethod).icon}

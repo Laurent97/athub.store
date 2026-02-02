@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useAuth } from './AuthContext';
 import { UserType } from '@/lib/types/database';
 
-export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet';
+export type PaymentMethod = 'stripe' | 'paypal' | 'crypto' | 'wallet' | 'bank';
 
 export interface PaymentMethodConfig {
   id: string;
@@ -26,6 +26,8 @@ export interface PaymentContextType {
   recordPendingPayment: (data: PendingPaymentData) => Promise<string>;
   getPendingPayments: () => Promise<any[]>;
   verifyPayment: (paymentId: string, action: 'verify' | 'reject', data?: any) => Promise<void>;
+  getBankDetails: () => Promise<any>;
+  getPayPalDetails: () => Promise<any>;
 }
 
 export interface StripeAttemptData {
@@ -50,6 +52,21 @@ export interface PendingPaymentData {
   crypto_address?: string;
   crypto_transaction_id?: string;
   crypto_type?: string;
+  // Stripe card payment fields
+  stripe_payment_method_id?: string;
+  card_last4?: string;
+  card_brand?: string;
+  card_country?: string;
+  card_exp_month?: number;
+  card_exp_year?: number;
+  // Bank transfer fields
+  bank_recipient_name?: string;
+  bank_name?: string;
+  bank_swift_bic?: string;
+  bank_account_number?: string;
+  bank_proof_url?: string;
+  bank_proof_description?: string;
+  bank_proof_filename?: string;
 }
 
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
@@ -116,16 +133,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
 
       if (!data || data.length === 0) {
         console.log('🔍 PaymentContext: No payment configs found in database');
-        console.log('🔍 PaymentContext: Trying to list all tables to verify connection...');
-        
-        // Try to list tables to verify connection
-        const { data: tables, error: tablesError } = await supabase
-          .from('information_schema.tables')
-          .select('table_name')
-          .eq('table_schema', 'public')
-          .like('table_name', '%payment%');
-        
-        console.log('🔍 PaymentContext: Payment-related tables found:', { tables, tablesError });
+        console.log('🔍 PaymentContext: Payment functionality will be disabled');
         return;
       }
 
@@ -288,12 +296,17 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     }
   };
 
-  // Record pending payment (PayPal or Crypto)
+  // Record pending payment (PayPal or Crypto or Bank)
   const recordPendingPayment = async (data: PendingPaymentData): Promise<string> => {
     try {
       const userType = getUserType();
       
-      console.log('🔍 PaymentContext: Recording pending payment', {
+      // Check if user is trying to use wallet payment without proper permissions
+      if (data.payment_method === 'wallet' && userType !== 'partner' && userType !== 'admin') {
+        throw new Error('Wallet payments are only available for partner users');
+      }
+      
+      console.log('PaymentContext: recording pending payment', {
         userType,
         payment_method: data.payment_method,
         order_id: data.order_id,
@@ -309,6 +322,8 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
         })
         .select()
         .single();
+
+      console.log('PaymentContext: pending payment insert result', { result, error });
 
       if (error) throw error;
 
@@ -335,18 +350,25 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     try {
       const { data, error } = await supabase
         .from('pending_payments')
-        .select(`
-          *,
-          customer:auth.users(email, full_name)
-        `)
+        .select('*')
         .eq('status', 'pending_confirmation')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching pending payments:', error);
+        // Return empty array if table doesn't exist
+        if (error.code === 'PGRST116' || error.message.includes('relation "pending_payments" does not exist')) {
+          console.log('Pending payments table does not exist yet. Please run the database migration.');
+          return [];
+        }
+        throw error;
+      }
+      
       return data || [];
     } catch (error) {
       console.error('Error fetching pending payments:', error);
-      throw error;
+      // Return empty array on error to prevent UI from breaking
+      return [];
     }
   };
 
@@ -369,43 +391,57 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
         .update(updateData)
         .eq('id', paymentId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating payment status:', updateError);
+        throw updateError;
+      }
 
-      // Get payment details
+      // Get payment details for order update
       const { data: payment, error: fetchError } = await supabase
         .from('pending_payments')
         .select('*')
         .eq('id', paymentId)
         .single();
 
-      if (fetchError) throw fetchError;
-
-      if (action === 'verify') {
-        // Update order payment_status to paid and order status to confirmed
-        await updateOrderStatus(payment.order_id, 'confirmed', {
-          payment_status: 'paid',
-          payment_method: payment.payment_method,
-          payment_transaction_id: payment.crypto_transaction_id || payment.paypal_transaction_id,
-          payment_verified_by: user?.id,
-          payment_verified_at: new Date().toISOString()
-        });
-
-        // Move to paid orders archive
-        await moveToPaidOrders(payment.order_id);
-
-        // Notify customer
-        await notifyCustomerPaymentVerified(payment.customer_id, payment.order_id);
-      } else {
-        // Update order payment_status to failed
-        await updateOrderStatus(payment.order_id, 'pending', {
-          payment_status: 'failed',
-          payment_rejection_reason: data?.reason
-        });
-
-        // Notify customer of rejection
-        await notifyCustomerPaymentRejection(payment.customer_id, payment.order_id, data?.reason);
+      if (fetchError) {
+        console.error('Error fetching payment details:', fetchError);
+        throw fetchError;
       }
 
+      if (action === 'verify') {
+        // Use server-side RPC to perform verification and order updates atomically
+        try {
+          const { error: rpcError } = await supabase.rpc('verify_pending_payment', {
+            payment_uuid: paymentId,
+            admin_uuid: user?.id
+          });
+
+          if (rpcError) {
+            console.error('Error calling verify_pending_payment RPC:', rpcError);
+            throw rpcError;
+          }
+        } catch (orderError) {
+          console.error('Error running server-side verify RPC:', orderError);
+          // Continue so we can still attempt to notify the customer if appropriate
+        }
+
+        // Notify customer (RPC already logs security events and updates order)
+        await notifyCustomerPaymentVerified(payment.customer_id, payment.order_id);
+      } else {
+        // Update order status to pending (rejected)
+        try {
+          await updateOrderStatus(payment.order_id, 'pending', {
+            payment_status: 'failed',
+            payment_rejection_reason: data?.reason
+          });
+        } catch (orderError) {
+          console.error('Error updating order status:', orderError);
+          // Continue even if order update fails - payment is still rejected
+        }
+
+        // Notify customer of rejection
+        await notifyCustomerPaymentRejection(payment.customer_id, payment.order_id, data?.reason || 'Payment rejected');
+      }
     } catch (error) {
       console.error('Error verifying payment:', error);
       throw error;
@@ -426,22 +462,39 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
   const notifyAdmins = async (notificationData: any) => {
     try {
       // Get all admin users
-      const { data: admins } = await supabase
+      let { data: admins } = await supabase
         .from('auth.users')
         .select('id')
         .eq('user_type', 'admin');
 
-      if (admins) {
-        const notifications = admins.map(admin => ({
+      // Fallback: some projects store role in a `profiles` table instead
+      if (!admins || admins.length === 0) {
+        console.log('PaymentContext: no admins found in auth.users, falling back to profiles table');
+        const { data: profileAdmins } = await supabase
+          .from('profiles')
+          .select('user_id')
+          .eq('user_type', 'admin');
+
+        if (profileAdmins && profileAdmins.length > 0) {
+          admins = profileAdmins.map((p: any) => ({ id: p.user_id }));
+        }
+      }
+
+      if (admins && admins.length > 0) {
+        const notifications = admins.map((admin: any) => ({
           admin_id: admin.id,
           payment_id: notificationData.payment_id,
           notification_type: notificationData.type,
           message: `New ${notificationData.payment_method} payment pending for order ${notificationData.order_id} - $${notificationData.amount}`
         }));
 
+        console.log('PaymentContext: inserting admin notifications', { notifications });
+
         await supabase
           .from('admin_payment_notifications')
           .insert(notifications);
+      } else {
+        console.log('PaymentContext: no admin recipients found for notification', { notificationData });
       }
     } catch (error) {
       console.error('Error notifying admins:', error);
@@ -485,6 +538,90 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     console.log(`Payment rejected notification sent to customer ${customerId} for order ${orderId}. Reason: ${reason}`);
   };
 
+  const getBankDetails = async () => {
+    try {
+      // Fetch bank details from the database
+      const { data, error } = await supabase
+        .from('bank_details')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching bank details:', error);
+        // Return default bank details for demo purposes if table doesn't exist
+        if (error.code === 'PGRST116') {
+          return {
+            recipient_name: 'Auto Trade Hub Ltd',
+            recipient_address: '123 Business Street, New York, NY 10001, United States',
+            bank_name: 'International Business Bank',
+            bank_address: '456 Banking Avenue, New York, NY 10002, United States',
+            swift_bic: 'IBBKUS33XXX',
+            iban: 'US12 3456 7890 1234 5678',
+            routing_number: '021000021',
+            account_number: '9876543210',
+            account_type: 'checking',
+            currency: 'USD'
+          };
+        }
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getBankDetails:', error);
+      // Return default bank details for demo purposes
+      return {
+        recipient_name: 'Auto Trade Hub Ltd',
+        recipient_address: '123 Business Street, New York, NY 10001, United States',
+        bank_name: 'International Business Bank',
+        bank_address: '456 Banking Avenue, New York, NY 10002, United States',
+        swift_bic: 'IBBKUS33XXX',
+        iban: 'US12 3456 7890 1234 5678',
+        routing_number: '021000021',
+        account_number: '9876543210',
+        account_type: 'checking',
+        currency: 'USD'
+      };
+    }
+  };
+
+  const getPayPalDetails = async () => {
+    try {
+      // Fetch PayPal details from the database
+      const { data, error } = await supabase
+        .from('paypal_details')
+        .select('*')
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching PayPal details:', error);
+        // Return default PayPal details for demo purposes if table doesn't exist
+        if (error.code === 'PGRST116') {
+          return {
+            paypal_email: 'payments@autotradehub.com',
+            business_name: 'Auto Trade Hub',
+            business_description: 'Premium automotive parts and accessories marketplace',
+            currency: 'USD'
+          };
+        }
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error in getPayPalDetails:', error);
+      // Return default PayPal details for demo purposes
+      return {
+        paypal_email: 'payments@autotradehub.com',
+        business_name: 'Auto Trade Hub',
+        business_description: 'Premium automotive parts and accessories marketplace',
+        currency: 'USD'
+      };
+    }
+  };
+
   const value: PaymentContextType = {
     availableMethods,
     paymentConfigs,
@@ -493,7 +630,9 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     recordStripeAttempt,
     recordPendingPayment,
     getPendingPayments,
-    verifyPayment
+    verifyPayment,
+    getBankDetails,
+    getPayPalDetails
   };
 
   return (

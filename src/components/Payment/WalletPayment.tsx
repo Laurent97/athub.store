@@ -314,15 +314,7 @@ const WalletPayment: React.FC<WalletPaymentProps> = ({
         </CardContent>
       </Card>
 
-      {/* Security Notice */}
-      <Alert className="dark:bg-gray-800 dark:border-gray-700">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="text-gray-300">
-          <strong>Security Notice:</strong> This payment will be processed immediately using your wallet balance. 
-          No additional confirmation is required for wallet payments.
-        </AlertDescription>
-      </Alert>
-
+      
       {/* Payment Button */}
       <div className="space-y-4">
         {walletBalance && walletBalance.balance < amount && (

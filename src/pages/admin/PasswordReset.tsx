@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -20,7 +20,7 @@ interface PasswordResetRequest {
   id: string;
   user_id: string;
   email: string;
-  reset_token: string;
+  token: string;
   temporary_password?: string;
   expires_at: string;
   used_at?: string;
@@ -133,7 +133,7 @@ const PasswordReset: React.FC = () => {
         .insert({
           user_id: userData.id,
           email: userEmail,
-          reset_token: token,
+          token: token,
           expires_at: expiresAt.toISOString(),
           created_by: admin.id,
           status: 'pending'
@@ -161,9 +161,37 @@ const PasswordReset: React.FC = () => {
     }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setError('Copied to clipboard!');
+  const copyToClipboard = async (text: string) => {
+    try {
+      // Try modern clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        setError('Copied to clipboard!');
+      } else {
+        // Fallback for older browsers or insecure contexts
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          document.execCommand('copy');
+          setError('Copied to clipboard!');
+        } catch (err) {
+          console.error('Failed to copy text: ', err);
+          setError('Copy failed! Please manually copy the text.');
+        } finally {
+          document.body.removeChild(textArea);
+        }
+      }
+    } catch (err) {
+      console.error('Clipboard error:', err);
+      setError('Copy failed! Please manually copy the text.');
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -279,6 +307,14 @@ const PasswordReset: React.FC = () => {
                   <CardDescription>Generate secure password reset links for users</CardDescription>
                 </CardHeader>
                 <CardContent>
+                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <strong>For users:</strong> Users can also request password resets themselves at{' '}
+                      <Link to="/forgot-password" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+                        /forgot-password
+                      </Link>
+                    </p>
+                  </div>
                   <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                     <DialogTrigger asChild>
                       <Button>
@@ -484,12 +520,12 @@ const PasswordReset: React.FC = () => {
                                         <Label>Reset Token</Label>
                                         <div className="flex gap-2">
                                           <p className="font-mono text-sm bg-muted p-2 rounded flex-1">
-                                            {selectedRequest.reset_token}
+                                            {selectedRequest.token}
                                           </p>
                                           <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => copyToClipboard(selectedRequest.reset_token)}
+                                            onClick={async () => await copyToClipboard(selectedRequest.token)}
                                           >
                                             <Copy className="w-4 h-4" />
                                           </Button>

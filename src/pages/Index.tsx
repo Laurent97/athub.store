@@ -1,9 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
-import EnhancedCategoryNavigation from "@/components/EnhancedCategoryNavigation";
-import FeaturedProducts from "@/components/FeaturedProducts";
+import EndlessCarGallery from "@/components/EndlessCarGallery";
 import TrustBadges from "@/components/TrustBadges";
-import SupplierShowcase from "@/components/SupplierShowcase";
 import PartnerCTA from "@/components/PartnerCTA";
 import Footer from "@/components/Footer";
 
@@ -13,17 +11,8 @@ const Index = () => {
       <Navbar />
       <main>
         <HeroSection />
+        <EndlessCarGallery />
         <TrustBadges />
-        
-        {/* Enhanced Category Navigation */}
-        <section className="section-padding bg-background">
-          <div className="container-wide">
-            <EnhancedCategoryNavigation />
-          </div>
-        </section>
-        
-        <FeaturedProducts />
-        <SupplierShowcase />
         <PartnerCTA />
       </main>
       <Footer />

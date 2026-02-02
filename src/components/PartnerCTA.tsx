@@ -144,37 +144,6 @@ const PartnerCTA = () => {
             ))}
           </div>
         </div>
-
-        {/* Bottom Partner Testimonial */}
-        <div className="mt-16 p-8 bg-slate-800/50 rounded-2xl border border-slate-700">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-600/20 border border-green-500/30 text-green-400 mb-4">
-              <CheckCircle className="w-4 h-4" />
-              <span className="text-sm font-semibold">SUCCESS STORIES</span>
-            </div>
-            <h3 className="text-2xl font-bold text-white mb-4">
-              Join Thousands of Successful Partners
-            </h3>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              "AutoTradeHub transformed our business. We reached international markets we never thought possible 
-              and increased our revenue by 300% in the first year."
-            </p>
-            <div className="mt-4">
-              <div className="font-semibold text-white">Michael Chen</div>
-              <div className="text-sm text-slate-400">CEO, Chen Automotive Parts</div>
-            </div>
-          </div>
-          
-          {/* Partner Logos */}
-          <div className="flex flex-wrap justify-center items-center gap-8 mt-8 pt-8 border-t border-slate-700">
-            <div className="text-slate-500 text-sm">Trusted by leading automotive brands:</div>
-            {["AutoParts Pro", "Global Motors", "Speed Components", "Elite Auto"].map((brand, index) => (
-              <div key={index} className="px-4 py-2 bg-slate-700/50 rounded-lg text-slate-400 text-sm font-medium">
-                {brand}
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </section>
   );

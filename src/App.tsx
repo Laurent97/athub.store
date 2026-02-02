@@ -2,15 +2,17 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Outlet, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { CartProvider } from "./contexts/CartContext";
-import { PaymentProvider } from "./contexts/PaymentContext";
-import { ErrorBoundary } from "./components/ErrorBoundary";
-import WhatsAppFloating from "./components/CustomerService/WhatsAppFloating";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
+import { PaymentProvider } from "@/contexts/PaymentContext";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { injectSpeedInsights } from "@vercel/speed-insights";
-import { AdminOnlyRoute, PartnerOnlyRoute } from "./components/RoleBasedRoute";
+import WhatsAppFloating from "@/components/CustomerService/WhatsAppFloating";
+import AppLayout from "@/components/Layout/AppLayout";
+import { AdminOnlyRoute, PartnerOnlyRoute } from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
 import Products from "./pages/Products-Enhanced";
 import ProductDetail from "./pages/ProductDetail";
@@ -30,7 +32,6 @@ import Store from "./pages/Store";
 import Auth from "./pages/Auth";
 import Manufacturers from "./pages/Manufacturers";
 import Notifications from "./pages/Notifications";
-import AppLayout from "./components/Layout/AppLayout";
 import PartnerPending from "./pages/partner/Pending";
 import PartnerRegisterRedirect from "./pages/PartnerRegisterRedirect";
 import BecomePartner from "./pages/BecomePartner";
@@ -41,7 +42,6 @@ import DashboardProducts from "./pages/partner/DashboardProducts";
 import DashboardOrders from "./pages/partner/DashboardOrders";
 import DashboardWallet from "./pages/partner/DashboardWallet";
 import DashboardInventory from "./pages/partner/DashboardInventory";
-import DashboardEarnings from "./pages/partner/DashboardEarnings";
 import DashboardAnalytics from "./pages/partner/DashboardAnalytics";
 import DashboardSettings from "./pages/partner/DashboardSettings";
 import WalletDeposit from "./pages/partner/WalletDeposit";
@@ -53,6 +53,8 @@ import AdminUsers from "./pages/admin/Users";
 import AdminOrders from "./pages/admin/Orders";
 import AdminSettings from "./pages/admin/Settings";
 import AdminPasswordReset from "./pages/admin/PasswordReset";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProductForm from "./components/Admin/ProductForm";
 import SeedData from "./pages/admin/SeedData";
 import AdminPayments from "./pages/admin/Payments";
@@ -122,6 +124,8 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/register" element={<Auth />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/partner/register" element={<BecomePartner />} />
               <Route path="/partner/apply" element={<BecomePartner />} />
               <Route path="/become-partner" element={<BecomePartner />} />
@@ -132,7 +136,6 @@ const App = () => (
                 <Route path="products" element={<DashboardProducts />} />
                 <Route path="orders" element={<DashboardOrders />} />
                 <Route path="inventory" element={<DashboardInventory />} />
-                <Route path="earnings" element={<DashboardEarnings />} />
                 <Route path="analytics" element={<DashboardAnalytics />} />
                 <Route path="settings" element={<DashboardSettings />} />
                 <Route path="wallet" element={<DashboardWallet />} />

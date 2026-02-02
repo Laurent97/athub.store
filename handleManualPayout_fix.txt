@@ -1,0 +1,45 @@
+// Add this function after the handleCompleteOrder function in src/pages/admin/Orders.tsx
+// Look for the line: } catch (error: any) { console.error('Error completing order:', error); alert(`❌ Failed to complete order: ${error.message || 'Unknown error'}`); } };
+// And add the following code right after it:
+
+const handleManualPayout = async (order: OrderWithDetails) => {
+  // Calculate the correct payout amounts
+  const commissionRate = (order.partner?.commission_rate || 10) / 100;
+  const commissionEarnings = order.total_amount * commissionRate;
+  const baseCostTotal = order.base_cost_total || 0;
+  const orderProfit = (order.total_amount || 0) - baseCostTotal;
+  const totalPayoutAmount = orderProfit + commissionEarnings; // Partner gets profit + commission
+  
+  const confirmPayout = window.confirm(
+    `💰 Pay Partner for Order #${order.order_number || order.id}?\n\n` +
+    `Order Amount: $${order.total_amount.toFixed(2)}\n` +
+    `Base Cost (Partner pays): $${baseCostTotal.toFixed(2)}\n` +
+    `Order Profit (Partner earns): $${orderProfit.toFixed(2)}\n` +
+    `Commission: $${commissionEarnings.toFixed(2)} (${(commissionRate * 100).toFixed(0)}%)\n` +
+    `Total Payout: $${totalPayoutAmount.toFixed(2)}\n\n` +
+    `This will add funds to the partner's wallet. Continue?` 
+  );
+  
+  if (!confirmPayout) return;
+  
+  try {
+    const result = await payoutService.processOrderPayout(order.id);
+    
+    if (result.success) {
+      alert(`✅ Partner paid successfully!\n` +
+            `Order Profit: $${result.data?.orderProfit?.toFixed(2)}\n` +
+            `Commission: $${result.data?.commissionEarnings?.toFixed(2)}\n` +
+            `Total Paid: $${result.data?.totalPayoutAmount?.toFixed(2)}`);
+      
+      loadOrders();
+      if (orderDetails?.id === order.id) {
+        loadOrderDetails(order.id);
+      }
+    } else {
+      alert(`❌ Payment failed: ${result.error}`);
+    }
+  } catch (error: any) {
+    console.error('Error processing manual payout:', error);
+    alert(`❌ Failed to process payment: ${error.message || 'Unknown error'}`);
+  }
+};

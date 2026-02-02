@@ -351,7 +351,12 @@ export const partnerTransactionService = {
 
       // Convert percentage to decimal (15% -> 0.15) for calculation
       const commissionRate = (partnerProfile.commission_rate || 10) / 100;
-      const payoutAmount = order.partner_payout_amount || (order.total_amount * commissionRate);
+      
+      // Calculate the correct payout amounts
+      const commissionEarnings = order.total_amount * commissionRate;
+      const baseCostTotal = order.base_cost_total || 0;
+      const orderProfit = (order.total_amount || 0) - baseCostTotal;
+      const payoutAmount = order.partner_payout_amount || (baseCostTotal + orderProfit + commissionEarnings);
 
       if (payoutAmount <= 0) {
         throw new Error('Invalid payout amount');
@@ -359,7 +364,10 @@ export const partnerTransactionService = {
 
       console.log('Payout calculation:', {
         totalAmount: order.total_amount,
-        commissionRate: commissionRate,
+        baseCostTotal,
+        orderProfit,
+        commissionRate,
+        commissionEarnings,
         payoutAmount
       });
 
@@ -370,7 +378,7 @@ export const partnerTransactionService = {
         transaction_type: 'payout',
         amount: payoutAmount,
         status: 'pending',
-        description: `Commission payout for order ${order.order_number} - ${order.total_amount} × ${commissionRate} = ${payoutAmount}`,
+        description: `Payout for order ${order.order_number} - Base Cost: $${baseCostTotal}, Profit: $${orderProfit}, Commission: $${commissionEarnings}, Total: $${payoutAmount}`,
         payment_method: 'wallet'
       });
 

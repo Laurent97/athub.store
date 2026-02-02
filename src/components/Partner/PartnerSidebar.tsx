@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Package, ShoppingCart, Wallet, DollarSign, TrendingUp, Settings, BarChart3, Inbox } from 'lucide-react';
+import { Package, ShoppingCart, Wallet, TrendingUp, Settings, BarChart3, Inbox } from 'lucide-react';
 
 interface MenuItem {
   path: string;
@@ -14,7 +14,6 @@ const menuItems: MenuItem[] = [
   { path: '/partner/dashboard/inventory', label: 'My Inventory', icon: <Inbox className="w-5 h-5" /> },
   { path: '/partner/dashboard/orders', label: 'Orders', icon: <ShoppingCart className="w-5 h-5" /> },
   { path: '/partner/dashboard/wallet', label: 'Wallet', icon: <Wallet className="w-5 h-5" /> },
-  { path: '/partner/dashboard/earnings', label: 'Earnings', icon: <DollarSign className="w-5 h-5" /> },
   { path: '/partner/dashboard/analytics', label: 'Analytics', icon: <TrendingUp className="w-5 h-5" /> },
   { path: '/partner/dashboard/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
 ];

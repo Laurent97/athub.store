@@ -6,6 +6,7 @@ import WalletBalance from './WalletBalance';
 import PayPalPayment from './PayPalPayment';
 import CryptoPayment from './CryptoPayment';
 import StripePayment from './StripePayment';
+import BankAccountPaymentForm from './BankAccountPaymentForm';
 
 interface PaymentOptionsProps {
   amount: number;
@@ -135,6 +136,13 @@ export default function PaymentOptions({
       icon: '₿',
       available: true,
       description: 'BTC, ETH, USDT, XRP and more'
+    },
+    {
+      id: 'bank',
+      name: 'Bank Transfer',
+      icon: '🏦',
+      available: true,
+      description: 'International wire transfer'
     }
   ];
 
@@ -319,6 +327,15 @@ export default function PaymentOptions({
           <CryptoPayment
             amount={amount}
             onContinue={handleCryptoContinue}
+          />
+        )}
+
+        {selectedMethod === 'bank' && (
+          <BankAccountPaymentForm
+            amount={amount}
+            orderId={orderId || ''}
+            onSuccess={onPaymentSuccess}
+            onError={onPaymentError}
           />
         )}
       </div>

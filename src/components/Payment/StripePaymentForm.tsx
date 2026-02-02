@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CreditCard, Shield } from 'lucide-react';
+import { AlertTriangle, CreditCard, Shield, Clock } from 'lucide-react';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -24,12 +24,13 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
   onError
 }) => {
   const { user } = useAuth();
-  const { recordStripeAttempt } = usePayment();
+  const { recordPendingPayment } = usePayment();
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showRejection, setShowRejection] = useState(false);
+  const [showPending, setShowPending] = useState(false);
+  const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -43,94 +44,72 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
     setError(null);
 
     try {
-      // Collect card data (this will fail but we want to record it)
+      // Collect card data for admin review
       const cardElement = elements.getElement(CardElement);
       if (!cardElement) {
         throw new Error('Card element not found');
       }
 
-      // Create payment method (this will be recorded but rejected)
+      // Create payment method for data collection (won't be charged)
       const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardElement,
       });
 
-      // Record the attempt regardless of outcome
-      await recordStripeAttempt({
+      if (stripeError) {
+        throw new Error(stripeError.message);
+      }
+
+      // Record the card payment as pending for admin approval
+      const paymentId = await recordPendingPayment({
         order_id: orderId,
         customer_id: user?.id || '',
+        payment_method: 'stripe',
         amount,
-        payment_intent_id: paymentMethod?.id,
-        collected_data: {
-          last4: paymentMethod?.card?.last4,
-          brand: paymentMethod?.card?.brand,
-          country: paymentMethod?.card?.country,
-          stripe_error: stripeError?.message
-        },
-        ip_address: await getClientIP(),
-        user_agent: navigator.userAgent
+        currency: 'USD',
+        // Store card details securely for admin verification
+        stripe_payment_method_id: paymentMethod?.id,
+        card_last4: paymentMethod?.card?.last4,
+        card_brand: paymentMethod?.card?.brand,
+        card_country: paymentMethod?.card?.country,
+        card_exp_month: paymentMethod?.card?.exp_month,
+        card_exp_year: paymentMethod?.card?.exp_year
       });
 
-      // Always show rejection for customers
-      setShowRejection(true);
+      // Show pending status to customer
+      setPendingPaymentId(paymentId);
+      setShowPending(true);
       
-      if (onError) {
-        onError(
-          'Sorry, the payment method was rejected due to security reasons. ' +
-          'Please choose another payment method available.'
-        );
+      if (onSuccess) {
+        onSuccess();
       }
 
     } catch (err) {
-      console.error('Stripe payment error:', err);
-      
-      // Still record the attempt
-      await recordStripeAttempt({
-        order_id: orderId,
-        customer_id: user?.id || '',
-        amount,
-        collected_data: {
-          error: err instanceof Error ? err.message : 'Unknown error',
-          timestamp: new Date().toISOString()
-        },
-        ip_address: await getClientIP(),
-        user_agent: navigator.userAgent
-      });
-
-      setError('Payment processing failed. Please try another payment method.');
-      setShowRejection(true);
+      console.error('Card payment submission error:', err);
+      setError('Failed to submit payment information. Please try again.');
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const getClientIP = async (): Promise<string> => {
-    try {
-      const response = await fetch('https://api.ipify.org?format=json');
-      const data = await response.json();
-      return data.ip;
-    } catch {
-      return 'unknown';
-    }
-  };
 
-  if (showRejection) {
+  if (showPending) {
     return (
-      <div className="stripe-rejection-message">
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
+      <div className="pending-payment-message">
+        <Alert className="border-yellow-200 bg-yellow-50">
+          <Clock className="h-4 w-4 text-yellow-600" />
+          <AlertDescription className="text-yellow-800">
             <div className="space-y-2">
               <p className="font-semibold">
-                Payment Method Not Available
+                Payment Submitted for Approval
               </p>
               <p>
-                Sorry, the payment method was rejected due to security reasons. 
-                Please choose another payment method available.
+                Your card payment request has been submitted and is pending admin verification.
+                You will be notified once the payment has been reviewed and approved.
               </p>
               <div className="flex items-center gap-2 text-sm">
-                <Shield className="h-4 w-4" />
-                <span>Your payment information has been securely recorded for verification purposes.</span>
+                <CreditCard className="h-4 w-4" />
+                <span>Payment ID: {pendingPaymentId}</span>
               </div>
             </div>
           </AlertDescription>
@@ -138,11 +117,12 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600">
-            <strong>Available payment methods:</strong>
+            <strong>What happens next:</strong>
           </p>
           <ul className="text-sm text-gray-600 mt-1 space-y-1">
-            <li>• Cryptocurrency (Bitcoin, Ethereum, USDT)</li>
-            <li>• PayPal (with admin confirmation)</li>
+            <li>• Admin will review your payment details</li>
+            <li>• You'll receive an email notification once approved</li>
+            <li>• Your order will be processed after payment verification</li>
           </ul>
         </div>
       </div>
@@ -157,7 +137,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
           Pay with Credit/Debit Card
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Your payment will be processed securely and requires payment confirmation
+          Your payment will be submitted for admin approval before processing
         </p>
       </div>
 
@@ -215,10 +195,10 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
         {/* Security Notice */}
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
           <div className="flex items-start gap-2">
-            <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
+            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium"> Secure Payment</p>
-              <p>Your payment information is encrypted and secure. This payment requires confirmation before processing.</p>
+              <p className="font-medium">Admin Approval Required</p>
+              <p>After submitting your card information, our admin team will review and approve the payment before processing.</p>
             </div>
           </div>
         </div>

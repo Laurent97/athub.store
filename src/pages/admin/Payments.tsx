@@ -57,6 +57,9 @@ import {
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import AdminSidebar from '../../components/Admin/AdminSidebar';
+import { PaymentVerification } from '../../components/Admin/PaymentVerification';
+import { AdminBankDetails } from '../../components/Admin/AdminBankDetails';
+import { AdminPayPalDetails } from '../../components/Admin/AdminPayPalDetails';
 
 interface StripePaymentAttempt {
   id: string;
@@ -83,7 +86,7 @@ interface PendingPayment {
   id: string;
   order_id: string;
   customer_id: string;
-  payment_method: 'paypal' | 'crypto';
+  payment_method: 'paypal' | 'crypto' | 'stripe';
   amount: number;
   currency: string;
   paypal_email?: string;
@@ -91,6 +94,13 @@ interface PendingPayment {
   crypto_address?: string;
   crypto_transaction_id?: string;
   crypto_type?: string;
+  // Stripe card payment fields
+  stripe_payment_method_id?: string;
+  card_last4?: string;
+  card_brand?: string;
+  card_country?: string;
+  card_exp_month?: number;
+  card_exp_year?: number;
   status: string;
   admin_notes?: string;
   confirmed_by?: string;
@@ -1050,6 +1060,8 @@ const Payments: React.FC = () => {
         <TabsList>
           <TabsTrigger value="stripe">Stripe Attempts</TabsTrigger>
           <TabsTrigger value="pending">Pending Payments</TabsTrigger>
+          <TabsTrigger value="paypal">PayPal Details</TabsTrigger>
+          <TabsTrigger value="bank">Bank Details</TabsTrigger>
           <TabsTrigger value="loans">Loan Applications</TabsTrigger>
           <TabsTrigger value="wallet">Wallet Management</TabsTrigger>
           <TabsTrigger value="security">Security Logs</TabsTrigger>
@@ -1201,179 +1213,17 @@ const Payments: React.FC = () => {
 
         {/* Pending Payments Tab */}
         <TabsContent value="pending" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pending Payments</CardTitle>
-              <CardDescription>Review and approve PayPal and cryptocurrency payments</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Order ID</TableHead>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Transaction ID</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingPayments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell className="font-mono text-xs">
-                        {payment.order_id}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{payment.user?.full_name}</div>
-                          <div className="text-sm text-muted-foreground">{payment.user?.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getPaymentMethodIcon(payment.payment_method)}
-                          <span className="capitalize">{payment.payment_method}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">${payment.amount.toFixed(2)}</div>
-                        <div className="text-sm text-muted-foreground">{payment.currency}</div>
-                      </TableCell>
-                      <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                      <TableCell className="font-mono text-xs">
-                        {payment.paypal_transaction_id || payment.crypto_transaction_id || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setSelectedPayment(payment)}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                              <DialogHeader>
-                                <DialogTitle>Payment Details</DialogTitle>
-                                <DialogDescription>
-                                  Full information about this pending payment
-                                </DialogDescription>
-                              </DialogHeader>
-                              {selectedPayment && 'payment_method' in selectedPayment && (
-                                <div className="space-y-4">
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <Label>Order ID</Label>
-                                      <p className="font-mono text-sm bg-muted p-2 rounded">{selectedPayment.order_id}</p>
-                                    </div>
-                                    <div>
-                                      <Label>Status</Label>
-                                      <div>{getStatusBadge(selectedPayment.status)}</div>
-                                    </div>
-                                    <div>
-                                      <Label>Customer</Label>
-                                      <p className="font-medium">{selectedPayment.user?.full_name}</p>
-                                      <p className="text-sm text-muted-foreground">{selectedPayment.user?.email}</p>
-                                    </div>
-                                    <div>
-                                      <Label>Amount</Label>
-                                      <p className="font-medium">${selectedPayment.amount} {selectedPayment.currency}</p>
-                                    </div>
-                                  </div>
+          <PaymentVerification />
+        </TabsContent>
 
-                                  <div>
-                                    <Label>Payment Method</Label>
-                                    <div className="flex items-center gap-2">
-                                      {getPaymentMethodIcon(selectedPayment.payment_method)}
-                                      <span className="capitalize">{selectedPayment.payment_method}</span>
-                                    </div>
-                                  </div>
+        {/* Bank Details Tab */}
+        <TabsContent value="bank" className="space-y-4">
+          <AdminBankDetails />
+        </TabsContent>
 
-                                  {selectedPayment.paypal_email && (
-                                    <div>
-                                      <Label>PayPal Email</Label>
-                                      <p className="text-sm">{selectedPayment.paypal_email}</p>
-                                    </div>
-                                  )}
-
-                                  {selectedPayment.crypto_address && (
-                                    <div>
-                                      <Label>Crypto Address</Label>
-                                      <div className="flex gap-2">
-                                        <p className="font-mono text-sm bg-muted p-2 rounded flex-1">
-                                          {selectedPayment.crypto_address}
-                                        </p>
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() => copyToClipboard(selectedPayment.crypto_address!)}
-                                        >
-                                          <Copy className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-
-                                  {selectedPayment.crypto_type && (
-                                    <div>
-                                      <Label>Cryptocurrency</Label>
-                                      <p className="text-sm">{selectedPayment.crypto_type.toUpperCase()}</p>
-                                    </div>
-                                  )}
-
-                                  {selectedPayment.admin_notes && (
-                                    <div>
-                                      <Label>Admin Notes</Label>
-                                      <p className="text-sm text-muted-foreground">{selectedPayment.admin_notes}</p>
-                                    </div>
-                                  )}
-
-                                  {(selectedPayment.status === 'pending_confirmation' || selectedPayment.status === 'pending') && (
-                                    <div className="flex gap-2">
-                                      <Button
-                                        onClick={() => approvePayment(selectedPayment as PendingPayment)}
-                                        disabled={processingAction === `approve-${selectedPayment.id}`}
-                                        className="flex-1"
-                                      >
-                                        {processingAction === `approve-${selectedPayment.id}` ? (
-                                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                                        ) : (
-                                          <CheckCircle className="w-4 h-4 mr-2" />
-                                        )}
-                                        Approve
-                                      </Button>
-                                      <Button
-                                        variant="destructive"
-                                        onClick={() => rejectPayment(selectedPayment as PendingPayment, 'Rejected by admin')}
-                                        disabled={processingAction === `reject-${selectedPayment.id}`}
-                                        className="flex-1"
-                                      >
-                                        {processingAction === `reject-${selectedPayment.id}` ? (
-                                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                                        ) : (
-                                          <XCircle className="w-4 h-4 mr-2" />
-                                        )}
-                                        Reject
-                                      </Button>
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+        {/* PayPal Details Tab */}
+        <TabsContent value="paypal" className="space-y-4">
+          <AdminPayPalDetails />
         </TabsContent>
 
         {/* Security Logs Tab */}

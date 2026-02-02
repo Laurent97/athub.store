@@ -5,12 +5,12 @@ export const payoutService = {
     try {
       console.log(`💰 Processing payout for order: ${orderId}`);
       
-      // 1. Get order details including partner info
+      // 1. Fetch order details with partner information
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .select(`
           *,
-          partner:partner_profiles!orders_partner_id_fkey(
+          partner:partner_profiles(
             id,
             user_id,
             commission_rate
@@ -20,28 +20,48 @@ export const payoutService = {
         .single();
 
       if (orderError) throw orderError;
-      
-      if (!order) {
-        throw new Error('Order not found');
+      if (!order) throw new Error('Order not found');
+
+      // 2. Check if order has already been paid out to prevent duplicate payments
+      if (order.paid_out) {
+        console.log(`⚠️ Order ${orderId} has already been paid out on ${order.payout_date}`);
+        return {
+          success: false,
+          error: 'Order has already been paid out to the partner'
+        };
       }
 
-      if (!order.partner_id) {
-        throw new Error('Order not assigned to a partner');
+      if (!order.partner) {
+        throw new Error('Partner information not found for this order');
       }
 
       if (order.status !== 'completed' && order.status !== 'delivered') {
         throw new Error('Order must be completed or delivered before payout');
       }
 
-      // 2. Calculate partner's earnings
+      // 2. Calculate partner's payout amount
       // Convert commission rate from percentage to decimal (15% -> 0.15)
       const commissionRate = (order.partner?.commission_rate || 10) / 100; // 10% default
-      const partnerEarnings = order.total_amount * commissionRate;
+      const commissionEarnings = order.total_amount * commissionRate;
       
-      console.log(`💰 Partner earnings calculation:`, {
+      // Get the base cost that partner originally paid for this order
+      const baseCostTotal = order.base_cost_total || 0;
+      
+      // Calculate order profit (selling price - base cost) - this is what partner earns
+      const orderProfit = (order.total_amount || 0) - baseCostTotal;
+      
+      // FIXED: Total payout = Base cost reimbursement + Order profit + Commission earnings
+      // Partner should be reimbursed for what they paid (base cost) plus earn profit plus commission
+      // Since orderProfit = total_amount - baseCostTotal, this simplifies to: total_amount + commissionEarnings
+      const totalPayoutAmount = baseCostTotal + orderProfit + commissionEarnings;
+      
+      console.log(`💰 Partner payout calculation:`, {
         totalAmount: order.total_amount,
+        baseCostTotal,
+        orderProfit,
         commissionRate,
-        partnerEarnings
+        commissionEarnings,
+        totalPayoutAmount
       });
 
       // 3. Create wallet transaction for partner
@@ -51,9 +71,9 @@ export const payoutService = {
           user_id: order.partner.user_id,
           order_id: orderId,
           type: 'commission',
-          amount: partnerEarnings,
+          amount: totalPayoutAmount,
           status: 'completed',
-          description: `Commission from Order #${order.order_number} - Amount: $${order.total_amount}, Rate: ${(commissionRate * 100).toFixed(0)}%`
+          description: `Payout from Order #${order.order_number} - Profit: $${orderProfit}, Commission: $${commissionEarnings}, Total: $${totalPayoutAmount}, Rate: ${(commissionRate * 100).toFixed(0)}%`
         })
         .select()
         .single();
@@ -74,7 +94,7 @@ export const payoutService = {
           .from('wallet_balances')
           .insert({
             user_id: order.partner.user_id,
-            balance: partnerEarnings,
+            balance: totalPayoutAmount,
             updated_at: new Date().toISOString()
           });
 
@@ -83,7 +103,7 @@ export const payoutService = {
         throw balanceError;
       } else {
         // Update existing wallet
-        const newBalance = (currentBalance?.balance || 0) + partnerEarnings;
+        const newBalance = (currentBalance?.balance || 0) + totalPayoutAmount;
         const { error: updateError } = await supabase
           .from('wallet_balances')
           .update({ 
@@ -100,7 +120,7 @@ export const payoutService = {
         .from('orders')
         .update({
           paid_out: true,
-          payout_amount: partnerEarnings,
+          payout_amount: totalPayoutAmount,
           payout_date: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -108,13 +128,16 @@ export const payoutService = {
 
       if (payoutError) throw payoutError;
 
-      console.log(`✅ Payout processed successfully: $${partnerEarnings} added to partner's wallet`);
+      console.log(`✅ Payout processed successfully: $${totalPayoutAmount} added to partner's wallet`);
       
       return {
         success: true,
         data: {
           orderId,
-          partnerEarnings,
+          totalPayoutAmount,
+          commissionEarnings,
+          baseCostTotal,
+          orderProfit,
           commissionRate
         }
       };

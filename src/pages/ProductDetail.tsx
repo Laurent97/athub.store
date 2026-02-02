@@ -14,6 +14,7 @@ import ProductRecommendations from '@/components/Product/ProductRecommendations'
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { LikeButton } from '@/components/liked-items/LikeButton';
+import { useProductScrollToTop } from '@/utils/scroll-restoration';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +25,9 @@ const ProductDetail = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  // Use the scroll restoration hook
+  useProductScrollToTop(id, loading);
 
   useEffect(() => {
     if (id) {
@@ -356,38 +360,11 @@ const ProductDetail = () => {
           <Tabs defaultValue="description" className="mt-12">
             <TabsList>
               <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="specifications">Specifications</TabsTrigger>
-              <TabsTrigger value="shipping">Shipping & Returns</TabsTrigger>
             </TabsList>
 
             <TabsContent value="description" className="mt-6">
               <div className="prose max-w-none">
                 <p className="text-muted-foreground whitespace-pre-line">{product.description}</p>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="specifications" className="mt-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                {product.specifications &&
-                  Object.entries(product.specifications).map(([key, value]) => (
-                    <div key={key} className="flex justify-between py-2 border-b border-border">
-                      <span className="text-muted-foreground capitalize">{key.replace('_', ' ')}:</span>
-                      <span className="font-medium">{String(value)}</span>
-                    </div>
-                  ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="shipping" className="mt-6">
-              <div className="space-y-4 text-muted-foreground">
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">Shipping Information</h3>
-                  <p>Free shipping on orders over $500. Standard shipping takes 5-10 business days.</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">Returns</h3>
-                  <p>30-day return policy. Items must be in original condition.</p>
-                </div>
               </div>
             </TabsContent>
           </Tabs>

@@ -1,5 +1,8 @@
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase/client';
+import { partnerService } from '../../lib/supabase/partner-service';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, DollarSign, ShoppingCart, Activity, Package, Users, Eye, Star, Shield, Target, Store } from 'lucide-react';
@@ -9,15 +12,98 @@ export default function DashboardOverview() {
   const navigate = useNavigate();
   const { stats: parentStats, partner } = useOutletContext<{ stats: any, partner: any, refreshData: () => void }>();
   
-  // Debug: Log what we receive from parent
-  console.log('=== DEBUG: DashboardOverview ===');
-  console.log('Parent Stats:', parentStats);
-  console.log('Partner Data:', partner);
-  console.log('Parent Stats type:', typeof parentStats);
-  console.log('Parent Stats keys:', parentStats ? Object.keys(parentStats) : 'null/undefined');
+  // State for our own data loading
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   
-  // Transform parent stats to match our component's needs
-  const stats = {
+  // Load analytics data for overview
+  useEffect(() => {
+    const loadAnalyticsData = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        
+        // Load partner profile
+        const { data: partnerProfile } = await supabase
+          .from('partner_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (!partnerProfile) return;
+        
+        // Load orders data
+        const { data: ordersData } = await supabase
+          .from('orders')
+          .select('*, order_items(*, products(*))')
+          .eq('partner_id', partnerProfile.id)
+          .order('created_at', { ascending: false });
+          
+        // Load products data
+        const { data: productsData } = await supabase
+          .from('partner_products')
+          .select('id, is_active')
+          .eq('partner_id', partnerProfile.id);
+          
+        // Calculate metrics
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+        
+        const allOrders = ordersData || [];
+        const revenueOrders = allOrders.filter(order => 
+          ['completed', 'paid', 'processing', 'shipped'].includes(order.status) &&
+          ['paid', 'completed', 'processing'].includes(order.payment_status)
+        );
+        
+        const commissionRate = (partnerProfile?.commission_rate || 10) / 100;
+        const totalRevenue = revenueOrders.reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        const commissionEarned = totalRevenue * commissionRate;
+        const avgOrderValue = revenueOrders.length > 0 ? totalRevenue / revenueOrders.length : 0;
+        
+        const thisMonthRevenue = revenueOrders
+          .filter(order => new Date(order.created_at) >= monthStart)
+          .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+          
+        const lastMonthRevenue = revenueOrders
+          .filter(order => {
+            const orderDate = new Date(order.created_at);
+            return orderDate >= lastMonthStart && orderDate <= lastMonthEnd;
+          })
+          .reduce((sum, order) => sum + (order.total_amount || 0), 0);
+        
+        // Set analytics data
+        setAnalyticsData({
+          totalRevenue: totalRevenue,
+          totalOrders: allOrders.length,
+          avgOrderValue: avgOrderValue,
+          profitTrend: lastMonthRevenue > 0 
+            ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100 
+            : 0,
+          monthlyRevenue: thisMonthRevenue,
+          lastMonthRevenue: lastMonthRevenue,
+          pendingOrders: allOrders.filter(order => order.status === 'pending').length,
+          conversionRate: 0, // Would need visit data for this
+          storeVisits: parentStats?.storeVisits?.allTime || 1000, // Use parent data or fallback
+          storeRating: partnerProfile?.store_rating || 0,
+          creditScore: partnerProfile?.store_credit_score || 750,
+          commissionRate: partnerProfile?.commission_rate || 10
+        });
+        
+      } catch (error) {
+        console.error('Failed to load analytics data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadAnalyticsData();
+  }, [user?.id, parentStats]);
+  
+  // Use analytics data if available, otherwise fall back to parent stats
+  const stats = analyticsData || {
     totalRevenue: parentStats?.totalEarnings || parentStats?.totalRevenue || 0,
     totalOrders: parentStats?.totalOrders || 0,
     avgOrderValue: parentStats?.averageOrderValue || parentStats?.avgOrderValue || 0,
@@ -28,14 +114,16 @@ export default function DashboardOverview() {
     lastMonthRevenue: parentStats?.lastMonthRevenue || 0,
     pendingOrders: parentStats?.pendingOrders || 0,
     conversionRate: parentStats?.conversionRate || 0,
-    storeVisits: parentStats?.storeVisits?.allTime || 0,
-    // Store performance data
+    storeVisits: parentStats?.storeVisits?.allTime || 1000,
     storeRating: partner?.store_rating || 0,
     creditScore: partner?.store_credit_score || 750,
     commissionRate: partner?.commission_rate || 10
   };
   
-  console.log('Transformed Stats for DashboardOverview:', stats);
+  console.log('=== DEBUG: DashboardOverview ===');
+  console.log('Analytics Data:', analyticsData);
+  console.log('Parent Stats:', parentStats);
+  console.log('Final Stats:', stats);
   console.log('=== END DEBUG DashboardOverview ===');
 
   const formatCurrency = (amount: number) => {

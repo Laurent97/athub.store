@@ -19,14 +19,18 @@ import {
   RefreshCw,
   User,
   Calendar,
-  DollarSign
+  DollarSign,
+  CreditCard,
+  Building
 } from 'lucide-react';
 
 interface PendingPayment {
   id: string;
   order_id: string;
   customer_id: string;
-  payment_method: 'paypal' | 'crypto';
+  customer_email?: string;
+  customer_name?: string;
+  payment_method: 'paypal' | 'crypto' | 'stripe' | 'bank';
   amount: number;
   currency: string;
   paypal_email?: string;
@@ -34,12 +38,23 @@ interface PendingPayment {
   crypto_address?: string;
   crypto_transaction_id?: string;
   crypto_type?: string;
+  // Stripe card payment fields
+  stripe_payment_method_id?: string;
+  card_last4?: string;
+  card_brand?: string;
+  card_country?: string;
+  card_exp_month?: number;
+  card_exp_year?: number;
+  // Bank transfer fields
+  bank_recipient_name?: string;
+  bank_name?: string;
+  bank_swift_bic?: string;
+  bank_account_number?: string;
+  bank_proof_url?: string;
+  bank_proof_description?: string;
+  bank_proof_filename?: string;
   status: string;
   created_at: string;
-  customer?: {
-    email: string;
-    full_name: string;
-  };
 }
 
 export const PaymentVerification: React.FC = () => {
@@ -115,6 +130,10 @@ export const PaymentVerification: React.FC = () => {
         return <Mail className="h-4 w-4 text-blue-600" />;
       case 'crypto':
         return <Bitcoin className="h-4 w-4 text-orange-600" />;
+      case 'stripe':
+        return <CreditCard className="h-4 w-4 text-purple-600" />;
+      case 'bank':
+        return <Building className="h-4 w-4 text-green-600" />;
       default:
         return <DollarSign className="h-4 w-4 text-gray-600" />;
     }
@@ -168,7 +187,7 @@ export const PaymentVerification: React.FC = () => {
                         Order #{payment.order_id}
                       </CardTitle>
                       <p className="text-sm text-gray-600">
-                        {payment.customer?.full_name} • {payment.customer?.email}
+                        {payment.customer_name || 'Unknown User'} • {payment.customer_email || 'No Email'}
                       </p>
                     </div>
                   </div>
@@ -191,6 +210,33 @@ export const PaymentVerification: React.FC = () => {
                       <Calendar className="h-4 w-4 text-gray-500" />
                       <span>Submitted: {formatDate(payment.created_at)}</span>
                     </div>
+                    
+                    {payment.payment_method === 'stripe' && (
+                      <div className="space-y-1">
+                        <div className="text-sm">
+                          <span className="font-medium">Card Type:</span>
+                          <span className="ml-2">{payment.card_brand?.toUpperCase()}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Card Number:</span>
+                          <span className="ml-2 font-mono">**** **** **** {payment.card_last4}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Expiry:</span>
+                          <span className="ml-2">{String(payment.card_exp_month).padStart(2, '0')}/{payment.card_exp_year}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Country:</span>
+                          <span className="ml-2">{payment.card_country}</span>
+                        </div>
+                        {payment.stripe_payment_method_id && (
+                          <div className="text-sm">
+                            <span className="font-medium">Payment Method ID:</span>
+                            <span className="ml-2 font-mono text-xs">{payment.stripe_payment_method_id}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     {payment.payment_method === 'paypal' && (
                       <div className="space-y-1">
@@ -235,6 +281,39 @@ export const PaymentVerification: React.FC = () => {
                                 <ExternalLink className="h-3 w-3" />
                               </Button>
                             </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {payment.payment_method === 'bank' && (
+                      <div className="space-y-1">
+                        <div className="text-sm">
+                          <span className="font-medium">Bank Name:</span>
+                          <span className="ml-2">{payment.bank_name}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Recipient:</span>
+                          <span className="ml-2">{payment.bank_recipient_name}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">SWIFT/BIC:</span>
+                          <span className="ml-2 font-mono">{payment.bank_swift_bic}</span>
+                        </div>
+                        <div className="text-sm">
+                          <span className="font-medium">Account:</span>
+                          <span className="ml-2 font-mono">****{payment.bank_account_number?.slice(-4)}</span>
+                        </div>
+                        {payment.bank_proof_filename && (
+                          <div className="text-sm">
+                            <span className="font-medium">Proof File:</span>
+                            <span className="ml-2">{payment.bank_proof_filename}</span>
+                          </div>
+                        )}
+                        {payment.bank_proof_description && (
+                          <div className="text-sm">
+                            <span className="font-medium">Payment Details:</span>
+                            <span className="ml-2 text-xs">{payment.bank_proof_description}</span>
                           </div>
                         )}
                       </div>
@@ -326,6 +405,14 @@ export const PaymentVerification: React.FC = () => {
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
                     <strong>Verification Checklist:</strong>
+                    {payment.payment_method === 'stripe' && (
+                      <ul className="mt-1 text-sm list-disc list-inside">
+                        <li>Verify card details match customer information</li>
+                        <li>Check that card is valid and not expired</li>
+                        <li>Confirm payment amount matches order total</li>
+                        <li>Verify card brand and issuing country</li>
+                      </ul>
+                    )}
                     {payment.payment_method === 'paypal' && (
                       <ul className="mt-1 text-sm list-disc list-inside">
                         <li>Verify PayPal transaction ID and amount</li>
@@ -339,6 +426,15 @@ export const PaymentVerification: React.FC = () => {
                         <li>Check transaction amount matches order total</li>
                         <li>Confirm transaction is confirmed (not pending)</li>
                         <li>Verify destination address matches our address</li>
+                      </ul>
+                    )}
+                    {payment.payment_method === 'bank' && (
+                      <ul className="mt-1 text-sm list-disc list-inside">
+                        <li>Review uploaded payment proof document</li>
+                        <li>Verify payment details in description</li>
+                        <li>Check that amount matches order total</li>
+                        <li>Confirm bank details are correct</li>
+                        <li>Verify payment proof shows successful transfer</li>
                       </ul>
                     )}
                   </AlertDescription>
