@@ -362,13 +362,17 @@ const Checkout = () => {
                         <span>{formatPrice(subtotal)}</span>
                       </div>
                       <div className="flex justify-between text-muted-foreground">
-                        <span>Shipping</span>
-                        <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                        <span>Shipping & Tax</span>
+                        <span className="text-orange-600 font-semibold">Added after order</span>
                       </div>
                       <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
-                        <span>Total</span>
+                        <span>Total (Today)</span>
                         <span>{formatPrice(total)}</span>
                       </div>
+                    </div>
+
+                    <div className="mb-3 p-3 bg-orange-50 rounded-lg">
+                      <p className="text-xs text-orange-800">ℹ️ Shipping & tax will be charged after the admin starts your shipment.</p>
                     </div>
 
                     <Button
@@ -641,13 +645,17 @@ const Checkout = () => {
                           <span>{formatPrice(subtotal)}</span>
                         </div>
                         <div className="flex justify-between text-muted-foreground">
-                          <span>Shipping</span>
-                          <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
+                          <span>Shipping & Tax</span>
+                          <span className="text-orange-600 font-semibold">Added after order</span>
                         </div>
                         <div className="flex justify-between text-lg font-bold text-foreground pt-2 border-t border-border">
-                          <span>Total</span>
+                          <span>Total (Today)</span>
                           <span>{formatPrice(total)}</span>
                         </div>
+                      </div>
+
+                      <div className="mb-3 p-3 bg-orange-50 rounded-lg">
+                        <p className="text-xs text-orange-800">ℹ️ Shipping & tax will be charged after your order is confirmed and the admin starts shipment.</p>
                       </div>
 
                       <Button type="submit" className="w-full" size="lg" disabled={loading}>

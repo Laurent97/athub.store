@@ -221,21 +221,19 @@ const Cart = () => {
                   </div>
                   <div className="flex justify-between text-muted-foreground">
                     <span>Shipping</span>
-                    <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : ''}>
-                      {shippingCost === 0 ? 'FREE' : formatPrice(shippingCost)}
+                    <span className="text-orange-600 font-semibold">
+                      Calculated after order
                     </span>
                   </div>
-                  {shippingCost === 0 && (
-                    <div className="text-xs text-green-600 bg-green-50 p-2 rounded-lg">
-                      🎉 You've qualified for free shipping!
-                    </div>
-                  )}
+                  <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg">
+                    ℹ️ Shipping & tax will be charged after the admin starts your shipment.
+                  </div>
                   <div className="border-t border-border pt-3 sm:pt-4 flex justify-between text-base sm:text-lg font-bold text-foreground">
-                    <span>Total</span>
+                    <span>Total (Today)</span>
                     <span>{formatPrice(orderTotal)}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    *Taxes calculated at checkout
+                    *Shipping & tax fees will be added by admin after shipment starts
                   </div>
                 </div>
 
@@ -255,7 +253,7 @@ const Cart = () => {
                 )}
 
                 <p className="text-xs text-muted-foreground text-center mt-3 sm:mt-4">
-                  Free shipping on orders over $500
+                  Shipping & tax fees will be charged separately after order confirmation
                 </p>
 
               </div>
