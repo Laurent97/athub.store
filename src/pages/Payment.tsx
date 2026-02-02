@@ -236,19 +236,14 @@ export default function Payment() {
                       <span className="text-foreground">${amount.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Shipping</span>
-                      <span className="text-green-600 dark:text-green-400">Free</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Tax</span>
-                      <span className="text-foreground">${(amount * 0.1).toFixed(2)}</span>
+                      <span className="text-muted-foreground">Shipping & Tax</span>
+                      <span className="text-orange-600 font-semibold">Added after order</span>
                     </div>
                     <div className="border-t border-border dark:border-gray-700 pt-3">
                       <div className="flex justify-between text-lg font-bold text-foreground">
-                        <span>Total</span>
-                        <span className="text-foreground">${(amount * 1.1).toFixed(2)}</span>
+                        <span>Total (Today)</span>
+                        <span className="text-foreground">${amount.toFixed(2)}</span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">Including ${(amount * 0.1).toFixed(2)} VAT</p>
                     </div>
                   </div>
 
