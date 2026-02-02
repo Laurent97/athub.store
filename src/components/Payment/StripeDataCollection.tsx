@@ -19,8 +19,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Initialize Stripe
-const stripePromise = loadStripe('pk_test_51234567890abcdefghijklmnopqrstuvwxyz');
+// Initialize Stripe with publishable key from environment
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface StripeDataCollectionProps {
   orderId: string;

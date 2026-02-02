@@ -7,8 +7,8 @@ import { AlertTriangle, CreditCard, Shield, Clock } from 'lucide-react';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Initialize Stripe with test key (replace with your actual key)
-const stripePromise = loadStripe('pk_test_51234567890abcdefghijklmnopqrstuvwxyz');
+// Initialize Stripe with publishable key from environment
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
 
 interface StripePaymentFormProps {
   orderId: string;
