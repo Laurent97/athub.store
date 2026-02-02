@@ -7,7 +7,9 @@ import { OrderStatusBadge } from '../components/OrderStatusBadge';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { ArrowLeft, Package, MapPin, CreditCard, User, Calendar, DollarSign, Truck, Clock, CheckCircle } from 'lucide-react';
+import { InvoiceTemplate } from '../components/Invoice/InvoiceTemplate';
+import { downloadInvoicePDF } from '../utils/pdf-generator';
+import { ArrowLeft, Package, MapPin, CreditCard, User, Calendar, DollarSign, Truck, Clock, CheckCircle, FileText } from 'lucide-react';
 
 export default function OrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -17,6 +19,8 @@ export default function OrderDetails() {
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [downloadingPDF, setDownloadingPDF] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -285,6 +289,20 @@ export default function OrderDetails() {
       setError(errorMessage);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+    
+    setDownloadingPDF(true);
+    try {
+      await downloadInvoicePDF('invoice-template', order.order_number);
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      alert('Failed to download invoice. Please try again.');
+    } finally {
+      setDownloadingPDF(false);
     }
   };
 
@@ -687,6 +705,29 @@ export default function OrderDetails() {
                 </h3>
                 <div className="space-y-3">
                   <button
+                    onClick={() => setShowInvoice(!showInvoice)}
+                    className="w-full flex items-center justify-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    <FileText className="w-4 h-4" />
+                    {showInvoice ? 'Hide Invoice' : 'View Invoice'}
+                  </button>
+                  {showInvoice && (
+                    <button
+                      onClick={handleDownloadInvoice}
+                      disabled={downloadingPDF}
+                      className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {downloadingPDF ? 'Generating PDF...' : 'Download as PDF'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => navigate(`/shipping?order=${order.order_number || order.id}`)}
+                    className="w-full flex items-center justify-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
+                  >
+                    <Truck className="w-4 h-4" />
+                    Track Package
+                  </button>
+                  <button
                     onClick={() => navigate('/contact')}
                     className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                   >
@@ -702,9 +743,30 @@ export default function OrderDetails() {
               </div>
             </div>
           </div>
+
+          {/* Invoice Modal */}
+          {showInvoice && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Invoice #{order.order_number}</h2>
+                  <button
+                    onClick={() => setShowInvoice(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="p-6">
+                  <InvoiceTemplate order={order} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </main>
       <Footer />
     </div>
   );
 }
+

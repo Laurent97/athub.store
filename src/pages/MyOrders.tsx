@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { orderService } from '../lib/supabase/order-service';
 import { OrderStatusBadge } from '../components/OrderStatusBadge';
+import { InvoiceTemplate } from '../components/Invoice/InvoiceTemplate';
+import { downloadInvoicePDF } from '../utils/pdf-generator';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -17,7 +19,9 @@ import {
   Truck,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  FileText,
+  Download
 } from 'lucide-react';
 
 export default function MyOrders() {
@@ -31,6 +35,8 @@ export default function MyOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<'date' | 'amount' | 'status'>('date');
   const [showFilters, setShowFilters] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
+  const [downloadingPDF, setDownloadingPDF] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -95,6 +101,29 @@ export default function MyOrders() {
           return 0;
       }
     });
+
+  const handleDownloadInvoice = async (order: any) => {
+    setDownloadingPDF(order.id);
+    try {
+      setSelectedInvoice(order);
+      // Wait a moment for the invoice to be added to the DOM
+      setTimeout(async () => {
+        try {
+          await downloadInvoicePDF('invoice-template', order.order_number);
+          setSelectedInvoice(null);
+        } catch (err) {
+          console.error('Error downloading invoice:', err);
+          alert('Failed to download invoice. Please try again.');
+        } finally {
+          setDownloadingPDF(null);
+        }
+      }, 500);
+    } catch (err) {
+      console.error('Error preparing invoice:', err);
+      alert('Failed to prepare invoice. Please try again.');
+      setDownloadingPDF(null);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -328,6 +357,20 @@ export default function MyOrders() {
                           <Eye className="w-4 h-4" />
                           View Details
                         </button>
+                        <button
+                          onClick={() => setSelectedInvoice(order)}
+                          className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 flex items-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Invoice
+                        </button>
+                        <button
+                          onClick={() => navigate(`/shipping?order=${order.order_number || order.id}`)}
+                          className="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 flex items-center gap-2"
+                        >
+                          <Truck className="w-4 h-4" />
+                          Track Package
+                        </button>
                       </div>
                     </div>
 
@@ -385,6 +428,46 @@ export default function MyOrders() {
           )}
         </div>
       </main>
+
+      {/* Invoice Modal */}
+      {selectedInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Invoice #{selectedInvoice.order_number}</h2>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleDownloadInvoice(selectedInvoice)}
+                  disabled={downloadingPDF === selectedInvoice.id}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  {downloadingPDF === selectedInvoice.id ? 'Generating...' : 'Download PDF'}
+                </button>
+                <button
+                  onClick={() => setSelectedInvoice(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <InvoiceTemplate order={selectedInvoice} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hidden invoice template for PDF generation */}
+      {selectedInvoice && (
+        <div style={{ display: 'none' }}>
+          <div id="invoice-template">
+            <InvoiceTemplate order={selectedInvoice} />
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
