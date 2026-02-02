@@ -218,14 +218,6 @@ export default function Shipping() {
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {order.tracking_number ? `Tracking: ${order.tracking_number}` : 'En route to your location'}
                     </p>
-                    {order.tracking_number && (
-                      <button
-                        onClick={() => window.open(`https://www.fedex.com/fedextrack/?trknbr=${order.tracking_number}`, '_blank')}
-                        className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 mt-2 font-medium"
-                      >
-                        Track on FedEx →
-                      </button>
-                    )}
                   </div>
                 </div>
 
