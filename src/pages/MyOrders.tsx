@@ -422,7 +422,7 @@ export default function MyOrders() {
                             Tracking: {order.tracking_number}
                           </span>
                           <button
-                            onClick={() => window.open(`https://www.fedex.com/fedextrack/?trknbr=${order.tracking_number}`, '_blank')}
+                            onClick={() => navigate(`/shipping?order=${order.order_number || order.id}`)}
                             className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 ml-auto"
                           >
                             Track →
