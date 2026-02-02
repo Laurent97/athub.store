@@ -137,7 +137,7 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
           Pay with Credit/Debit Card
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Your payment will be submitted for admin approval before processing
+          Your payment will be verified before processing
         </p>
       </div>
 
@@ -197,8 +197,8 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
           <div className="flex items-start gap-2">
             <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
             <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium">Admin Approval Required</p>
-              <p>After submitting your card information, our admin team will review and approve the payment before processing.</p>
+              <p className="font-medium">Verification Required</p>
+              <p>After submitting your card information, your payment will be verified and processed.</p>
             </div>
           </div>
         </div>

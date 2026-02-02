@@ -271,14 +271,14 @@ export default function DepositForm() {
       // Show success message
       toast({
         title: "Deposit Request Submitted!",
-        description: `$${formData.amount.toFixed(2)} deposit request has been submitted for admin approval.`,
+        description: `$${formData.amount.toFixed(2)} deposit request has been submitted for verification.`,
       });
       
       // Navigate back to wallet
       navigate('/partner/dashboard/wallet', {
         state: {
           success: true,
-          message: `Deposit request of $${formData.amount.toFixed(2)} has been submitted for admin approval. You will be notified once it's approved.`,
+          message: `Deposit request of $${formData.amount.toFixed(2)} has been submitted for verification. You will be notified once it's processed.`,
           amount: formData.amount,
           pendingApproval: true,
           transactionId: result.data?.transaction?.id

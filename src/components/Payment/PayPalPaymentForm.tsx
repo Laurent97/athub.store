@@ -280,7 +280,7 @@ export const PayPalPaymentForm: React.FC<PayPalPaymentFormProps> = ({
           Pay with PayPal
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Your payment will be submitted for admin approval before processing
+          Your payment will be verified before processing
         </p>
       </div>
 
