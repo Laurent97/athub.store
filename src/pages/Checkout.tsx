@@ -654,10 +654,6 @@ const Checkout = () => {
                         </div>
                       </div>
 
-                      <div className="mb-3 p-3 bg-orange-50 rounded-lg">
-                        <p className="text-xs text-orange-800">ℹ️ Shipping & tax will be charged after your order is confirmed and the admin starts shipment.</p>
-                      </div>
-
                       <Button type="submit" className="w-full" size="lg" disabled={loading}>
                         {loading ? 'Processing...' : `Continue to Payment • ${formatPrice(total)}`}
                       </Button>
