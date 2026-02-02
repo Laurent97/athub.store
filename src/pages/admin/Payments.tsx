@@ -473,6 +473,87 @@ const Payments: React.FC = () => {
     }
   };
 
+  // Approve Stripe card payment
+  const approveStripeAttempt = async (attempt: StripePaymentAttempt) => {
+    setProcessingAction(`approve-stripe-${attempt.id}`);
+    setError('');
+    
+    try {
+      console.log('Approving Stripe attempt:', {
+        attemptId: attempt.id,
+        orderId: attempt.order_id,
+        amount: attempt.amount
+      });
+
+      // Call the server-side RPC to approve the attempt
+      const { data, error } = await supabase
+        .rpc('approve_stripe_attempt', {
+          attempt_uuid: attempt.id,
+          admin_uuid: user.id,
+          action: 'approved'
+        });
+
+      if (error) {
+        console.error('Error approving Stripe attempt:', error);
+        throw error;
+      }
+
+      console.log('Stripe attempt approved successfully:', data);
+      setError(`✅ Payment approved! Order ${attempt.order_id} marked as paid.`);
+
+      // Refresh the data to remove from pending list
+      await fetchPaymentData();
+    } catch (error: any) {
+      console.error('Error approving Stripe attempt:', error);
+      setError(`Failed to approve payment: ${error.message || 'Unknown error'}`);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
+  const rejectStripeAttempt = async (attempt: StripePaymentAttempt, reason: string) => {
+    setProcessingAction(`reject-stripe-${attempt.id}`);
+    setError('');
+    
+    try {
+      if (!reason.trim()) {
+        setError('Please provide a rejection reason');
+        return;
+      }
+
+      console.log('Rejecting Stripe attempt:', {
+        attemptId: attempt.id,
+        orderId: attempt.order_id,
+        reason
+      });
+
+      // Call the server-side RPC to reject the attempt
+      const { data, error } = await supabase
+        .rpc('approve_stripe_attempt', {
+          attempt_uuid: attempt.id,
+          admin_uuid: user.id,
+          action: 'rejected',
+          rejection_reason: reason
+        });
+
+      if (error) {
+        console.error('Error rejecting Stripe attempt:', error);
+        throw error;
+      }
+
+      console.log('Stripe attempt rejected successfully:', data);
+      setError(`Payment rejected. Order ${attempt.order_id} returned to pending.`);
+
+      // Refresh the data
+      await fetchPaymentData();
+    } catch (error: any) {
+      console.error('Error rejecting Stripe attempt:', error);
+      setError(`Failed to reject payment: ${error.message || 'Unknown error'}`);
+    } finally {
+      setProcessingAction(null);
+    }
+  };
+
   const approvePayment = async (payment: PendingPayment) => {
     setProcessingAction(`approve-${payment.id}`);
     setError('');
@@ -1113,44 +1194,135 @@ const Payments: React.FC = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedPayment(attempt)}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Stripe Payment Attempt Details</DialogTitle>
-                              <DialogDescription>
-                                Full information about this payment attempt
-                              </DialogDescription>
-                            </DialogHeader>
-                            {selectedPayment && 'payment_intent_id' in selectedPayment && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label>Order ID</Label>
-                                    <p className="font-mono text-sm bg-muted p-2 rounded">{selectedPayment.order_id}</p>
+                        {attempt.status === 'rejected' ? (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedPayment(attempt)}
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Stripe Payment Attempt Details</DialogTitle>
+                                <DialogDescription>
+                                  Full information about this payment attempt
+                                </DialogDescription>
+                              </DialogHeader>
+                              {selectedPayment && 'payment_intent_id' in selectedPayment && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Order ID</Label>
+                                      <p className="font-mono text-sm bg-muted p-2 rounded">{selectedPayment.order_id}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Status</Label>
+                                      <div>{getStatusBadge(selectedPayment.status)}</div>
+                                    </div>
+                                    <div>
+                                      <Label>Customer</Label>
+                                      <p className="font-medium">{selectedPayment.user?.full_name}</p>
+                                      <p className="text-sm text-muted-foreground">{selectedPayment.user?.email}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Amount</Label>
+                                      <p className="font-medium">${selectedPayment.amount} {selectedPayment.currency}</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <Label>Status</Label>
-                                    <div>{getStatusBadge(selectedPayment.status)}</div>
+                                  
+                                  {selectedPayment.payment_intent_id && (
+                                    <div>
+                                      <Label>Payment Intent ID</Label>
+                                      <div className="flex gap-2">
+                                        <p className="font-mono text-sm bg-muted p-2 rounded flex-1">
+                                          {selectedPayment.payment_intent_id}
+                                        </p>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => copyToClipboard(selectedPayment.payment_intent_id!)}
+                                        >
+                                          <Copy className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {selectedPayment.rejection_reason && (
+                                    <div>
+                                      <Label>Rejection Reason</Label>
+                                      <p className="text-sm text-muted-foreground">{selectedPayment.rejection_reason}</p>
+                                    </div>
+                                  )}
+
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>IP Address</Label>
+                                      <p className="text-sm text-muted-foreground">{selectedPayment.ip_address || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Created</Label>
+                                      <p className="text-sm text-muted-foreground">
+                                        {new Date(selectedPayment.created_at).toLocaleString()}
+                                      </p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <Label>Customer</Label>
-                                    <p className="font-medium">{selectedPayment.user?.full_name}</p>
-                                    <p className="text-sm text-muted-foreground">{selectedPayment.user?.email}</p>
-                                  </div>
-                                  <div>
-                                    <Label>Amount</Label>
-                                    <p className="font-medium">${selectedPayment.amount} {selectedPayment.currency}</p>
-                                  </div>
+
+                                  {selectedPayment.collected_data && (
+                                    <div>
+                                      <Label>Collected Data</Label>
+                                      <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
+                                        {JSON.stringify(selectedPayment.collected_data, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
                                 </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        ) : (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedPayment(attempt)}
+                              >
+                                <Check className="w-4 h-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Approve/Reject Stripe Payment</DialogTitle>
+                                <DialogDescription>
+                                  Review and confirm this card payment
+                                </DialogDescription>
+                              </DialogHeader>
+                              {selectedPayment && 'payment_intent_id' in selectedPayment && (
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                      <Label>Order ID</Label>
+                                      <p className="font-mono text-sm bg-muted p-2 rounded">{selectedPayment.order_id}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Status</Label>
+                                      <div>{getStatusBadge(selectedPayment.status)}</div>
+                                    </div>
+                                    <div>
+                                      <Label>Customer</Label>
+                                      <p className="font-medium">{selectedPayment.user?.full_name}</p>
+                                      <p className="text-sm text-muted-foreground">{selectedPayment.user?.email}</p>
+                                    </div>
+                                    <div>
+                                      <Label>Amount</Label>
+                                      <p className="font-medium">${selectedPayment.amount} {selectedPayment.currency}</p>
+                                    </div>
+                                  </div>
 
                                 {selectedPayment.payment_intent_id && (
                                   <div>
@@ -1190,18 +1362,69 @@ const Payments: React.FC = () => {
                                   </div>
                                 </div>
 
-                                {selectedPayment.collected_data && (
-                                  <div>
-                                    <Label>Collected Data</Label>
-                                    <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
-                                      {JSON.stringify(selectedPayment.collected_data, null, 2)}
-                                    </pre>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
+                                  {selectedPayment.collected_data && (
+                                    <div>
+                                      <Label>Collected Data</Label>
+                                      <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
+                                        {JSON.stringify(selectedPayment.collected_data, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Action Buttons for Pending Stripe Attempts */}
+                                  {selectedPayment.status === 'pending' && (
+                                    <div className="flex gap-2 pt-4 border-t">
+                                      <Button
+                                        onClick={() => {
+                                          if ('payment_intent_id' in selectedPayment) {
+                                            approveStripeAttempt(selectedPayment as StripePaymentAttempt);
+                                          }
+                                        }}
+                                        disabled={processingAction === `approve-stripe-${selectedPayment.id}`}
+                                        className="flex-1"
+                                      >
+                                        {processingAction === `approve-stripe-${selectedPayment.id}` ? (
+                                          <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                            Approving...
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-2">
+                                            <CheckCircle className="w-4 h-4" />
+                                            Approve & Process
+                                          </div>
+                                        )}
+                                      </Button>
+                                      
+                                      <Button
+                                        variant="destructive"
+                                        onClick={() => {
+                                          const reason = prompt('Enter rejection reason:');
+                                          if (reason && 'payment_intent_id' in selectedPayment) {
+                                            rejectStripeAttempt(selectedPayment as StripePaymentAttempt, reason);
+                                          }
+                                        }}
+                                        disabled={processingAction === `reject-stripe-${selectedPayment.id}`}
+                                      >
+                                        {processingAction === `reject-stripe-${selectedPayment.id}` ? (
+                                          <div className="flex items-center gap-2">
+                                            <RefreshCw className="w-4 h-4 animate-spin" />
+                                            Rejecting...
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-2">
+                                            <XCircle className="w-4 h-4" />
+                                            Reject
+                                          </div>
+                                        )}
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

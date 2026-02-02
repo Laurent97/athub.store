@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CreditCard, Shield, Clock } from 'lucide-react';
+import { AlertTriangle, CreditCard, Shield, Clock, RefreshCw } from 'lucide-react';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase/client';
 
 // Initialize Stripe with publishable key from environment
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '');
@@ -31,6 +32,49 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [showPending, setShowPending] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(null);
+  const [pollingMessage, setPollingMessage] = useState('Waiting for admin review...');
+
+  useEffect(() => {
+    if (!showPending || !pendingPaymentId) return;
+
+    // Poll for admin approval/rejection every 2 seconds
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data: attempt, error } = await supabase
+          .from('stripe_payment_attempts')
+          .select('status')
+          .eq('id', pendingPaymentId)
+          .single();
+
+        if (error) {
+          console.error('Error polling payment status:', error);
+          return;
+        }
+
+        if (attempt) {
+          console.log('Payment status:', attempt.status);
+          
+          if (attempt.status === 'approved') {
+            clearInterval(pollInterval);
+            setPollingMessage('✅ Payment approved! Redirecting...');
+            setTimeout(() => {
+              if (onSuccess) onSuccess();
+              // Redirect to order confirmation
+              window.location.href = `/order-confirmation/${pendingPaymentId}`;
+            }, 1500);
+          } else if (attempt.status === 'rejected') {
+            clearInterval(pollInterval);
+            setError('Payment rejected by admin. Please try again.');
+            setShowPending(false);
+          }
+        }
+      } catch (err) {
+        console.error('Polling error:', err);
+      }
+    }, 2000);
+
+    return () => clearInterval(pollInterval);
+  }, [showPending, pendingPaymentId, onSuccess]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -60,24 +104,35 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
         throw new Error(stripeError.message);
       }
 
-      // Record the card payment as pending for admin approval
-      const paymentId = await recordPendingPayment({
-        order_id: orderId,
-        customer_id: user?.id || '',
-        payment_method: 'stripe',
-        amount,
-        currency: 'USD',
-        // Store card details securely for admin verification
-        stripe_payment_method_id: paymentMethod?.id,
-        card_last4: paymentMethod?.card?.last4,
-        card_brand: paymentMethod?.card?.brand,
-        card_country: paymentMethod?.card?.country,
-        card_exp_month: paymentMethod?.card?.exp_month,
-        card_exp_year: paymentMethod?.card?.exp_year
-      });
+      // Record as a Stripe payment attempt for admin review
+      const { data: result, error: insertError } = await supabase
+        .from('stripe_payment_attempts')
+        .insert({
+          order_id: orderId,
+          customer_id: user?.id || '',
+          payment_method: 'stripe',
+          amount,
+          currency: 'USD',
+          status: 'pending', // Pending admin approval
+          payment_intent_id: paymentMethod?.id,
+          stripe_payment_method_id: paymentMethod?.id,
+          collected_data: {
+            card_last4: paymentMethod?.card?.last4,
+            card_brand: paymentMethod?.card?.brand,
+            card_country: paymentMethod?.card?.country,
+            card_exp_month: paymentMethod?.card?.exp_month,
+            card_exp_year: paymentMethod?.card?.exp_year
+          }
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        throw new Error(`Failed to record payment: ${insertError.message}`);
+      }
 
       // Show pending status to customer
-      setPendingPaymentId(paymentId);
+      setPendingPaymentId(result.id);
       setShowPending(true);
       
       if (onSuccess) {
@@ -95,25 +150,51 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
 
   if (showPending) {
     return (
-      <div className="pending-payment-message">
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <Clock className="h-4 w-4 text-yellow-600" />
-          <AlertDescription className="text-yellow-800">
-            <div className="space-y-2">
-              <p className="font-semibold">
-                Payment Submitted for Approval
-              </p>
-              <p>
-                Your card payment request has been submitted and is pending admin verification.
-                You will be notified once the payment has been reviewed and approved.
-              </p>
-              <div className="flex items-center gap-2 text-sm">
-                <CreditCard className="h-4 w-4" />
-                <span>Payment ID: {pendingPaymentId}</span>
-              </div>
+      <div className="pending-payment-message space-y-4">
+        <Alert className="border-blue-200 bg-blue-50">
+          <div className="flex items-start gap-3">
+            <RefreshCw className="h-5 w-5 text-blue-600 animate-spin flex-shrink-0 mt-0.5" />
+            <div>
+              <AlertDescription className="text-blue-800">
+                <p className="font-semibold mb-2">
+                  Waiting for Admin Review
+                </p>
+                <p className="text-sm mb-3">
+                  {pollingMessage}
+                </p>
+                <div className="flex items-center gap-2 text-xs bg-white/50 p-2 rounded">
+                  <CreditCard className="h-3 w-3" />
+                  <span>Payment ID: {pendingPaymentId}</span>
+                </div>
+              </AlertDescription>
             </div>
+          </div>
+        </Alert>
+        
+        <Alert className="border-gray-200 bg-gray-50">
+          <AlertDescription className="text-gray-700 text-sm">
+            <strong>What happens next:</strong>
+            <ul className="mt-2 ml-4 space-y-1 list-disc">
+              <li>Admin will review your payment in the admin dashboard</li>
+              <li>Your order will be confirmed upon approval</li>
+              <li>You'll be redirected automatically when approved</li>
+              <li>This typically takes a few minutes</li>
+            </ul>
           </AlertDescription>
         </Alert>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <AlertTriangle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-800">
+          {error}
+        </AlertDescription>
+      </Alert>
+    );
         
         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
           <p className="text-sm text-gray-600">
