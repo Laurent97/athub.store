@@ -4,7 +4,6 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, CreditCard, Shield, Clock, RefreshCw } from 'lucide-react';
-import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase/client';
 
@@ -25,7 +24,6 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
   onError
 }) => {
   const { user } = useAuth();
-  const { recordPendingPayment } = usePayment();
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
