@@ -255,17 +255,6 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
             </div>
           )}
         </Button>
-
-        {/* Security Notice */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
-          <div className="flex items-start gap-2">
-            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <div className="text-sm text-blue-800 dark:text-blue-200">
-              <p className="font-medium">Verification Required</p>
-              <p>After submitting your card information, your payment will be verified and processed.</p>
-            </div>
-          </div>
-        </div>
       </form>
     </div>
   );

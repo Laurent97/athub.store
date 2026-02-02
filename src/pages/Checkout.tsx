@@ -371,10 +371,6 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    <div className="mb-3 p-3 bg-orange-50 rounded-lg">
-                      <p className="text-xs text-orange-800">ℹ️ Shipping & tax will be charged after the admin starts your shipment.</p>
-                    </div>
-
                     <Button
                       variant="outline"
                       className="w-full mb-2"

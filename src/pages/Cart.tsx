@@ -225,9 +225,6 @@ const Cart = () => {
                       Calculated after order
                     </span>
                   </div>
-                  <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg">
-                    ℹ️ Shipping & tax will be charged after the admin starts your shipment.
-                  </div>
                   <div className="border-t border-border pt-3 sm:pt-4 flex justify-between text-base sm:text-lg font-bold text-foreground">
                     <span>Total (Today)</span>
                     <span>{formatPrice(orderTotal)}</span>
