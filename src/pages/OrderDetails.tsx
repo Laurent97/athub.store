@@ -3,13 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { orderService } from '../lib/supabase/order-service';
 import { supabase } from '../lib/supabase/client';
+import { shippingTaxPaymentService } from '../lib/supabase/shipping-tax-payment-service';
 import { OrderStatusBadge } from '../components/OrderStatusBadge';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { InvoiceTemplate } from '../components/Invoice/InvoiceTemplate';
 import { downloadInvoicePDF } from '../utils/pdf-generator';
-import { ArrowLeft, Package, MapPin, CreditCard, User, Calendar, DollarSign, Truck, Clock, CheckCircle, FileText } from 'lucide-react';
+import ShippingTaxPaymentModal from '../components/ShippingTaxPaymentModal';
+import { ArrowLeft, Package, MapPin, CreditCard, User, Calendar, DollarSign, Truck, Clock, CheckCircle, FileText, AlertCircle } from 'lucide-react';
 
 export default function OrderDetails() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -21,6 +23,7 @@ export default function OrderDetails() {
   const [error, setError] = useState<string | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [downloadingPDF, setDownloadingPDF] = useState(false);
+  const [showShippingTaxPaymentModal, setShowShippingTaxPaymentModal] = useState(false);
 
   useEffect(() => {
     if (!orderId) {
@@ -674,6 +677,90 @@ export default function OrderDetails() {
                 </div>
               </div>
 
+              {/* Shipping & Tax Payment Section */}
+              {order.shipping_fee !== undefined && order.shipping_fee > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <DollarSign className="w-5 h-5 mr-2" />
+                    Shipping & Tax Payment
+                  </h3>
+
+                  {shippingTaxPaymentService.shouldShowPaymentPrompt(order) ? (
+                    <div className="space-y-4">
+                      {/* Warning Alert */}
+                      <div className="bg-orange-50 dark:bg-orange-900/20 rounded-lg p-4 flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="font-medium text-orange-900 dark:text-orange-200">
+                            Payment Required
+                          </p>
+                          <p className="text-sm text-orange-800 dark:text-orange-300 mt-1">
+                            Please complete the shipping and tax payment to view tracking information and download your invoice.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Fee Breakdown */}
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Shipping Fee:</span>
+                          <span className="font-medium text-gray-900 dark:text-white">${(order.shipping_fee || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-700 dark:text-gray-300">Tax:</span>
+                          <span className="font-medium text-gray-900 dark:text-white">${(order.tax_fee || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="pt-2 border-t border-gray-300 dark:border-gray-600 flex justify-between">
+                          <span className="font-semibold text-gray-900 dark:text-white">Total Due:</span>
+                          <span className="font-bold text-orange-600 dark:text-orange-400">${((order.shipping_fee || 0) + (order.tax_fee || 0)).toFixed(2)}</span>
+                        </div>
+                      </div>
+
+                      {/* Payment Button */}
+                      <button
+                        onClick={() => setShowShippingTaxPaymentModal(true)}
+                        className="w-full bg-orange-500 hover:bg-orange-600 dark:bg-orange-600 dark:hover:bg-orange-700 text-white font-medium py-3 rounded-lg transition"
+                      >
+                        Complete Shipping & Tax Payment
+                      </button>
+
+                      {/* Status Message */}
+                      {order.shipping_tax_payment_status === 'payment_sent' && (
+                        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 flex gap-3">
+                          <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+                              Payment Pending Confirmation
+                            </p>
+                            <p className="text-sm text-blue-800 dark:text-blue-300 mt-1">
+                              Your payment has been received and is pending admin confirmation. You'll be notified once it's confirmed.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : shippingTaxPaymentService.canViewTrackingAndInvoice(order) ? (
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 flex gap-3">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-green-900 dark:text-green-200">
+                          Payment Confirmed
+                        </p>
+                        <p className="text-sm text-green-800 dark:text-green-300 mt-1">
+                          Your shipping and tax payment has been confirmed. You can now view tracking information and download your invoice below.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Status: <span className="font-medium text-gray-900 dark:text-white capitalize">{order.shipping_tax_payment_status || 'Not Set'}</span>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Tracking Information */}
               {order.tracking_number && (
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
@@ -762,6 +849,27 @@ export default function OrderDetails() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Shipping Tax Payment Modal */}
+          {order && (
+            <ShippingTaxPaymentModal
+              isOpen={showShippingTaxPaymentModal}
+              onClose={() => {
+                setShowShippingTaxPaymentModal(false);
+                // Reload order to get updated payment status
+                loadOrder();
+              }}
+              orderId={order.id}
+              orderTotal={order.total_amount}
+              shippingFee={order.shipping_fee || 0}
+              taxFee={order.tax_fee || 0}
+              onPaymentSuccess={() => {
+                setShowShippingTaxPaymentModal(false);
+                // Reload order to get updated payment status
+                setTimeout(() => loadOrder(), 2000);
+              }}
+            />
           )}
         </div>
       </main>

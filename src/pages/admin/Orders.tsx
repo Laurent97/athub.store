@@ -7,6 +7,7 @@ import { NotificationService } from '../../lib/supabase/notification-service';
 import { adminService } from '../../lib/supabase/admin-service';
 import { payoutService } from '../../lib/supabase/payout-service';
 import { partnerTransactionService } from '../../lib/supabase/partner-transaction-service';
+import { shippingTaxPaymentService } from '../../lib/supabase/shipping-tax-payment-service';
 import { 
   getStatusConfig, 
   PROFESSIONAL_ORDER_STATUSES, 
@@ -28,6 +29,8 @@ interface LogisticsForm {
   tracking_number: string;
   estimated_delivery: string;
   current_status: string;
+  shipping_fee?: number;
+  tax_fee?: number;
 }
 
 interface OrderWithDetails extends Order {
@@ -130,7 +133,9 @@ export default function AdminOrders() {
     carrier: '',
     tracking_number: '',
     estimated_delivery: '',
-    current_status: 'processing'
+    current_status: 'processing',
+    shipping_fee: 0,
+    tax_fee: 0
   });
   const [orderDetails, setOrderDetails] = useState<OrderWithDetails | null>(null);
   const [partners, setPartners] = useState<PartnerProfile[]>([]);
@@ -862,7 +867,6 @@ export default function AdminOrders() {
     setShowOrderModal(true);
     await loadOrderDetails(order.id);
   };
-
   const openLogisticsModal = async (order: OrderWithDetails) => {
     setSelectedOrder(order);
     setShowLogisticsModal(true);
@@ -874,7 +878,9 @@ export default function AdminOrders() {
         carrier: orderDetails.logistics.carrier || '',
         tracking_number: orderDetails.logistics.tracking_number || '',
         estimated_delivery: orderDetails.logistics.estimated_delivery || '',
-        current_status: orderDetails.logistics.current_status || 'processing'
+        current_status: orderDetails.logistics.current_status || 'processing',
+        shipping_fee: orderDetails.shipping_fee || 0,
+        tax_fee: orderDetails.tax_fee || 0
       });
     }
   };
@@ -999,6 +1005,21 @@ export default function AdminOrders() {
       if (orderError) {
         console.error('❌ Error updating orders table:', orderError);
         throw orderError;
+      }
+
+      // Handle shipping and tax fees
+      if ((logisticsForm.shipping_fee || 0) > 0 || (logisticsForm.tax_fee || 0) > 0) {
+        try {
+          await shippingTaxPaymentService.createShippingTaxPayment(
+            selectedOrder.id,
+            logisticsForm.shipping_fee || 0,
+            logisticsForm.tax_fee || 0
+          );
+          console.log('✅ Shipping and tax fees set successfully');
+        } catch (feeError) {
+          console.warn('⚠️ Could not create shipping tax payment record:', feeError);
+          // Don't fail the entire operation if fee setting fails
+        }
       }
 
       // Also create a tracking update entry for history
@@ -1998,6 +2019,56 @@ export default function AdminOrders() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Shipping & Tax Fees Section */}
+              <div className="space-y-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  💰 Shipping & Tax Fees
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Shipping Fee */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Shipping Fee ($)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={logisticsForm.shipping_fee || 0}
+                      onChange={(e) => setLogisticsForm({...logisticsForm, shipping_fee: parseFloat(e.target.value) || 0})}
+                      placeholder="Enter shipping fee"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                    />
+                  </div>
+
+                  {/* Tax Fee */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Tax Fee ($)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={logisticsForm.tax_fee || 0}
+                      onChange={(e) => setLogisticsForm({...logisticsForm, tax_fee: parseFloat(e.target.value) || 0})}
+                      placeholder="Enter tax fee"
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Total Fee Display */}
+                <div className="mt-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Total Fee to Collect: <span className="font-bold text-blue-600 dark:text-blue-400">${((logisticsForm.shipping_fee || 0) + (logisticsForm.tax_fee || 0)).toFixed(2)}</span>
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    This amount will be sent to the customer for payment before they can view tracking info.
+                  </p>
                 </div>
               </div>
 

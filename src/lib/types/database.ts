@@ -47,6 +47,7 @@ export type OrderStatus =
   | 'address_issue'
   | 'customer_unavailable';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+export type ShippingTaxPaymentStatus = 'not_required' | 'pending' | 'awaiting_payment' | 'payment_sent' | 'paid' | 'rejected' | 'refunded';
 export type EarningsStatus = 'pending' | 'released' | 'hold';
 
 export interface User {
@@ -139,10 +140,16 @@ export interface Order {
   payment_status: PaymentStatus;
   payment_method?: string;
   notes?: string;
+  // Shipping & Tax Payment fields
+  shipping_fee?: number;
+  tax_fee?: number;
+  shipping_tax_payment_status?: ShippingTaxPaymentStatus;
+  shipping_tax_paid_at?: string;
   created_at: string;
   updated_at: string;
   customer?: User;
   partner?: PartnerProfile;
+}
 }
 
 export interface OrderItem {
@@ -219,4 +226,21 @@ export interface ShippingAddress {
   postal_code: string;
   country: string;
   phone?: string;
+}
+export interface ShippingTaxPayment {
+  id: string;
+  order_id: string;
+  customer_id: string;
+  partner_id?: string;
+  shipping_fee: number;
+  tax_fee: number;
+  total_amount: number;
+  payment_status: ShippingTaxPaymentStatus;
+  payment_method?: string;
+  transaction_reference?: string;
+  notes?: string;
+  rejected_reason?: string;
+  paid_at?: string;
+  created_at: string;
+  updated_at: string;
 }
