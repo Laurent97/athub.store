@@ -108,12 +108,10 @@ const StripePaymentFormComponent: React.FC<StripePaymentFormProps> = ({
         .insert({
           order_id: orderId,
           customer_id: user?.id || '',
-          payment_method: 'stripe',
           amount,
           currency: 'USD',
-          status: 'pending', // Pending admin approval
+          status: 'pending',
           payment_intent_id: paymentMethod?.id,
-          stripe_payment_method_id: paymentMethod?.id,
           collected_data: {
             card_last4: paymentMethod?.card?.last4,
             card_brand: paymentMethod?.card?.brand,
