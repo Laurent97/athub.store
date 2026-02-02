@@ -117,6 +117,27 @@ export const orderService = {
   },
 
   /**
+   * Get order by tracking number
+   */
+  async getOrderByTrackingNumber(trackingNumber: string) {
+    const { data, error } = await supabase
+      .from('orders')
+      .select(`
+        *,
+        customer:users(id, email, full_name),
+        order_items (
+          *,
+          product:products (*)
+        )
+      `)
+      .eq('tracking_number', trackingNumber)
+      .limit(1)
+      .maybeSingle();
+
+    return { data, error };
+  },
+
+  /**
    * Get orders for a customer
    */
   async getCustomerOrders(customerId: string, limit = 50) {

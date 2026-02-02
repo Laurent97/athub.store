@@ -33,12 +33,20 @@ export default function Shipping() {
     
     try {
       const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(term);
-      
+      const looksLikeOrderNumber = /^ORD-/i.test(term);
+
       let result;
       if (isUUID) {
         result = await orderService.getOrderById(term);
-      } else {
+      } else if (looksLikeOrderNumber) {
         result = await orderService.getOrderByNumber(term);
+      } else {
+        // Try order number first (in case user pasted a number without prefix),
+        // then fall back to tracking number lookup.
+        result = await orderService.getOrderByNumber(term);
+        if (!result.data) {
+          result = await orderService.getOrderByTrackingNumber(term);
+        }
       }
 
       if (result.data) {
