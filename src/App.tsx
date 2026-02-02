@@ -19,6 +19,7 @@ import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Payment from "./pages/Payment";
+import PaymentShippingTax from "./pages/PaymentShippingTax";
 import OrderSuccess from "./pages/OrderSuccess";
 import OrderSuccessStore from "./pages/OrderSuccessStore";
 import OrderDetails from "./pages/OrderDetails";
@@ -110,6 +111,7 @@ const App = () => (
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/checkout/payment" element={<Payment />} />
+              <Route path="/payment-shipping-tax/:orderId" element={<PaymentShippingTax />} />
               <Route path="/payment/withdraw" element={<Withdrawal />} />
               <Route path="/order-success" element={<OrderSuccess />} />
               <Route path="/order-success/:orderId" element={<OrderSuccessStore />} />

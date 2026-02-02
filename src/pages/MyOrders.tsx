@@ -371,6 +371,15 @@ export default function MyOrders() {
                           <Truck className="w-4 h-4" />
                           Track Package
                         </button>
+                        {order.shipping_fee && !order.shipping_tax_paid_at && (
+                          <button
+                            onClick={() => navigate(`/payment-shipping-tax/${order.id}`, { state: { order } })}
+                            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                          >
+                            <DollarSign className="w-4 h-4" />
+                            Pay Shipping & Tax
+                          </button>
+                        )}
                       </div>
                     </div>
 
