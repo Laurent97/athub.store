@@ -71,8 +71,8 @@ const Checkout = () => {
   };
 
   const subtotal = getTotal();
-  const shipping = subtotal >= 500 ? 0 : 25;
-  const total = subtotal + shipping;
+  const shipping = 0; // Shipping now charged after order in new payment system
+  const total = subtotal; // No shipping added at checkout
 
   const saveCurrentAddress = async () => {
     if (!user) return;
