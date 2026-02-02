@@ -1428,6 +1428,19 @@ export default function AdminOrders() {
                                 >
                                   📦 Update Shipping
                                 </button>
+                                {order.status !== 'pending' && order.status !== 'waiting_confirmation' && !order.shipping_fee && (
+                                  <button
+                                    onClick={() => openLogisticsModal(order)}
+                                    className="text-orange-600 hover:text-orange-800 text-left font-medium flex items-center gap-1 transition-colors bg-orange-50 px-2 py-1 rounded"
+                                  >
+                                    💰 Set Shipping & Tax Fees
+                                  </button>
+                                )}
+                                {order.shipping_fee && (
+                                  <div className="text-xs text-gray-600 px-2 py-1 bg-blue-50 rounded">
+                                    ✓ Fees Set: ${order.shipping_fee.toFixed(2)} + ${order.tax_fee?.toFixed(2) || '0.00'}
+                                  </div>
+                                )}
                                 <CancelOrderButton
                                   orderId={order.id}
                                   currentStatus={order.status}
