@@ -229,9 +229,6 @@ const Cart = () => {
                     <span>Total (Today)</span>
                     <span>{formatPrice(orderTotal)}</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    *Shipping & tax fees will be added by admin after shipment starts
-                  </div>
                 </div>
 
                 <Button 
