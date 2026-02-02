@@ -618,28 +618,55 @@ export default function OrderDetails() {
                 </h3>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Subtotal</span>
+                    <span className="text-gray-500 dark:text-gray-400">Order Subtotal (Paid)</span>
                     <span className="text-gray-900 dark:text-white">
                       ${order.total_amount?.toFixed(2)}
                     </span>
                   </div>
+
+                  {/* Shipping Fee */}
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Shipping</span>
-                    <span className="text-green-600 dark:text-green-400">Free</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">Tax</span>
-                    <span className="text-gray-900 dark:text-white">
-                      ${(order.total_amount * 0.1).toFixed(2)}
+                    <span className="text-gray-500 dark:text-gray-400">
+                      Shipping Fee
+                      {order.partner_id ? ' (Partner)' : ''}
+                    </span>
+                    <span className={
+                      order.partner_id
+                        ? 'text-green-600 dark:text-green-400 font-medium'
+                        : (order.shipping_fee ? 'text-gray-900 dark:text-white' : 'text-orange-500 dark:text-orange-400')
+                    }>
+                      {order.partner_id 
+                        ? 'Free' 
+                        : order.shipping_fee 
+                          ? `$${order.shipping_fee.toFixed(2)}`
+                          : 'Pending'}
                     </span>
                   </div>
+
+                  {/* Tax Fee */}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500 dark:text-gray-400">Tax</span>
+                    <span className={order.tax_fee ? 'text-gray-900 dark:text-white' : 'text-orange-500 dark:text-orange-400'}>
+                      {order.tax_fee 
+                        ? `$${order.tax_fee.toFixed(2)}`
+                        : 'Pending'}
+                    </span>
+                  </div>
+
                   <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                     <div className="flex justify-between">
                       <span className="font-semibold text-gray-900 dark:text-white">Total</span>
                       <span className="font-bold text-lg text-gray-900 dark:text-white">
-                        ${(order.total_amount * 1.1).toFixed(2)}
+                        ${(order.total_amount + (order.shipping_fee || 0) + (order.tax_fee || 0)).toFixed(2)}
                       </span>
                     </div>
+                    {(order.shipping_fee || order.tax_fee) && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        {order.shipping_tax_payment_status === 'paid' 
+                          ? '✓ Shipping & Tax fees paid'
+                          : '⚠️ Shipping & Tax fees pending payment'}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
