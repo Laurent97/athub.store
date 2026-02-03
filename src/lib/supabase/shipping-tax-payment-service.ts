@@ -52,7 +52,7 @@ export const shippingTaxPaymentService = {
       .update({
         shipping_fee: shippingFee,
         tax_fee: taxFee,
-        shipping_tax_payment_status: 'awaiting_payment',
+        shipping_tax_payment_status: 'pending',
         updated_at: new Date().toISOString()
       })
       .eq('id', orderId);
@@ -68,8 +68,7 @@ export const shippingTaxPaymentService = {
           customer_id: order.customer_id,
           shipping_fee: shippingFee,
           tax_fee: taxFee,
-          total_amount: shippingFee + taxFee,
-          payment_status: 'awaiting_payment'
+          status: 'pending'
         })
         .select()
         .single();
@@ -179,10 +178,10 @@ export const shippingTaxPaymentService = {
       );
     }
 
-    // Update to payment_sent status (pending admin confirmation)
+    // Update to pending_confirmation status (payment received, awaiting admin confirmation)
     await this.updateShippingTaxPaymentStatus(
       orderId,
-      'payment_sent',
+      'pending_confirmation',
       transactionRef,
       paymentMethod
     );
@@ -292,7 +291,7 @@ export const shippingTaxPaymentService = {
         created_at,
         users:customer_id(email, full_name)
       `)
-      .eq('shipping_tax_payment_status', 'payment_sent')
+      .eq('shipping_tax_payment_status', 'pending_confirmation')
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -319,11 +318,11 @@ export const shippingTaxPaymentService = {
   shouldShowPaymentPrompt(order: any): boolean {
     // Show payment prompt if:
     // 1. NOT a partner order, AND
-    // 2. Status is awaiting_payment or payment_sent (not yet confirmed by admin)
+    // 2. Status is pending or pending_confirmation (not yet confirmed by admin)
     const isPartnerOrder = !!order.partner_id;
     const needsPayment = !isPartnerOrder && 
-      (order.shipping_tax_payment_status === 'awaiting_payment' || 
-       order.shipping_tax_payment_status === 'payment_sent');
+      (order.shipping_tax_payment_status === 'pending' || 
+       order.shipping_tax_payment_status === 'pending_confirmation');
 
     return needsPayment;
   }

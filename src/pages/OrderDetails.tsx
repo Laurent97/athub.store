@@ -752,7 +752,7 @@ export default function OrderDetails() {
                       </button>
 
                       {/* Status Message */}
-                      {order.shipping_tax_payment_status === 'payment_sent' && (
+                      {order.shipping_tax_payment_status === 'pending_confirmation' && (
                         <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 flex gap-3">
                           <AlertCircle className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                           <div>

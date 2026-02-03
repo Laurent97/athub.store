@@ -47,7 +47,7 @@ export type OrderStatus =
   | 'address_issue'
   | 'customer_unavailable';
 export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
-export type ShippingTaxPaymentStatus = 'not_required' | 'pending' | 'awaiting_payment' | 'payment_sent' | 'paid' | 'rejected' | 'refunded';
+export type ShippingTaxPaymentStatus = 'pending' | 'pending_confirmation' | 'verified' | 'rejected' | 'paid';
 export type EarningsStatus = 'pending' | 'released' | 'hold';
 
 export interface User {
