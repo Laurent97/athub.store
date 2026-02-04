@@ -1351,7 +1351,7 @@ export default function AdminOrders() {
                               onScroll={handleScrollbarScroll}
                               style={{ overflowX: 'auto' }}
                             >
-                              <div className="h-full bg-amber-500 rounded-full" style={{ width: '200%' }}></div>
+                              <div className="h-full bg-amber-500 rounded-full" style={{ width: '150%' }}></div>
                             </div>
                           </div>
                         </td>
