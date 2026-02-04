@@ -17,9 +17,9 @@ interface PartnerShop {
   store_name: string;
   store_slug: string;
   store_tagline?: string;
-  description?: string;
-  logo_url?: string;
-  banner_url?: string;
+  store_description?: string;
+  store_logo?: string;
+  store_banner?: string;
   brand_color?: string;
   accent_color?: string;
   business_type?: string;
@@ -120,10 +120,10 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
       <Card className="overflow-hidden border border-border hover:border-accent transition-all duration-300 hover:shadow-lg">
         {/* Enhanced Banner/Logo */}
         <div className="relative h-48 sm:h-48">
-          {shop.banner_url ? (
+          {shop.store_banner ? (
             <div className="relative w-full h-full">
               <img
-                src={shop.banner_url}
+                src={shop.store_banner}
                 alt={shop.store_name}
                 className="w-full h-full object-cover"
               />
@@ -146,9 +146,9 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
           {/* Enhanced Logo Overlay */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4">
             <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-2 border-white dark:border-gray-700 shadow-lg flex items-center justify-center overflow-hidden">
-              {shop.logo_url ? (
+              {shop.store_logo ? (
                 <img
-                  src={shop.logo_url}
+                  src={shop.store_logo}
                   alt={shop.store_name}
                   className="w-full h-full object-cover"
                 />
@@ -216,9 +216,9 @@ const ShopCard = ({ shop }: { shop: PartnerShop }) => {
           )}
 
           {/* Description */}
-          {shop.description && (
+          {shop.store_description && (
             <p className="text-xs sm:text-sm text-muted-foreground mb-3 line-clamp-2">
-              {shop.description}
+              {shop.store_description}
             </p>
           )}
 
@@ -353,7 +353,7 @@ export default function Manufacturers() {
     // Check if any search word matches
     const hasSearchMatch = searchWords.some(word => 
       shop.store_name.toLowerCase().includes(word) ||
-      shop.description?.toLowerCase().includes(word) ||
+      shop.store_description?.toLowerCase().includes(word) ||
       shop.city?.toLowerCase().includes(word) ||
       shop.country?.toLowerCase().includes(word)
     );
@@ -362,30 +362,30 @@ export default function Manufacturers() {
     const hasAutomotiveMatch = searchWords.some(word => {
       // Cars/Vehicles category
       if (automotiveKeywords.cars.includes(word)) {
-        return shop.description?.toLowerCase().includes('car') || 
-               shop.description?.toLowerCase().includes('vehicle') || 
-               shop.description?.toLowerCase().includes('automotive') ||
-               shop.description?.toLowerCase().includes('motor') ||
+        return shop.store_description?.toLowerCase().includes('car') || 
+               shop.store_description?.toLowerCase().includes('vehicle') || 
+               shop.store_description?.toLowerCase().includes('automotive') ||
+               shop.store_description?.toLowerCase().includes('motor') ||
                shop.store_name.toLowerCase().includes('car') ||
                shop.store_name.toLowerCase().includes('auto');
       }
       
       // Parts category
       if (automotiveKeywords.parts.includes(word)) {
-        return shop.description?.toLowerCase().includes('part') || 
-               shop.description?.toLowerCase().includes('component') ||
-               shop.description?.toLowerCase().includes('spare') ||
-               shop.description?.toLowerCase().includes('oem') ||
+        return shop.store_description?.toLowerCase().includes('part') || 
+               shop.store_description?.toLowerCase().includes('component') ||
+               shop.store_description?.toLowerCase().includes('spare') ||
+               shop.store_description?.toLowerCase().includes('oem') ||
                shop.store_name.toLowerCase().includes('part');
       }
       
       // Accessories category
       if (automotiveKeywords.accessories.includes(word)) {
-        return shop.description?.toLowerCase().includes('accessory') || 
-               shop.description?.toLowerCase().includes('gear') ||
-               shop.description?.toLowerCase().includes('equipment') ||
-               shop.description?.toLowerCase().includes('interior') ||
-               shop.description?.toLowerCase().includes('exterior') ||
+        return shop.store_description?.toLowerCase().includes('accessory') || 
+               shop.store_description?.toLowerCase().includes('gear') ||
+               shop.store_description?.toLowerCase().includes('equipment') ||
+               shop.store_description?.toLowerCase().includes('interior') ||
+               shop.store_description?.toLowerCase().includes('exterior') ||
                shop.store_name.toLowerCase().includes('accessory');
       }
       
