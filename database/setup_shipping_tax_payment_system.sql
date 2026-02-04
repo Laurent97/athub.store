@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS shipping_tax_payments (
     tax_fee DECIMAL(10,2) NOT NULL,
     
     -- Payment details
-    payment_method TEXT NOT NULL CHECK (payment_method IN ('stripe', 'paypal', 'crypto', 'wallet', 'bank')),
+    payment_method TEXT CHECK (payment_method IN ('stripe', 'paypal', 'crypto', 'wallet', 'bank')),
     
     -- Payment method specific fields
     stripe_payment_intent_id TEXT,
