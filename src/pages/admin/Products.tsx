@@ -375,6 +375,12 @@ export default function AdminProducts() {
                         ))}
                       </tbody>
                     </table>
+                    {/* Scroll Indicator */}
+                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-2 mt-3 text-center">
+                      <div className="text-xs text-amber-700 font-medium">
+                        ↔️ Scroll horizontally to view all table columns →
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
