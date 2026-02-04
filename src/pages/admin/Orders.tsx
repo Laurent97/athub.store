@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
@@ -163,6 +163,32 @@ export default function AdminOrders() {
   const [loadingPartnerProducts, setLoadingPartnerProducts] = useState(false);
   const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
   const [creatingOrder, setCreatingOrder] = useState(false);
+
+  // Refs for scrollbar synchronization
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
+
+  // Synchronize scrollbar with table scroll
+  const handleTableScroll = () => {
+    if (tableContainerRef.current && scrollbarRef.current) {
+      const tableContainer = tableContainerRef.current;
+      const scrollbar = scrollbarRef.current;
+      
+      const scrollRatio = tableContainer.scrollLeft / (tableContainer.scrollWidth - tableContainer.clientWidth);
+      scrollbar.scrollLeft = scrollRatio * (scrollbar.scrollWidth - scrollbar.clientWidth);
+    }
+  };
+
+  // Synchronize table with scrollbar scroll
+  const handleScrollbarScroll = () => {
+    if (scrollbarRef.current && tableContainerRef.current) {
+      const scrollbar = scrollbarRef.current;
+      const tableContainer = tableContainerRef.current;
+      
+      const scrollRatio = scrollbar.scrollLeft / (scrollbar.scrollWidth - scrollbar.clientWidth);
+      tableContainer.scrollLeft = scrollRatio * (tableContainer.scrollWidth - tableContainer.clientWidth);
+    }
+  };
 
   // Add filteredOrders calculation using useMemo
   const filteredOrders = useMemo(() => {
@@ -1286,7 +1312,7 @@ export default function AdminOrders() {
                     <p className="text-muted-foreground">No orders found</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto" ref={tableContainerRef} onScroll={handleTableScroll}>
                     <table className="min-w-full divide-y divide-border">
                       <thead className="bg-gradient-to-r from-card to-card/50">
                         <tr>
@@ -1315,9 +1341,17 @@ export default function AdminOrders() {
                       </thead>
                       <tr>
                         <td colSpan={7} className="p-0">
-                          <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-2 m-2 text-center">
-                            <div className="text-xs text-amber-700 font-medium">
+                          <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-2 m-2">
+                            <div className="text-xs text-amber-700 font-medium mb-2 text-center">
                               ↔️ Scroll horizontally to view all table columns →
+                            </div>
+                            <div 
+                              ref={scrollbarRef}
+                              className="w-full h-2 bg-amber-200 rounded-full cursor-pointer overflow-hidden"
+                              onScroll={handleScrollbarScroll}
+                              style={{ overflowX: 'auto' }}
+                            >
+                              <div className="h-full bg-amber-500 rounded-full" style={{ width: '200%' }}></div>
                             </div>
                           </div>
                         </td>
@@ -1469,12 +1503,6 @@ export default function AdminOrders() {
                         ))}
                       </tbody>
                     </table>
-                    {/* Scroll Indicator */}
-                    <div className="bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 rounded-lg p-2 mt-3 text-center">
-                      <div className="text-xs text-amber-700 font-medium">
-                        ↔️ Scroll horizontally to view all table columns →
-                      </div>
-                    </div>
                   </div>
                 )}
               </div>
