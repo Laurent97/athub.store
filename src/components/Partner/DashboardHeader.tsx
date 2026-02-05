@@ -1,8 +1,10 @@
-import React from 'react';
-import { Store, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Store, RefreshCw, Copy, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import StoreIdBadge from '@/components/ui/StoreIdBadge';
+import { supabase } from '@/lib/supabase/client';
+import { toast } from 'sonner';
 
 interface DashboardHeaderProps {
   partner: any;
@@ -19,6 +21,72 @@ export default function DashboardHeader({
   refreshing = false,
   onRefresh 
 }: DashboardHeaderProps) {
+  const [invitationCode, setInvitationCode] = useState<string>('');
+  const [invitationUsage, setInvitationUsage] = useState<number>(0);
+  const [loadingInvitation, setLoadingInvitation] = useState(false);
+
+  // Load invitation code data
+  useEffect(() => {
+    if (partner?.id) {
+      loadInvitationData();
+    }
+  }, [partner?.id]);
+
+  const loadInvitationData = async () => {
+    if (!partner?.id) return;
+    
+    setLoadingInvitation(true);
+    try {
+      // Get invitation code from partner_profiles
+      const { data: partnerData } = await supabase
+        .from('partner_profiles')
+        .select('invitation_code, invitation_usage_count')
+        .eq('id', partner.id)
+        .single();
+
+      if (partnerData?.invitation_code) {
+        setInvitationCode(partnerData.invitation_code);
+        setInvitationUsage(partnerData.invitation_usage_count || 0);
+      }
+
+      // Also try to get from public_invitation_codes for more detailed info
+      const { data: publicData } = await supabase
+        .from('public_invitation_codes')
+        .select('current_uses, max_uses, expires_at')
+        .eq('code', partnerData?.invitation_code)
+        .single();
+
+      if (publicData) {
+        setInvitationUsage(publicData.current_uses || 0);
+      }
+    } catch (error) {
+      console.error('Error loading invitation data:', error);
+    } finally {
+      setLoadingInvitation(false);
+    }
+  };
+
+  const copyInvitationCode = async () => {
+    if (!invitationCode) return;
+    
+    try {
+      await navigator.clipboard.writeText(invitationCode);
+      toast.success('Invitation code copied to clipboard!');
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = invitationCode;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success('Invitation code copied to clipboard!');
+      } catch (fallbackError) {
+        toast.error('Failed to copy invitation code');
+      }
+      document.body.removeChild(textArea);
+    }
+  };
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
       <div className="container mx-auto px-4 py-8">
@@ -31,9 +99,36 @@ export default function DashboardHeader({
             <p className="text-blue-100 text-lg mb-4">
               Welcome back, {storeName}!
             </p>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-4">
               {partner?.store_id && (
                 <StoreIdBadge storeId={partner.store_id} size="sm" variant="outline" />
+              )}
+              {invitationCode && (
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-3 py-2 border border-white/20">
+                  <Users className="w-4 h-4 text-white" />
+                  <div className="flex flex-col">
+                    <span className="text-xs text-white/70">Invitation Code</span>
+                    <div className="flex items-center gap-2">
+                      <code className="text-sm font-mono text-white">
+                        {invitationCode}
+                      </code>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={copyInvitationCode}
+                        className="h-6 w-6 p-0 text-white hover:bg-white/20"
+                        title="Copy invitation code"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    {!loadingInvitation && (
+                      <span className="text-xs text-white/60">
+                        {invitationUsage} uses
+                      </span>
+                    )}
+                  </div>
+                </div>
               )}
               <Badge variant={userProfile?.partner_status === 'approved' ? 'default' : 'secondary'}>
                 {userProfile?.partner_status === 'approved' ? '✅ Verified Partner' : '⏳ Under Review'}
