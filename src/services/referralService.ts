@@ -33,13 +33,42 @@ export class ReferralService {
         return { valid: false, error: 'Invalid invitation code format' };
       }
 
-      // Check if code exists and get referrer info
+      // Use the database validation function
+      const { data: isValid, error: validationError } = await supabase
+        .rpc('validate_invitation_code', { code });
+
+      if (validationError) {
+        console.error('Validation error:', validationError);
+        // Fallback to direct database check if function doesn't exist
+        const { data: partner, error: partnerError } = await supabase
+          .from('partner_profiles')
+          .select('id, store_name, store_id, user_id')
+          .eq('invitation_code', code)
+          .eq('partner_status', 'approved')
+          .eq('is_active', true)
+          .single();
+
+        if (partnerError || !partner) {
+          return { valid: false, error: 'Invitation code not found or invalid' };
+        }
+
+        return {
+          valid: true,
+          referrer_id: partner.id,
+          referrer_name: partner.store_name
+        };
+      }
+
+      if (!isValid) {
+        return { valid: false, error: 'Invitation code not found, expired, or max uses reached' };
+      }
+
+      // Get referrer info from partner_profiles
       const { data: partner, error: partnerError } = await supabase
         .from('partner_profiles')
         .select('id, store_name, store_id, user_id')
         .eq('invitation_code', code)
         .eq('partner_status', 'approved')
-        .eq('is_active', true)
         .single();
 
       if (partnerError || !partner) {

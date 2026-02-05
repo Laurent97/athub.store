@@ -591,17 +591,25 @@ const PartnerRegistrationForm: React.FC = () => {
 
       // Increment invitation code usage
       try {
-        // Update invitation usage count directly
-        if (invitationValidation?.referrer_id) {
-          await supabase
-            .from('partner_profiles')
-            .update({ 
-              invitation_usage_count: supabase.raw`COALESCE(invitation_usage_count, 0) + 1`
-            })
-            .eq('id', invitationValidation.referrer_id);
-        }
+        // Use the database function to increment usage
+        await supabase.rpc('increment_invitation_usage', {
+          p_code: formData.invitationCode
+        });
       } catch (usageError) {
         console.error('Error incrementing invitation usage:', usageError);
+        // Fallback: try direct update if function doesn't exist
+        try {
+          if (invitationValidation?.referrer_id) {
+            await supabase
+              .from('partner_profiles')
+              .update({ 
+                invitation_usage_count: supabase.raw`COALESCE(invitation_usage_count, 0) + 1`
+              })
+              .eq('id', invitationValidation.referrer_id);
+          }
+        } catch (fallbackError) {
+          console.error('Fallback usage tracking failed:', fallbackError);
+        }
         // Don't fail the registration if usage tracking fails
       }
 
