@@ -38,26 +38,47 @@ export default function DashboardHeader({
     setLoadingInvitation(true);
     try {
       // Get invitation code from partner_profiles
-      const { data: partnerData } = await supabase
+      const { data: partnerData, error: partnerError } = await supabase
         .from('partner_profiles')
-        .select('invitation_code, invitation_usage_count')
+        .select('invitation_code')
         .eq('id', partner.id)
         .single();
 
-      if (partnerData?.invitation_code) {
-        setInvitationCode(partnerData.invitation_code);
-        setInvitationUsage(partnerData.invitation_usage_count || 0);
+      if (partnerError) {
+        console.error('Error fetching partner invitation code:', partnerError);
+        return;
       }
 
-      // Also try to get from public_invitation_codes for more detailed info
-      const { data: publicData } = await supabase
-        .from('public_invitation_codes')
-        .select('current_uses, max_uses, expires_at')
-        .eq('code', partnerData?.invitation_code)
-        .single();
+      if (partnerData?.invitation_code) {
+        setInvitationCode(partnerData.invitation_code);
+        
+        // Try to get usage count from public_invitation_codes first
+        try {
+          const { data: publicData } = await supabase
+            .from('public_invitation_codes')
+            .select('current_uses')
+            .eq('code', partnerData.invitation_code)
+            .single();
 
-      if (publicData) {
-        setInvitationUsage(publicData.current_uses || 0);
+          if (publicData) {
+            setInvitationUsage(publicData.current_uses || 0);
+          }
+        } catch (publicError) {
+          // If public_invitation_codes doesn't exist, calculate usage manually
+          console.log('public_invitation_codes table not found, calculating usage manually');
+          
+          try {
+            const { data: referredCount } = await supabase
+              .from('partner_profiles')
+              .select('id', { count: 'exact' })
+              .eq('referred_by', partner.id);
+              
+            setInvitationUsage(referredCount?.length || 0);
+          } catch (countError) {
+            console.error('Error calculating usage count:', countError);
+            setInvitationUsage(0);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading invitation data:', error);
