@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { partnerService } from '../../lib/supabase/partner-service';
+import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -135,31 +137,19 @@ export default function DashboardSettings() {
     if (!userProfile?.id) return;
     
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userProfile.id}_${type}_${Date.now()}.${fileExt}`;
-      const filePath = `partner-assets/${fileName}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('partner-assets')
-        .upload(filePath, file, {
-          contentType: file.type,
-          cacheControl: '3600'
-        });
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('partner-assets')
-        .getPublicUrl(filePath);
+      // Upload to Cloudinary
+      const publicUrl = await uploadImageToCloudinary(file);
       
       if (type === 'logo') {
         setSettings(prev => ({ ...prev, storeLogo: file, storeLogoPreview: publicUrl }));
       } else {
         setSettings(prev => ({ ...prev, storeBanner: file, storeBannerPreview: publicUrl }));
       }
+      
+      toast.success(`${type === 'logo' ? 'Logo' : 'Banner'} uploaded successfully`);
     } catch (error) {
-      console.error('File upload error:', error);
-      setError('Failed to upload file');
+      console.error('Error uploading file:', error);
+      toast.error(`Failed to upload ${type}. Please try again.`);
     }
   };
 
@@ -180,26 +170,16 @@ export default function DashboardSettings() {
       
       const { error } = await partnerService.updatePartnerSettings(userProfile.id, {
         store_name: settings.storeName,
-        business_type: settings.businessType,
-        store_category: settings.storeCategory,
-        store_tagline: settings.storeTagline,
-        store_description: settings.storeDescription,
-        year_established: settings.yearEstablished,
-        logo_url: settings.storeLogoPreview,
-        banner_url: settings.storeBannerPreview,
-        brand_color: settings.brandColor,
-        accent_color: settings.accentColor,
+        description: settings.storeDescription,
         contact_email: settings.contactEmail,
         contact_phone: settings.contactPhone,
+        country: settings.country,
+        city: settings.city,
+        tax_id: settings.taxId,
         website: settings.website,
         social_facebook: settings.socialFacebook,
         social_instagram: settings.socialInstagram,
         social_linkedin: settings.socialLinkedIn,
-        country: settings.country,
-        city: settings.city,
-        timezone: settings.timezone,
-        business_hours: settings.businessHours,
-        tax_id: settings.taxId,
       });
 
       if (error) throw error;

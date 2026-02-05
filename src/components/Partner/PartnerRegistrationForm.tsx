@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase/client';
+import { uploadImageToCloudinary } from '../../services/cloudinaryService';
+import { supabase } from '@/lib/supabase/client';
 import { 
   Store, Mail, Phone, MapPin, Gift, CheckCircle, AlertCircle, FileText, Globe,
   Upload, Image as ImageIcon, X, ChevronRight, ChevronLeft, Building, User,
@@ -457,22 +458,10 @@ const PartnerRegistrationForm: React.FC = () => {
 
       if (existingPartner) throw new Error('Partner account already exists');
 
-      // Upload files to Supabase Storage with retry
+      // Upload files to Cloudinary with retry
       const uploadFile = async (file: File, path: string): Promise<string> => {
         return await retryOperation(async () => {
-          const { data, error } = await supabase.storage
-            .from('partner-assets')
-            .upload(`${path}/${Date.now()}-${file.name}`, file, {
-              contentType: file.type,
-              cacheControl: '3600'
-            });
-
-          if (error) throw error;
-          
-          const { data: { publicUrl } } = supabase.storage
-            .from('partner-assets')
-            .getPublicUrl(data.path);
-
+          const publicUrl = await uploadImageToCloudinary(file);
           return publicUrl;
         });
       };
