@@ -787,7 +787,7 @@ const PartnerRegistrationForm: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Logo Upload */}
         <div className="space-y-6">
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
+          <div className="dark:bg-gray-800/95 dark:border-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
             <input
               type="file"
               ref={fileInputLogoRef}
@@ -895,7 +895,7 @@ const PartnerRegistrationForm: React.FC = () => {
 
         {/* Banner Upload */}
         <div className="space-y-6">
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
+          <div className="dark:bg-gray-800/95 dark:border-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
             <input
               type="file"
               ref={fileInputBannerRef}
@@ -976,7 +976,7 @@ const PartnerRegistrationForm: React.FC = () => {
                 
                 {/* Logo Overlay Preview */}
                 <div className="absolute -bottom-6 left-6">
-                  <div className="w-16 h-16 dark:bg-gray-800 dark:border-gray-700 bg-white rounded-xl border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center">
+                  <div className="w-16 h-16 dark:bg-gray-800/95 dark:border-gray-600 bg-white rounded-xl border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center">
                     {formData.storeLogoPreview ? (
                       <img
                         src={formData.storeLogoPreview}
@@ -991,7 +991,7 @@ const PartnerRegistrationForm: React.FC = () => {
               </div>
               
               {/* Store Info Preview */}
-              <div className="p-6 pt-8 dark:bg-gray-800">
+              <div className="p-6 pt-8 dark:bg-gray-800/95">
                 <h4 className="text-xl font-bold text-foreground mb-1">
                   {formData.storeName || "Your Store Name"}
                 </h4>
@@ -1155,40 +1155,32 @@ const PartnerRegistrationForm: React.FC = () => {
       <div className="max-w-2xl mx-auto">
         {/* Referrer Info */}
         {invitationValidation?.valid && (
-          <div className="dark:bg-gray-800 dark:border-gray-700 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-6 mb-8">
+          <div className="dark:bg-blue-900 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0">
                 <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  {invitationValidation.referrerLogo ? (
-                    <img 
-                      src={invitationValidation.referrerLogo} 
-                      alt={invitationValidation.referrerName}
-                      className="w-12 h-12 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <Store className="w-8 h-8 text-white" />
-                  )}
+                  <Store className="w-8 h-8 text-black" />
                 </div>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-bold text-foreground">
+                  <h3 className="text-xl font-bold text-black">
                     Invited by {invitationValidation.referrerName}
                   </h3>
-                  <span className="px-3 py-1 dark:bg-green-900/30 dark:text-green-300 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                  <span className="px-3 py-1 dark:bg-green-900/80 dark:text-green-200 bg-green-100 text-green-900 rounded-full text-sm font-medium">
                     Verified Partner
                   </span>
                 </div>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-black mb-4">
                   You're joining through an approved AutoVault partner
                 </p>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {invitationValidation.benefits?.map((benefit: string, index: number) => (
-                    <div key={index} className="dark:bg-gray-700/50 dark:border-gray-600 bg-white border border-green-200 rounded-lg p-3">
+                    <div key={index} className="dark:bg-blue-800/50 dark:border-blue-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-600" />
-                        <span className="text-sm font-medium text-foreground">{benefit}</span>
+                        <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        <span className="text-sm font-medium text-black">{benefit}</span>
                       </div>
                     </div>
                   ))}
@@ -1450,16 +1442,16 @@ const PartnerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Benefits Card */}
-          <div className="dark:bg-gray-800 dark:border-blue-800/30 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6">
-            <h3 className="text-lg font-bold text-foreground mb-4">What happens next?</h3>
+          <div className="dark:bg-gray-800/90 dark:border-gray-700 bg-gradient-to-r from-indigo-50 to-indigo-100 border border-blue-200 rounded-2xl p-6">
+            <h3 className="text-lg font-bold text-black mb-4">What happens next?</h3>
             <ul className="space-y-3">
               <li className="flex items-center gap-3">
-                <div className="w-8 h-8 dark:bg-blue-900/40 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 dark:bg-blue-900/60 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
                   <Clock className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Application Review</p>
-                  <p className="text-sm text-muted-foreground">We'll review your application within 48 hours</p>
+                  <p className="font-medium text-black">Application Review</p>
+                  <p className="text-sm font-bold text-blue-200 dark:text-blue-300">We'll review your application within 48 hours</p>
                 </div>
               </li>
               <li className="flex items-center gap-3">
@@ -1467,8 +1459,8 @@ const PartnerRegistrationForm: React.FC = () => {
                   <Store className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Store Setup</p>
-                  <p className="text-sm text-muted-foreground">Your store will be created with a unique Store ID</p>
+                  <p className="font-medium text-black">Store Setup</p>
+                  <p className="text-sm font-bold text-blue-200 dark:text-blue-300">Your store will be created with a unique Store ID</p>
                 </div>
               </li>
               <li className="flex items-center gap-3">
@@ -1476,8 +1468,8 @@ const PartnerRegistrationForm: React.FC = () => {
                   <TrendingUp className="w-4 h-4 dark:text-blue-400 text-blue-600" />
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">Start Selling</p>
-                  <p className="text-sm text-muted-foreground">Access our catalog and start selling immediately</p>
+                  <p className="font-medium text-black">Start Selling</p>
+                  <p className="text-sm font-bold text-blue-200 dark:text-blue-300">Access our catalog and start selling immediately</p>
                 </div>
               </li>
             </ul>
@@ -1505,11 +1497,11 @@ const PartnerRegistrationForm: React.FC = () => {
           </p>
 
           {generatedStoreId && (
-            <div className="dark:bg-gray-700/50 dark:border-gray-600 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-8 mb-8">
+            <div className="dark:bg-blue-800/50 dark:border-blue-600 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-6 mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 dark:bg-gray-800 bg-white rounded-full shadow-sm mb-4">
                 <Store className="w-8 h-8 dark:text-blue-400 text-blue-600" />
               </div>
-              <p className="text-sm font-medium dark:text-blue-300 text-blue-800 mb-2">Your Store ID</p>
+              <p className="text-sm font-bold dark:text-blue-300 text-blue-800 mb-2">Your Store ID</p>
               <div className="text-2xl font-bold text-foreground font-mono tracking-wider">
                 {StoreIdService.formatStoreId(generatedStoreId)}
               </div>
