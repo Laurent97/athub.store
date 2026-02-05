@@ -95,7 +95,7 @@ END;
 $$;
 
 -- Update existing invitation validation function to use the new table
-CREATE OR REPLACE FUNCTION validate_invitation_code(code TEXT)
+CREATE OR REPLACE FUNCTION validate_public_invitation_code(code TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -125,7 +125,7 @@ END;
 $$;
 
 -- Function to increment invitation usage
-CREATE OR REPLACE FUNCTION increment_invitation_usage(p_code TEXT)
+CREATE OR REPLACE FUNCTION increment_public_invitation_usage(p_code TEXT)
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -146,7 +146,7 @@ END;
 $$;
 
 -- Function to generate new invitation codes and record them
-CREATE OR REPLACE FUNCTION generate_and_record_invitation_code(partner_id TEXT, partner_name TEXT)
+CREATE OR REPLACE FUNCTION generate_and_record_public_invitation_code(partner_id TEXT, partner_name TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -228,9 +228,9 @@ CREATE TRIGGER trigger_sync_invitation_on_partner_change
 
 -- Grant necessary permissions
 GRANT SELECT, INSERT, UPDATE ON public.public_invitation_codes TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION validate_invitation_code TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION increment_invitation_usage TO authenticated, anon;
-GRANT EXECUTE ON FUNCTION generate_and_record_invitation_code TO authenticated;
+GRANT EXECUTE ON FUNCTION validate_public_invitation_code TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION increment_public_invitation_usage TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION generate_and_record_public_invitation_code TO authenticated;
 GRANT EXECUTE ON FUNCTION sync_partner_invitation_codes TO authenticated;
 
 -- Initial sync - sync existing partner invitation codes

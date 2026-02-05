@@ -35,7 +35,7 @@ export class ReferralService {
 
       // Use the database validation function
       const { data: isValid, error: validationError } = await supabase
-        .rpc('validate_invitation_code', { code });
+        .rpc('validate_public_invitation_code', { code });
 
       if (validationError) {
         console.error('Validation error:', validationError);

@@ -592,7 +592,7 @@ const PartnerRegistrationForm: React.FC = () => {
       // Increment invitation code usage
       try {
         // Use the database function to increment usage
-        await supabase.rpc('increment_invitation_usage', {
+        await supabase.rpc('increment_public_invitation_usage', {
           p_code: formData.invitationCode
         });
       } catch (usageError) {
@@ -600,10 +600,19 @@ const PartnerRegistrationForm: React.FC = () => {
         // Fallback: try direct update if function doesn't exist
         try {
           if (invitationValidation?.referrer_id) {
+            // Get current usage count first
+            const { data: currentPartner } = await supabase
+              .from('partner_profiles')
+              .select('invitation_usage_count')
+              .eq('id', invitationValidation.referrer_id)
+              .single();
+            
+            const currentCount = currentPartner?.invitation_usage_count || 0;
+            
             await supabase
               .from('partner_profiles')
               .update({ 
-                invitation_usage_count: supabase.raw`COALESCE(invitation_usage_count, 0) + 1`
+                invitation_usage_count: currentCount + 1
               })
               .eq('id', invitationValidation.referrer_id);
           }
