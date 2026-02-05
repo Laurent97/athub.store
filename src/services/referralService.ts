@@ -28,13 +28,8 @@ export class ReferralService {
   // Validate invitation code
   static async validateInvitationCode(code: string): Promise<InvitationValidation> {
     try {
-      // First validate format
-      const { data: isValid, error: validationError } = await supabase
-        .rpc('validate_invitation_code', { code });
-
-      if (validationError) throw validationError;
-
-      if (!isValid) {
+      // Basic format validation
+      if (!code || code.length < 6) {
         return { valid: false, error: 'Invalid invitation code format' };
       }
 
@@ -44,6 +39,7 @@ export class ReferralService {
         .select('id, store_name, store_id, user_id')
         .eq('invitation_code', code)
         .eq('partner_status', 'approved')
+        .eq('is_active', true)
         .single();
 
       if (partnerError || !partner) {

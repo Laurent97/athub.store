@@ -141,7 +141,10 @@ export default function DashboardSettings() {
       
       const { error: uploadError } = await supabase.storage
         .from('partner-assets')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type,
+          cacheControl: '3600'
+        });
       
       if (uploadError) throw uploadError;
       

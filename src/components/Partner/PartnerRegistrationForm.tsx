@@ -462,7 +462,10 @@ const PartnerRegistrationForm: React.FC = () => {
         return await retryOperation(async () => {
           const { data, error } = await supabase.storage
             .from('partner-assets')
-            .upload(`${path}/${Date.now()}-${file.name}`, file);
+            .upload(`${path}/${Date.now()}-${file.name}`, file, {
+              contentType: file.type,
+              cacheControl: '3600'
+            });
 
           if (error) throw error;
           
@@ -588,11 +591,18 @@ const PartnerRegistrationForm: React.FC = () => {
 
       // Increment invitation code usage
       try {
-        await supabase.rpc('increment_invitation_usage', {
-          p_code: formData.invitationCode
-        });
+        // Update invitation usage count directly
+        if (invitationValidation?.referrer_id) {
+          await supabase
+            .from('partner_profiles')
+            .update({ 
+              invitation_usage_count: supabase.raw`COALESCE(invitation_usage_count, 0) + 1`
+            })
+            .eq('id', invitationValidation.referrer_id);
+        }
       } catch (usageError) {
         console.error('Error incrementing invitation usage:', usageError);
+        // Don't fail the registration if usage tracking fails
       }
 
       // Send notification to admins
