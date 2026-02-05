@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
+import { cloudinaryService } from '@/lib/cloudinary/cloudinary-service';
 
 interface MediaItem {
   id: string;
@@ -68,23 +69,14 @@ export default function MediaUploader({
   const uploadFile = async (file: File, type: 'image' | 'video'): Promise<string> => {
     validateFile(file, type);
 
-    const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '')}`;
-    const filePath = `${type}s/${fileName}`;
+    // Upload to Cloudinary
+    const uploadResult = await cloudinaryService.uploadDocument(
+      file,
+      'products', // Folder for product media
+      type
+    );
 
-    const { data, error } = await supabase.storage
-      .from('product-media')
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: false
-      });
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('product-media')
-      .getPublicUrl(data.path);
-
-    return publicUrl;
+    return uploadResult.secure_url;
   };
 
   const handleFileUpload = async (files: FileList | null, type: 'image' | 'video') => {

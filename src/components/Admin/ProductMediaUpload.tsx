@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase/client';
+import { cloudinaryService } from '../../lib/cloudinary/cloudinary-service';
 import { Upload, X, Image as ImageIcon, Video, Trash2 } from 'lucide-react';
 
 interface ProductMediaFile {
@@ -30,7 +31,7 @@ export default function ProductMediaUpload({ productId, onMediaChange, existingM
   React.useEffect(() => {
     const initialMedia = existingMedia.map(media => ({
       file: new File([], media.file_path),
-      preview: `${process.env.VITE_SUPABASE_URL}/storage/v1/object/public/product-media/${media.file_path}`,
+      preview: media.file_path, // Use Cloudinary URL directly
       type: media.media_type,
       id: media.id
     }));
@@ -71,29 +72,17 @@ export default function ProductMediaUpload({ productId, onMediaChange, existingM
         // Skip if already uploaded (existing media)
         if (mediaFile.file.size === 0) continue;
 
-        const fileExt = mediaFile.file.name.split('.').pop();
-        const fileName = `${productId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `product-media/${fileName}`;
-
         newProgress[mediaFile.id] = 0;
         setUploadProgress({ ...newProgress });
 
-        const { error } = await supabase.storage
-          .from('product-media')
-          .upload(filePath, mediaFile.file, {
-            cacheControl: '3600',
-            upsert: false
-          });
+        // Upload to Cloudinary
+        const uploadResult = await cloudinaryService.uploadDocument(
+          mediaFile.file,
+          productId,
+          mediaFile.type
+        );
 
-        if (error) {
-          console.error('Upload error:', error);
-          continue;
-        }
-
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('product-media')
-          .getPublicUrl(filePath);
+        const publicUrl = uploadResult.secure_url;
 
         // Save to database
         const { error: dbError } = await supabase
@@ -101,8 +90,8 @@ export default function ProductMediaUpload({ productId, onMediaChange, existingM
           .insert({
             product_id: productId,
             file_name: mediaFile.file.name,
-            file_path: filePath,
-            file_size: mediaFile.file.size,
+            file_path: publicUrl,
+            file_size: uploadResult.bytes,
             mime_type: mediaFile.file.type,
             media_type: mediaFile.type,
             is_primary: mediaFiles.findIndex(f => f.id === mediaFile.id) === 0, // First image is primary

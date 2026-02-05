@@ -22,8 +22,8 @@ interface CloudinaryDocument {
 }
 
 // Cloudinary configuration
-const CLOUDINARY_CLOUD_NAME = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your-cloud-name';
-const CLOUDINARY_UPLOAD_PRESET = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'loan_documents';
+const CLOUDINARY_CLOUD_NAME = process.env.VITE_CLOUDINARY_CLOUD_NAME || process.env.REACT_APP_CLOUDINARY_CLOUD_NAME || 'your-cloud-name';
+const CLOUDINARY_UPLOAD_PRESET = process.env.VITE_CLOUDINARY_UPLOAD_PRESET || process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET || 'product_media';
 
 export class CloudinaryService {
   private static instance: CloudinaryService;
@@ -40,21 +40,25 @@ export class CloudinaryService {
    */
   async uploadDocument(
     file: File, 
-    applicationId: string, 
+    folder: string, 
     documentType: string
   ): Promise<CloudinaryUploadResponse> {
     return new Promise((resolve, reject) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-      formData.append('folder', `loan_applications/${applicationId}`);
-      formData.append('context', `application_id=${applicationId};document_type=${documentType}`);
+      formData.append('folder', folder);
+      formData.append('context', `folder=${folder};type=${documentType}`);
       
       // Add tags for better organization
-      const tags = [`loan_application_${applicationId}`, documentType, 'loan_document'];
+      const tags = [`${folder}_${documentType}`, documentType, 'media'];
       formData.append('tags', tags.join(','));
 
-      fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      // Determine upload endpoint based on file type
+      const resourceType = file.type.startsWith('video/') ? 'video' : 'image';
+      const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
+
+      fetch(uploadUrl, {
         method: 'POST',
         body: formData
       })
@@ -150,25 +154,30 @@ export class CloudinaryService {
    * Validate file before upload
    */
   validateFile(file: File): { valid: boolean; error?: string } {
-    // Check file size (10MB limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    // Check file size (100MB limit for videos, 10MB for images)
+    const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return { valid: false, error: 'File size must be less than 10MB' };
+      const maxSizeMB = maxSize / (1024 * 1024);
+      return { valid: false, error: `File size must be less than ${maxSizeMB}MB` };
     }
 
     // Check file type
     const allowedTypes = [
-      'application/pdf',
+      // Images
       'image/jpeg',
-      'image/png',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'image/png', 
+      'image/webp',
+      'image/gif',
+      // Videos
+      'video/mp4',
+      'video/webm',
+      'video/quicktime'
     ];
 
     if (!allowedTypes.includes(file.type)) {
       return { 
         valid: false, 
-        error: 'Only PDF, JPEG, PNG, and Word documents are allowed' 
+        error: 'Only JPEG, PNG, WebP, GIF images and MP4, WebM, MOV videos are allowed' 
       };
     }
 
@@ -179,8 +188,9 @@ export class CloudinaryService {
    * Get file type category
    */
   getFileTypeCategory(mimeType: string): string {
-    if (mimeType === 'application/pdf') return 'pdf';
     if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType === 'application/pdf') return 'pdf';
     if (mimeType.includes('word') || mimeType.includes('document')) return 'document';
     return 'other';
   }
