@@ -74,6 +74,7 @@ export default function MediaUploader({
     const { data, error } = await supabase.storage
       .from('product-media')
       .upload(filePath, file, {
+        contentType: file.type,
         cacheControl: '3600',
         upsert: false
       });

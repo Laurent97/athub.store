@@ -81,6 +81,7 @@ export default function ProductMediaUpload({ productId, onMediaChange, existingM
         const { error } = await supabase.storage
           .from('product-media')
           .upload(filePath, mediaFile.file, {
+            contentType: mediaFile.file.type,
             cacheControl: '3600',
             upsert: false
           });
