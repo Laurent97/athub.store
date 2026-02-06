@@ -5,7 +5,7 @@
 SELECT 
     'Current Constraint Check' as result,
     conname as constraint_name,
-    consrc as constraint_definition
+    pg_get_constraintdef(oid) as constraint_definition
 FROM pg_constraint
 WHERE conrelid = 'product_categories'::regclass
     AND contype = 'c'
@@ -46,7 +46,7 @@ UPDATE product_categories SET product_type = 'commercial' WHERE slug = 'commerci
 SELECT 
     'Updated Constraint' as result,
     conname as constraint_name,
-    consrc as constraint_definition
+    pg_get_constraintdef(oid) as constraint_definition
 FROM pg_constraint
 WHERE conrelid = 'product_categories'::regclass
     AND contype = 'c'
