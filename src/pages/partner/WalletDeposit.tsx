@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import DepositForm from '../../components/Payment/DepositForm';
+import DepositFormEnhanced from '../../components/Payment/DepositForm-Enhanced';
 import { 
   ArrowLeft, 
   Shield, 
@@ -122,7 +122,7 @@ export default function WalletDeposit() {
             <p className="text-muted-foreground">Choose amount and payment method to add funds to your wallet</p>
           </CardHeader>
           <CardContent>
-            <DepositForm />
+            <DepositFormEnhanced />
           </CardContent>
         </Card>
 

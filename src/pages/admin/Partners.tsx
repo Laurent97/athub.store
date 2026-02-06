@@ -110,17 +110,53 @@ export default function AdminPartners() {
 
   const updatePartnerStatus = async (partnerId: string, status: string) => {
     try {
-      // Update partner status
-      const { error: partnerError } = await supabase
+      console.log('🔄 Starting partner status update:', { partnerId, status });
+      
+      // Validate inputs
+      if (!partnerId || !status) {
+        console.error('❌ Invalid input:', { partnerId, status });
+        alert('Error: Partner ID and status are required');
+        return { success: false, error: 'Invalid input' };
+      }
+      
+      // Validate status value
+      const validStatuses = ['pending', 'approved', 'rejected', 'suspended'];
+      if (!validStatuses.includes(status)) {
+        console.error('❌ Invalid status:', status);
+        alert(`Error: Invalid status "${status}". Must be one of: ${validStatuses.join(', ')}`);
+        return { success: false, error: 'Invalid status' };
+      }
+      
+      console.log('📤 Updating partner_profiles table...');
+      
+      // ✅ FIXED: Capture both data and error from the update
+      const { data: updateData, error: partnerError } = await supabase
         .from('partner_profiles')
-        .update({ partner_status: status })
-        .eq('id', partnerId);
-
-      if (partnerError) throw partnerError;
-
-      // Update user status
+        .update({ 
+          partner_status: status
+          // Temporarily removed updated_at due to VARCHAR(9) constraint
+          // updated_at: new Date().toISOString()
+        })
+        .eq('id', partnerId)
+        .select('id, partner_status');
+      
+      console.log('📊 Partner profiles update result:', { updateData, partnerError });
+      
+      if (partnerError) {
+        console.error('❌ Supabase error updating partner_profiles:', {
+          message: partnerError.message,
+          details: partnerError.details,
+          hint: partnerError.hint,
+          code: partnerError.code
+        });
+        return { success: false, error: partnerError.message || 'Database update failed' };
+      }
+      
+      console.log('📤 Updating users table...');
+      // Update user status if partner exists
       const partner = partners.find(p => p.id === partnerId);
-      if (partner) {
+      if (partner?.user_id) {
+        console.log('👤 Found partner, updating user status:', partner.user_id);
         const { error: userError } = await supabase
           .from('users')
           .update({ 
@@ -128,23 +164,71 @@ export default function AdminPartners() {
             updated_at: new Date().toISOString()
           })
           .eq('id', partner.user_id);
-
-        if (userError) throw userError;
+        
+        if (userError) {
+          console.error('❌ Supabase error updating users:', {
+            message: userError.message,
+            details: userError.details,
+            hint: userError.hint,
+            code: userError.code
+          });
+        }
+      } else {
+        console.log('ℹ️ No user found for partner:', partnerId);
       }
-
-      // Reload partners
+      
+      // Reload partners to get fresh data
+      console.log('🔄 Reloading partners...');
       loadPartners();
       
-      alert(`Partner status updated to ${status}`);
-    } catch (error) {
-      console.error('Error updating partner status:', error);
-      alert('Failed to update partner status');
+      // ✅ FIXED: Use the correctly named variable
+      console.log('✅ Partner status updated successfully:', updateData);
+      
+      // Show success message
+      setTimeout(() => {
+        const updatedPartner = partners.find(p => p.id === partnerId);
+        const actualStatus = updatedPartner?.partner_status || status;
+        console.log('✅ Final status check:', { partnerId, actualStatus });
+        alert(`Partner status updated to ${actualStatus}`);
+      }, 500);
+      
+      return { success: true, data: updateData };
+      
+    } catch (error: any) {
+      console.error('❌ Unexpected error in updatePartnerStatus:', error);
+      alert(`Failed to update partner status: ${error.message}`);
+      return { success: false, error: error.message };
     }
   };
 
-  const togglePartnerActiveStatus = async (partnerId: string, currentStatus: boolean) => {
-    const newStatus = currentStatus ? 'approved' : 'suspended';
-    await updatePartnerStatus(partnerId, newStatus);
+  const togglePartnerActiveStatus = async (partnerId: string, isActive: boolean) => {
+    try {
+      const newStatus = isActive ? 'suspended' : 'approved';
+      console.log(`🔄 Toggling partner ${partnerId} from ${isActive ? 'active' : 'inactive'} to ${newStatus}`);
+      
+      const result = await updatePartnerStatus(partnerId, newStatus);
+      
+      if (result.success) {
+        console.log(`✅ Successfully toggled partner status to ${newStatus}`);
+        
+        // Update local state to reflect the change immediately
+        setPartners(prevPartners => 
+          prevPartners.map(partner => 
+            partner.id === partnerId 
+              ? { ...partner, partner_status: newStatus, is_active: !isActive, updated_at: new Date().toISOString() }
+              : partner
+          )
+        );
+        
+        // Show success message
+        alert(`Partner ${newStatus === 'approved' ? 'activated' : 'suspended'} successfully`);
+      } else {
+        throw new Error(result.error || 'Failed to update partner status');
+      }
+    } catch (error: any) {
+      console.error('❌ Error toggling partner status:', error);
+      alert(`Failed to toggle partner status: ${error.message}`);
+    }
   };
 
   const updateStoreVisits = async (partnerId: string, visits: number) => {
@@ -152,8 +236,7 @@ export default function AdminPartners() {
       const { error } = await supabase
         .from('partner_profiles')
         .update({ 
-          store_visits: visits,
-          updated_at: new Date().toISOString()
+          store_visits: visits
         })
         .eq('id', partnerId);
 
@@ -172,13 +255,11 @@ export default function AdminPartners() {
       const { error } = await supabase
         .from('partner_profiles')
         .update({ 
-          rating: rating,
-          updated_at: new Date().toISOString()
+          rating: rating
         })
         .eq('id', partnerId);
-
-      if (error) throw error;
       
+      if (error) throw error;
       loadPartners();
       alert(`Partner rating updated to ${rating}`);
     } catch (error) {
@@ -488,7 +569,7 @@ export default function AdminPartners() {
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2">
                                 <button
-                                  onClick={() => togglePartnerActiveStatus(partner.id, partner.is_active)}
+                                  onClick={() => togglePartnerActiveStatus(partner.id, !partner.is_active)}
                                   title={partner.is_active ? 'Deactivate Store' : 'Activate Store'}
                                   className={`p-2 rounded-lg transition-all flex items-center gap-2 ${
                                     partner.is_active 
@@ -536,7 +617,6 @@ export default function AdminPartners() {
         </div>
       </div>
       <Footer />
-
 
       {/* Edit Partner Modal */}
       {showEditModal && selectedPartner && (
