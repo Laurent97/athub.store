@@ -40,7 +40,7 @@ const fallbackProducts = [
   {
     id: "1",
     title: "2023 Toyota Land Cruiser",
-    category: "1",
+    category: "vehicles",
     price: 78500,
     originalPrice: 85000,
     year: 2023,
@@ -56,7 +56,7 @@ const fallbackProducts = [
   {
     id: "2",
     title: "V8 Engine Assembly",
-    category: "9",
+    category: "engine-parts",
     price: 12500,
     originalPrice: 15000,
     condition: "New",
@@ -66,7 +66,7 @@ const fallbackProducts = [
   {
     id: "3",
     title: "Automatic Transmission Kit",
-    category: "10",
+    category: "transmission",
     price: 3200,
     originalPrice: 3800,
     condition: "New",
@@ -76,7 +76,7 @@ const fallbackProducts = [
   {
     id: "4",
     title: "Coilover Suspension System",
-    category: "12",
+    category: "suspension",
     price: 1800,
     originalPrice: 2200,
     condition: "New",
@@ -86,7 +86,7 @@ const fallbackProducts = [
   {
     id: "4a",
     title: "Performance Shock Absorbers",
-    category: "12",
+    category: "suspension",
     price: 650,
     originalPrice: 799,
     condition: "New",
@@ -96,7 +96,7 @@ const fallbackProducts = [
   {
     id: "4b",
     title: "Lowering Springs Kit",
-    category: "12",
+    category: "suspension",
     price: 320,
     originalPrice: 399,
     condition: "New",
@@ -106,7 +106,7 @@ const fallbackProducts = [
   {
     id: "5",
     title: "Premium Brake Kit",
-    category: "11",
+    category: "brakes",
     price: 450,
     originalPrice: 599,
     condition: "New",
@@ -446,7 +446,7 @@ const Products = () => {
           sku: p.id,
           title: p.title,
           description: '',
-          category: p.category as 'car' | 'part' | 'accessory',
+          category: p.category as 'vehicles' | 'engine-parts' | 'transmission' | 'suspension' | 'brakes' | 'electrical' | 'interior' | 'exterior' | 'performance' | 'tools-equipment' | 'maintenance' | 'commercial',
           original_price: Number(p.price || p.originalPrice || 0),
           stock_quantity: 1,
           images: p.image ? [p.image] : [],
@@ -476,7 +476,7 @@ const Products = () => {
         sku: p.id,
         title: p.title,
         description: '',
-        category: p.category as 'car' | 'part' | 'accessory',
+        category: p.category as 'vehicles' | 'engine-parts' | 'transmission' | 'suspension' | 'brakes' | 'electrical' | 'interior' | 'exterior' | 'performance' | 'tools-equipment' | 'maintenance' | 'commercial',
         original_price: p.price || p.originalPrice || 0,
         stock_quantity: 1,
         images: p.image ? [p.image] : [],
