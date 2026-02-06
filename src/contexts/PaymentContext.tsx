@@ -92,12 +92,12 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
   const getUserType = (): UserType => {
     if (!user) {
       console.log('🔍 PaymentContext: No user logged in');
-      return 'customer'; // Default fallback
+      return 'user'; // Default fallback
     }
 
     if (!userProfile) {
-      console.log('🔍 PaymentContext: User logged in but no profile data, defaulting to customer');
-      return 'customer'; // Default fallback
+      console.log('🔍 PaymentContext: User logged in but no profile data, defaulting to user');
+      return 'user'; // Default fallback
     }
 
     const userType = userProfile.user_type;
@@ -108,7 +108,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       userProfile: userProfile
     });
 
-    return userType || 'customer';
+    return userType || 'user';
   };
 
   // Fetch payment method configurations
@@ -176,8 +176,8 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
       const userType = getUserType();
       
       switch (userType) {
-        case 'customer':
-          console.log('🔍 PaymentContext: Checking customer access for', _, 'Access:', config.customer_access);
+        case 'user':
+          console.log('🔍 PaymentContext: Checking user access for', _, 'Access:', config.customer_access);
           return config.customer_access;
         case 'partner':
           console.log('🔍 PaymentContext: Checking partner access for', _, 'Access:', config.partner_access);
@@ -212,7 +212,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
     });
     
     switch (userType) {
-      case 'customer':
+      case 'user':
         return config.customer_access;
       case 'partner':
         return config.partner_access;
@@ -268,7 +268,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
         .insert({
           ...data,
           status: 'rejected',
-          rejection_reason: userType === 'customer' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
+          rejection_reason: userType === 'user' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
         });
 
       if (error) throw error;
@@ -283,7 +283,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
           amount: data.amount,
           ip_address: data.ip_address,
           user_agent: data.user_agent,
-          rejection_reason: userType === 'customer' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
+          rejection_reason: userType === 'user' ? 'customer_not_allowed_stripe' : 'security_policy_rejection'
         },
         ip_address: data.ip_address,
         user_agent: data.user_agent
@@ -540,11 +540,15 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
 
   const getBankDetails = async () => {
     try {
-      // Fetch bank details from the database
+      console.log('🔍 PaymentContext: Fetching fresh bank details...');
+      
+      // Fetch bank details from the database with cache-busting
       const { data, error } = await supabase
         .from('bank_details')
         .select('*')
         .eq('is_active', true)
+        .order('updated_at', { ascending: false })
+        .limit(1)
         .single();
 
       if (error) {
@@ -567,6 +571,7 @@ export const PaymentProvider: React.FC<PaymentProviderProps> = ({ children }) =>
         throw error;
       }
 
+      console.log('🔍 PaymentContext: Bank details fetched successfully:', data);
       return data;
     } catch (error) {
       console.error('Error in getBankDetails:', error);

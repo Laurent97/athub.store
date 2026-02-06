@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Copy, CheckCircle, Clock, Building, Upload, AlertCircle, FileText } from 'lucide-react';
+import { Copy, CheckCircle, Clock, Building, Upload, AlertCircle, FileText, RefreshCw } from 'lucide-react';
 import { usePayment } from '@/contexts/PaymentContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -51,6 +51,24 @@ export const BankAccountPaymentForm: React.FC<BankAccountPaymentFormProps> = ({
 
   useEffect(() => {
     loadBankDetails();
+    
+    // Set up periodic refresh to check for updated bank details
+    const interval = setInterval(() => {
+      loadBankDetails();
+    }, 30000); // Refresh every 30 seconds
+
+    // Set up visibility change listener to refresh when tab becomes active
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadBankDetails();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   const loadBankDetails = async () => {
@@ -172,9 +190,21 @@ export const BankAccountPaymentForm: React.FC<BankAccountPaymentFormProps> = ({
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="h-5 w-5" />
-              Bank Transfer Details
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Bank Transfer Details
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={loadBankDetails}
+                disabled={loading}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
             </CardTitle>
             <CardDescription>
               Use these details to make an international wire transfer from your bank account
