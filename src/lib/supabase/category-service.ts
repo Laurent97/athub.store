@@ -105,5 +105,58 @@ export const categoryService = {
       { id: "all", label: "All Products 150K+ Items" },
       ...formattedCategories
     ];
+  },
+
+  /**
+   * Get categories with actual product counts from products table
+   */
+  async getCategoriesWithProductCounts(): Promise<{ id: string; label: string; productCount: number }[]> {
+    // Get categories with actual product counts
+    const { data, error } = await supabase
+      .from('product_categories')
+      .select(`
+        id,
+        name,
+        slug,
+        item_count
+      `)
+      .eq('is_active', true)
+      .eq('level', 1)
+      .order('sort_order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching categories with counts:', error);
+      return [];
+    }
+
+    // Get actual product counts for each category
+    const categoriesWithCounts = await Promise.all(
+      (data as Category[]).map(async (category) => {
+        const { count: productCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .eq('category', category.slug);
+
+        return {
+          id: category.slug,
+          label: category.name,
+          productCount: productCount || 0
+        };
+      })
+    );
+
+    // Filter to only include categories that have products
+    const categoriesWithProducts = categoriesWithCounts.filter(cat => cat.productCount > 0);
+
+    // Add "All Products" at the beginning
+    return [
+      { 
+        id: "all", 
+        label: "All Products", 
+        productCount: categoriesWithProducts.reduce((sum, cat) => sum + cat.productCount, 0)
+      },
+      ...categoriesWithProducts
+    ];
   }
 };

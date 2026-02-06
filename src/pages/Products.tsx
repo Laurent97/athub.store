@@ -317,7 +317,7 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; label: string; productCount: number }[]>([]);
   
   const categoryFilter = searchParams.get("category") || "all";
   const sortBy = searchParams.get("sort") || "popular";
@@ -330,53 +330,21 @@ const Products = () => {
 
   const loadCategories = async () => {
     try {
-      console.log('=== LOADING CATEGORIES FROM DATABASE ===');
-      const dbCategories = await categoryService.getFormattedCategories();
-      console.log('Categories from database:', dbCategories);
+      console.log('=== LOADING CATEGORIES WITH PRODUCT COUNTS ===');
+      const categoriesWithCounts = await categoryService.getCategoriesWithProductCounts();
+      console.log('Categories with product counts:', categoriesWithCounts);
       
-      if (dbCategories && dbCategories.length > 0) {
-        console.log('Setting categories from database:', dbCategories);
-        setCategories(dbCategories);
+      if (categoriesWithCounts && categoriesWithCounts.length > 0) {
+        console.log('Setting categories with product counts:', categoriesWithCounts);
+        setCategories(categoriesWithCounts);
       } else {
-        console.log('No categories found in database, using fallback categories');
-        // Use comprehensive automotive categories as fallback
-        const fallbackCategories = [
-          { id: "all", label: "All Products 150K+ Items" },
-          { id: "vehicles", label: "Vehicles 15K+ Products" },
-          { id: "engine-parts", label: "Engine Parts 25K+ Products" },
-          { id: "transmission", label: "Transmission 8K+ Products" },
-          { id: "suspension", label: "Suspension 12K+ Products" },
-          { id: "brakes", label: "Brakes 10K+ Products" },
-          { id: "electrical", label: "Electrical 18K+ Products" },
-          { id: "interior", label: "Interior 20K+ Products" },
-          { id: "exterior", label: "Exterior 14K+ Products" },
-          { id: "performance", label: "Performance 6K+ Products" },
-          { id: "tools-equipment", label: "Tools & Equipment 5K+ Products" },
-          { id: "maintenance", label: "Maintenance 22K+ Products" },
-          { id: "commercial", label: "Commercial 7K+ Products" }
-        ];
-        setCategories(fallbackCategories);
+        console.log('No categories found with products, showing only All Products');
+        setCategories([{ id: "all", label: "All Products", productCount: 0 }]);
       }
     } catch (error) {
       console.error('Error loading categories:', error);
       console.log('Using fallback categories due to error');
-      // Use fallback categories on error
-      const fallbackCategories = [
-        { id: "all", label: "All Products 150K+ Items" },
-        { id: "vehicles", label: "Vehicles 15K+ Products" },
-        { id: "engine-parts", label: "Engine Parts 25K+ Products" },
-        { id: "transmission", label: "Transmission 8K+ Products" },
-        { id: "suspension", label: "Suspension 12K+ Products" },
-        { id: "brakes", label: "Brakes 10K+ Products" },
-        { id: "electrical", label: "Electrical 18K+ Products" },
-        { id: "interior", label: "Interior 20K+ Products" },
-        { id: "exterior", label: "Exterior 14K+ Products" },
-        { id: "performance", label: "Performance 6K+ Products" },
-        { id: "tools-equipment", label: "Tools & Equipment 5K+ Products" },
-        { id: "maintenance", label: "Maintenance 22K+ Products" },
-        { id: "commercial", label: "Commercial 7K+ Products" }
-      ];
-      setCategories(fallbackCategories);
+      setCategories([{ id: "all", label: "All Products", productCount: 0 }]);
     }
   };
 
@@ -571,30 +539,42 @@ const Products = () => {
             </div>
           </div>
 
-          {/* Categories Tabs */}
-          <div className="flex flex-wrap gap-2 mb-8">
-            {/* Debug: Log categories being rendered */}
-            {(() => {
-              console.log('=== RENDERING CATEGORIES TABS ===');
-              console.log('Categories array:', categories);
-              console.log('Categories length:', categories.length);
-              console.log('Current category filter:', categoryFilter);
-              return null;
-            })()}
-            
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => handleCategoryChange(category.id)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  categoryFilter === category.id
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-              >
-                {category.label}
-              </button>
-            ))}
+          {/* Shop by Category - Redesigned */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Shop by Category</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {categories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryChange(category.id)}
+                  className={`group relative overflow-hidden rounded-lg border transition-all ${
+                    categoryFilter === category.id
+                      ? "border-accent bg-accent/10 shadow-md"
+                      : "border-border bg-card hover:border-accent/50 hover:shadow-sm"
+                  }`}
+                >
+                  <div className="p-4 text-center">
+                    <div className="mb-2">
+                      {getCategoryIcon(category.id)}
+                    </div>
+                    <h3 className="font-medium text-sm text-foreground mb-1">
+                      {category.label}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      {category.productCount > 0 
+                        ? `${category.productCount}+ Products`
+                        : "Coming Soon"
+                      }
+                    </p>
+                  </div>
+                  {categoryFilter === category.id && (
+                    <div className="absolute top-2 right-2">
+                      <div className="w-2 h-2 bg-accent rounded-full"></div>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Products Grid */}
