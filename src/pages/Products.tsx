@@ -11,6 +11,9 @@ import PublicLayout from "@/components/PublicLayout";
 const getCategoryIcon = (categoryId: string) => {
   const iconMap: { [key: string]: React.ReactNode } = {
     car: <Car className="w-6 h-6" />,
+    cars: <Car className="w-6 h-6" />,
+    vehicle: <Car className="w-6 h-6" />,
+    vehicles: <Car className="w-6 h-6" />,
     engine: <Gauge className="w-6 h-6" />,
     transmission: <Settings className="w-6 h-6" />,
     suspension: <Car className="w-6 h-6" />,
@@ -22,7 +25,12 @@ const getCategoryIcon = (categoryId: string) => {
     tools: <Wrench className="w-6 h-6" />,
     maintenance: <Droplets className="w-6 h-6" />,
     part: <Hammer className="w-6 h-6" />,
+    parts: <Hammer className="w-6 h-6" />,
     accessory: <Star className="w-6 h-6" />,
+    accessories: <Star className="w-6 h-6" />,
+    tires: <Car className="w-6 h-6" />,
+    wheels: <Car className="w-6 h-6" />,
+    battery: <Battery className="w-6 h-6" />,
   };
   return iconMap[categoryId] || <Car className="w-6 h-6" />;
 };
@@ -290,7 +298,21 @@ const Products = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categories, setCategories] = useState<{ id: string; label: string }[]>([
-    { id: "all", label: "All Products" }
+    { id: "all", label: "All Products" },
+    { id: "car", label: "Cars & Vehicles" },
+    { id: "parts", label: "Parts & Components" },
+    { id: "accessories", label: "Accessories" },
+    { id: "engine", label: "Engine" },
+    { id: "transmission", label: "Transmission" },
+    { id: "suspension", label: "Suspension" },
+    { id: "brakes", label: "Brakes" },
+    { id: "electrical", label: "Electrical" },
+    { id: "interior", label: "Interior" },
+    { id: "exterior", label: "Exterior" },
+    { id: "performance", label: "Performance" },
+    { id: "maintenance", label: "Maintenance" },
+    { id: "tires", label: "Tires & Wheels" },
+    { id: "tools", label: "Tools & Equipment" }
   ]);
   
   const categoryFilter = searchParams.get("category") || "all";
