@@ -14,7 +14,6 @@ import WhatsAppFloating from "@/components/CustomerService/WhatsAppFloating";
 import AppLayout from "@/components/Layout/AppLayout";
 import { AdminOnlyRoute, PartnerOnlyRoute } from "@/components/RoleBasedRoute";
 import Index from "./pages/Index";
-import Products from "./pages/Products-Enhanced";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
@@ -105,8 +104,6 @@ const App = () => (
                   <AppLayout>
                     <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/products-legacy" element={<Products />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />

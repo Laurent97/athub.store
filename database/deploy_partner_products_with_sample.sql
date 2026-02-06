@@ -102,17 +102,19 @@ SELECT
     pp.id as partner_id,
     'PARTNER-' || UPPER(substring(md5(random()::text), 1, 8)) as sku,
     CASE 
-        WHEN pp.store_name LIKE '%suspension%' THEN 'Premium Coilover Suspension Kit'
-        WHEN pp.store_name LIKE '%engine%' THEN 'High-Performance Engine Oil'
-        WHEN pp.store_name LIKE '%brake%' THEN 'Ceramic Brake Pads'
-        ELSE 'Universal Auto Parts Kit'
+        WHEN pp.store_category LIKE '%suspension%' OR pp.store_name LIKE '%suspension%' THEN 'Premium Coilover Suspension Kit'
+        WHEN pp.store_category LIKE '%engine%' OR pp.store_name LIKE '%engine%' THEN 'High-Performance Engine Oil'
+        WHEN pp.store_category LIKE '%brake%' OR pp.store_name LIKE '%brake%' THEN 'Ceramic Brake Pads'
+        WHEN pp.store_category LIKE '%part%' OR pp.store_name LIKE '%part%' THEN 'Universal Auto Parts Kit'
+        ELSE 'Automotive Parts Package'
     END as name,
     'High-quality automotive parts for professional use' as description,
     CASE 
-        WHEN pp.store_name LIKE '%suspension%' THEN 'suspension'
-        WHEN pp.store_name LIKE '%engine%' THEN 'engine'
-        WHEN pp.store_name LIKE '%brake%' THEN 'brakes'
-        ELSE 'parts'
+        WHEN pp.store_category LIKE '%suspension%' OR pp.store_name LIKE '%suspension%' THEN '12'
+        WHEN pp.store_category LIKE '%engine%' OR pp.store_name LIKE '%engine%' THEN '9'
+        WHEN pp.store_category LIKE '%brake%' OR pp.store_name LIKE '%brake%' THEN '11'
+        WHEN pp.store_category LIKE '%part%' OR pp.store_name LIKE '%part%' THEN '3'
+        ELSE '3'
     END as category,
     (random() * 500 + 100)::numeric(10,2) as price,
     (random() * 600 + 150)::numeric(10,2) as original_price,
