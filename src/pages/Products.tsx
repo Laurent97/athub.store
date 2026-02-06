@@ -3,36 +3,36 @@ import { Link, useSearchParams } from "react-router-dom";
 import { Search, Filter, Grid, List, ChevronDown, Star, MapPin, Heart, SlidersHorizontal, X, Loader2, Car, Wrench, Battery, Settings, PaintBucket, Gauge, Hammer, Droplets } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { productService } from "@/lib/supabase/product-service";
+import { productService } from '@/lib/supabase/product-service';
+import { categoryService } from '@/lib/supabase/category-service';
 import type { Product } from "@/lib/types";
 import PublicLayout from "@/components/PublicLayout";
 
 // Category icon mapping
 const getCategoryIcon = (categoryId: string) => {
   const iconMap: { [key: string]: React.ReactNode } = {
-    car: <Car className="w-6 h-6" />,
-    cars: <Car className="w-6 h-6" />,
-    vehicle: <Car className="w-6 h-6" />,
+    all: <Grid className="w-6 h-6" />,
     vehicles: <Car className="w-6 h-6" />,
-    engine: <Gauge className="w-6 h-6" />,
-    transmission: <Settings className="w-6 h-6" />,
-    suspension: <Car className="w-6 h-6" />,
-    brakes: <Settings className="w-6 h-6" />,
+    cars: <Car className="w-6 h-6" />,
+    'engine-parts': <Settings className="w-6 h-6" />,
+    engine: <Settings className="w-6 h-6" />,
+    transmission: <Gauge className="w-6 h-6" />,
+    suspension: <Wrench className="w-6 h-6" />,
+    brakes: <Hammer className="w-6 h-6" />,
     electrical: <Battery className="w-6 h-6" />,
     interior: <PaintBucket className="w-6 h-6" />,
-    exterior: <Car className="w-6 h-6" />,
+    exterior: <PaintBucket className="w-6 h-6" />,
     performance: <Gauge className="w-6 h-6" />,
-    tools: <Wrench className="w-6 h-6" />,
+    'tools-equipment': <Hammer className="w-6 h-6" />,
+    tools: <Hammer className="w-6 h-6" />,
     maintenance: <Droplets className="w-6 h-6" />,
-    part: <Hammer className="w-6 h-6" />,
-    parts: <Hammer className="w-6 h-6" />,
-    accessory: <Star className="w-6 h-6" />,
+    commercial: <Car className="w-6 h-6" />,
     accessories: <Star className="w-6 h-6" />,
     tires: <Car className="w-6 h-6" />,
     wheels: <Car className="w-6 h-6" />,
     battery: <Battery className="w-6 h-6" />,
   };
-  return iconMap[categoryId] || <Car className="w-6 h-6" />;
+  return iconMap[categoryId] || <Grid className="w-6 h-6" />;
 };
 
 // Keep demo products as fallback if Supabase is not configured
@@ -317,26 +317,7 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [categories, setCategories] = useState<{ id: string; label: string }[]>([
-    { id: "all", label: "All Products" },
-    { id: "1", label: "Car" },
-    { id: "2", label: "Vehicle" },
-    { id: "3", label: "Part" },
-    { id: "4", label: "Accessory" },
-    { id: "5", label: "Tool" },
-    { id: "6", label: "Fluid" },
-    { id: "7", label: "Tire" },
-    { id: "8", label: "Battery" },
-    { id: "9", label: "Engine" },
-    { id: "10", label: "Transmission" },
-    { id: "11", label: "Brake" },
-    { id: "12", label: "Suspension" },
-    { id: "13", label: "Electrical" },
-    { id: "14", label: "Interior" },
-    { id: "15", label: "Exterior" },
-    { id: "16", label: "Performance" },
-    { id: "17", label: "Other" }
-  ]);
+  const [categories, setCategories] = useState<{ id: string; label: string }[]>([]);
   
   const categoryFilter = searchParams.get("category") || "all";
   const sortBy = searchParams.get("sort") || "popular";
@@ -350,61 +331,50 @@ const Products = () => {
   const loadCategories = async () => {
     try {
       console.log('=== LOADING CATEGORIES FROM DATABASE ===');
-      const filterOptions = await productService.getFilterOptions();
-      console.log('Filter options result:', filterOptions);
-      console.log('Categories from database:', filterOptions.categories);
+      const dbCategories = await categoryService.getFormattedCategories();
+      console.log('Categories from database:', dbCategories);
       
-      let finalCategories = [{ id: "all", label: "All Products" }];
-      
-      if (filterOptions.categories && filterOptions.categories.length > 0) {
-        const dbCategories = filterOptions.categories.map((cat: string) => ({
-          id: cat.toLowerCase().replace(/\s+/g, '-'),
-          label: cat.charAt(0).toUpperCase() + cat.slice(1)
-        }));
-        console.log('Formatted categories:', dbCategories);
-        finalCategories = [{ id: "all", label: "All Products" }, ...dbCategories];
+      if (dbCategories && dbCategories.length > 0) {
+        console.log('Setting categories from database:', dbCategories);
+        setCategories(dbCategories);
       } else {
         console.log('No categories found in database, using fallback categories');
         // Use comprehensive automotive categories as fallback
-        finalCategories = [
-          { id: "all", label: "All Products" },
-          { id: "engine", label: "Engine" },
-          { id: "transmission", label: "Transmission" },
-          { id: "suspension", label: "Suspension" },
-          { id: "brakes", label: "Brakes" },
-          { id: "electrical", label: "Electrical" },
-          { id: "interior", label: "Interior" },
-          { id: "exterior", label: "Exterior" },
-          { id: "performance", label: "Performance" },
-          { id: "tools", label: "Tools" },
-          { id: "maintenance", label: "Maintenance" },
-          { id: "car", label: "Vehicles" },
-          { id: "part", label: "Parts" },
-          { id: "accessory", label: "Accessories" },
+        const fallbackCategories = [
+          { id: "all", label: "All Products 150K+ Items" },
+          { id: "vehicles", label: "Vehicles 15K+ Products" },
+          { id: "engine-parts", label: "Engine Parts 25K+ Products" },
+          { id: "transmission", label: "Transmission 8K+ Products" },
+          { id: "suspension", label: "Suspension 12K+ Products" },
+          { id: "brakes", label: "Brakes 10K+ Products" },
+          { id: "electrical", label: "Electrical 18K+ Products" },
+          { id: "interior", label: "Interior 20K+ Products" },
+          { id: "exterior", label: "Exterior 14K+ Products" },
+          { id: "performance", label: "Performance 6K+ Products" },
+          { id: "tools-equipment", label: "Tools & Equipment 5K+ Products" },
+          { id: "maintenance", label: "Maintenance 22K+ Products" },
+          { id: "commercial", label: "Commercial 7K+ Products" }
         ];
+        setCategories(fallbackCategories);
       }
-      
-      console.log('Final categories state:', finalCategories);
-      setCategories(finalCategories);
     } catch (error) {
       console.error('Error loading categories:', error);
       console.log('Using fallback categories due to error');
-      // Use comprehensive automotive categories as fallback
+      // Use fallback categories on error
       const fallbackCategories = [
-        { id: "all", label: "All Products" },
-        { id: "engine", label: "Engine" },
-        { id: "transmission", label: "Transmission" },
-        { id: "suspension", label: "Suspension" },
-        { id: "brakes", label: "Brakes" },
-        { id: "electrical", label: "Electrical" },
-        { id: "interior", label: "Interior" },
-        { id: "exterior", label: "Exterior" },
-        { id: "performance", label: "Performance" },
-        { id: "tools", label: "Tools" },
-        { id: "maintenance", label: "Maintenance" },
-        { id: "car", label: "Vehicles" },
-        { id: "part", label: "Parts" },
-        { id: "accessory", label: "Accessories" },
+        { id: "all", label: "All Products 150K+ Items" },
+        { id: "vehicles", label: "Vehicles 15K+ Products" },
+        { id: "engine-parts", label: "Engine Parts 25K+ Products" },
+        { id: "transmission", label: "Transmission 8K+ Products" },
+        { id: "suspension", label: "Suspension 12K+ Products" },
+        { id: "brakes", label: "Brakes 10K+ Products" },
+        { id: "electrical", label: "Electrical 18K+ Products" },
+        { id: "interior", label: "Interior 20K+ Products" },
+        { id: "exterior", label: "Exterior 14K+ Products" },
+        { id: "performance", label: "Performance 6K+ Products" },
+        { id: "tools-equipment", label: "Tools & Equipment 5K+ Products" },
+        { id: "maintenance", label: "Maintenance 22K+ Products" },
+        { id: "commercial", label: "Commercial 7K+ Products" }
       ];
       setCategories(fallbackCategories);
     }
