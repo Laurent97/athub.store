@@ -25,7 +25,7 @@ ORDER BY sort_order;
 
 -- Step 3: Create sample products for each category if none exist
 -- Engine Parts
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'ENG-' || gen_random_uuid(),
@@ -35,6 +35,7 @@ SELECT
     15000.00,
     12500.00,
     5,
+    ARRAY['https://images.unsplash.com/photo-1557823217-3a406371c764?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -45,7 +46,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Transmission
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'TRANS-' || gen_random_uuid(),
@@ -55,6 +56,7 @@ SELECT
     3500.00,
     3200.00,
     8,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -65,7 +67,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Suspension
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'SUSP-' || gen_random_uuid(),
@@ -75,6 +77,7 @@ SELECT
     2200.00,
     1800.00,
     10,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -85,7 +88,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Brakes
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'BRAKE-' || gen_random_uuid(),
@@ -95,6 +98,7 @@ SELECT
     600.00,
     450.00,
     15,
+    ARRAY['https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -105,7 +109,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Electrical
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'ELEC-' || gen_random_uuid(),
@@ -115,6 +119,7 @@ SELECT
     350.00,
     289.00,
     20,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -125,7 +130,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Interior
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'INT-' || gen_random_uuid(),
@@ -135,6 +140,7 @@ SELECT
     800.00,
     650.00,
     12,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -145,7 +151,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Exterior
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'EXT-' || gen_random_uuid(),
@@ -155,6 +161,7 @@ SELECT
     1200.00,
     999.00,
     6,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -165,7 +172,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Performance
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'PERF-' || gen_random_uuid(),
@@ -175,6 +182,7 @@ SELECT
     4500.00,
     3800.00,
     4,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -185,7 +193,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Tools & Equipment
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'TOOL-' || gen_random_uuid(),
@@ -195,6 +203,7 @@ SELECT
     400.00,
     320.00,
     25,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -205,7 +214,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Maintenance
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'MAINT-' || gen_random_uuid(),
@@ -215,6 +224,7 @@ SELECT
     80.00,
     65.00,
     50,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -225,7 +235,7 @@ WHERE NOT EXISTS (
 ) = 0;
 
 -- Commercial
-INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, is_active, created_at, updated_at)
+INSERT INTO products (id, sku, title, description, category, original_price, sale_price, stock_quantity, images, is_active, created_at, updated_at)
 SELECT 
     gen_random_uuid(),
     'COMM-' || gen_random_uuid(),
@@ -235,6 +245,7 @@ SELECT
     500.00,
     420.00,
     8,
+    ARRAY['https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&auto=format&fit=crop'],
     true,
     NOW(),
     NOW()
@@ -249,6 +260,7 @@ SELECT
     '=== CATEGORY VERIFICATION ===' as test,
     pc.slug as category,
     pc.name as category_name,
+    pc.sort_order,
     COUNT(p.id) as actual_product_count,
     CASE 
         WHEN COUNT(p.id) > 0 THEN '✅ HAS PRODUCTS'
@@ -257,7 +269,7 @@ SELECT
 FROM product_categories pc
 LEFT JOIN products p ON pc.slug = p.category AND p.is_active = true
 WHERE pc.level = 1
-GROUP BY pc.slug, pc.name
+GROUP BY pc.slug, pc.name, pc.sort_order
 ORDER BY pc.sort_order;
 
 -- Step 5: Success message
