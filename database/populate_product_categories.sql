@@ -4,40 +4,26 @@
 -- Step 1: Clear existing data (if any)
 DELETE FROM product_categories;
 
--- Step 2: Insert main automotive categories
-INSERT INTO product_categories (id, parent_id, name, slug, product_type, level, sort_order, is_active) VALUES
--- Main Categories (Level 1)
-(gen_random_uuid(), NULL, 'Cars', 'cars', 'cars', 1, 1, true),
-(gen_random_uuid(), NULL, 'Parts', 'parts', 'parts', 1, 2, true),
-(gen_random_uuid(), NULL, 'Accessories', 'accessories', 'accessories', 1, 3, true),
+-- Step 2: Insert categories that match frontend exactly
+INSERT INTO product_categories (id, parent_id, name, slug, product_type, level, sort_order, item_count, is_active) VALUES
+-- Main Category (All Products)
+(gen_random_uuid(), NULL, 'All Products', 'all', 'parts', 1, 0, 150000, true),
 
--- Cars Subcategories (Level 2)
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'Sedans', 'sedans', 'cars', 2, 1, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'SUVs', 'suvs', 'cars', 2, 2, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'Trucks', 'trucks', 'cars', 2, 3, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'Sports Cars', 'sports-cars', 'cars', 2, 4, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'Electric Vehicles', 'electric-vehicles', 'cars', 2, 5, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'cars'), 'Hybrid Vehicles', 'hybrid-vehicles', 'cars', 2, 6, true),
+-- Vehicles Category
+(gen_random_uuid(), NULL, 'Vehicles', 'vehicles', 'cars', 1, 1, 15000, true),
 
--- Parts Subcategories (Level 2)
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Engine Parts', 'engine-parts', 'parts', 2, 1, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Transmission', 'transmission', 'parts', 2, 2, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Suspension', 'suspension', 'parts', 2, 3, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Brakes', 'brakes', 'parts', 2, 4, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Electrical', 'electrical', 'parts', 2, 5, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Exterior', 'exterior', 'parts', 2, 6, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Interior', 'interior', 'parts', 2, 7, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Performance', 'performance', 'parts', 2, 8, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Maintenance', 'maintenance', 'parts', 2, 9, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'parts'), 'Tools & Equipment', 'tools-equipment', 'parts', 2, 10, true),
-
--- Accessories Subcategories (Level 2)
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Electronics', 'electronics', 'accessories', 2, 1, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Interior Accessories', 'interior-accessories', 'accessories', 2, 2, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Exterior Accessories', 'exterior-accessories', 'accessories', 2, 3, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Safety & Security', 'safety-security', 'accessories', 2, 4, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Lighting', 'lighting', 'accessories', 2, 5, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'accessories'), 'Audio & Entertainment', 'audio-entertainment', 'accessories', 2, 6, true);
+-- Parts Categories (Level 1)
+(gen_random_uuid(), NULL, 'Engine Parts', 'engine-parts', 'parts', 1, 2, 25000, true),
+(gen_random_uuid(), NULL, 'Transmission', 'transmission', 'parts', 1, 3, 8000, true),
+(gen_random_uuid(), NULL, 'Suspension', 'suspension', 'parts', 1, 4, 12000, true),
+(gen_random_uuid(), NULL, 'Brakes', 'brakes', 'parts', 1, 5, 10000, true),
+(gen_random_uuid(), NULL, 'Electrical', 'electrical', 'parts', 1, 6, 18000, true),
+(gen_random_uuid(), NULL, 'Interior', 'interior', 'parts', 1, 7, 20000, true),
+(gen_random_uuid(), NULL, 'Exterior', 'exterior', 'parts', 1, 8, 14000, true),
+(gen_random_uuid(), NULL, 'Performance', 'performance', 'parts', 1, 9, 6000, true),
+(gen_random_uuid(), NULL, 'Tools & Equipment', 'tools-equipment', 'parts', 1, 10, 5000, true),
+(gen_random_uuid(), NULL, 'Maintenance', 'maintenance', 'parts', 1, 11, 22000, true),
+(gen_random_uuid(), NULL, 'Commercial', 'commercial', 'parts', 1, 12, 7000, true);
 
 -- Step 3: Update item counts based on existing products
 UPDATE product_categories pc SET item_count = (
