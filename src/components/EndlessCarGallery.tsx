@@ -181,22 +181,13 @@ const EndlessCarGallery = () => {
       const result = await productService.getProducts(pageNum, 12); // Load 12 products per page
       
       if (result.data) {
-        // Filter for cars and vehicles primarily
-        const carProducts = result.data.filter((product: any) => 
-          product.category === 'vehicles' || 
-          product.category === 'cars' ||
-          product.category === 'car' || 
-          product.category === 'vehicle' ||
-          product.category_path?.category_name?.toLowerCase().includes('car') ||
-          product.category_path?.category_name?.toLowerCase().includes('vehicle') ||
-          product.title?.toLowerCase().includes('car') ||
-          product.title?.toLowerCase().includes('vehicle')
-        );
+        // Show all products for homepage (not just vehicles)
+        const allProducts = result.data;
         
         if (isInitial) {
-          setProducts(carProducts);
+          setProducts(allProducts);
         } else {
-          setProducts(prev => [...prev, ...carProducts]);
+          setProducts(prev => [...prev, ...allProducts]);
         }
         
         setTotalProducts(result.total || result.data.length);
@@ -291,7 +282,7 @@ const EndlessCarGallery = () => {
           <div className="flex justify-center items-center py-12">
             <div className="flex items-center gap-3 text-muted-foreground">
               <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-lg font-medium">Loading more vehicles...</span>
+              <span className="text-lg font-medium">Loading more products...</span>
             </div>
           </div>
         )}
@@ -300,10 +291,10 @@ const EndlessCarGallery = () => {
         {!hasMore && products.length > 0 && (
           <div className="text-center py-12">
             <div className="text-muted-foreground mb-4">
-              You've reached the end of our vehicle collection
+              You've reached the end of our product collection
             </div>
             <div className="text-sm text-muted-foreground">
-              Showing {products.length} of {totalProducts} vehicles
+              Showing {products.length} of {totalProducts} products
             </div>
           </div>
         )}
@@ -312,7 +303,7 @@ const EndlessCarGallery = () => {
         {!loading && products.length === 0 && (
           <div className="text-center py-12">
             <div className="text-muted-foreground mb-4">
-              No vehicles available at the moment
+              No products available at the moment
             </div>
             <div className="text-sm text-muted-foreground">
               Please check back later or browse our other categories
