@@ -106,7 +106,7 @@ const fallbackProducts = [
   {
     id: "5",
     title: "Premium Brake Kit",
-    category: "brakes",
+    category: "11",
     price: 450,
     originalPrice: 599,
     condition: "New",
