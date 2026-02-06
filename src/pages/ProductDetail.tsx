@@ -33,7 +33,7 @@ const ProductDetail = () => {
     if (id) {
       loadProduct();
     } else {
-      navigate('/products');
+      navigate('/');
     }
   }, [id]);
 
@@ -50,7 +50,7 @@ const ProductDetail = () => {
           description: 'The product you are looking for does not exist.',
           variant: 'destructive',
         });
-        navigate('/products');
+        navigate('/');
       } else {
         setProduct(data);
         if (data.images && data.images.length > 0) {
@@ -64,7 +64,7 @@ const ProductDetail = () => {
         description: 'Failed to load product details.',
         variant: 'destructive',
       });
-      navigate('/products');
+      navigate('/');
     } finally {
       setLoading(false);
     }
