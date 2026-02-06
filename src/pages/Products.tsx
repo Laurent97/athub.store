@@ -40,7 +40,7 @@ const fallbackProducts = [
   {
     id: "1",
     title: "2023 Toyota Land Cruiser",
-    category: "car",
+    category: "1",
     price: 78500,
     originalPrice: 85000,
     year: 2023,
@@ -56,7 +56,7 @@ const fallbackProducts = [
   {
     id: "2",
     title: "V8 Engine Assembly",
-    category: "engine",
+    category: "9",
     price: 12500,
     originalPrice: 15000,
     condition: "New",
@@ -66,7 +66,7 @@ const fallbackProducts = [
   {
     id: "3",
     title: "Automatic Transmission Kit",
-    category: "transmission",
+    category: "10",
     price: 3200,
     originalPrice: 3800,
     condition: "New",
@@ -76,7 +76,7 @@ const fallbackProducts = [
   {
     id: "4",
     title: "Coilover Suspension System",
-    category: "suspension",
+    category: "12",
     price: 1800,
     originalPrice: 2200,
     condition: "New",
@@ -86,7 +86,7 @@ const fallbackProducts = [
   {
     id: "4a",
     title: "Performance Shock Absorbers",
-    category: "suspension",
+    category: "12",
     price: 650,
     originalPrice: 799,
     condition: "New",
@@ -96,7 +96,7 @@ const fallbackProducts = [
   {
     id: "4b",
     title: "Lowering Springs Kit",
-    category: "suspension",
+    category: "12",
     price: 320,
     originalPrice: 399,
     condition: "New",
@@ -319,20 +319,23 @@ const Products = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [categories, setCategories] = useState<{ id: string; label: string }[]>([
     { id: "all", label: "All Products" },
-    { id: "car", label: "Cars & Vehicles" },
-    { id: "parts", label: "Parts & Components" },
-    { id: "accessories", label: "Accessories" },
-    { id: "engine", label: "Engine" },
-    { id: "transmission", label: "Transmission" },
-    { id: "suspension", label: "Suspension" },
-    { id: "brakes", label: "Brakes" },
-    { id: "electrical", label: "Electrical" },
-    { id: "interior", label: "Interior" },
-    { id: "exterior", label: "Exterior" },
-    { id: "performance", label: "Performance" },
-    { id: "maintenance", label: "Maintenance" },
-    { id: "tires", label: "Tires & Wheels" },
-    { id: "tools", label: "Tools & Equipment" }
+    { id: "1", label: "Car" },
+    { id: "2", label: "Vehicle" },
+    { id: "3", label: "Part" },
+    { id: "4", label: "Accessory" },
+    { id: "5", label: "Tool" },
+    { id: "6", label: "Fluid" },
+    { id: "7", label: "Tire" },
+    { id: "8", label: "Battery" },
+    { id: "9", label: "Engine" },
+    { id: "10", label: "Transmission" },
+    { id: "11", label: "Brake" },
+    { id: "12", label: "Suspension" },
+    { id: "13", label: "Electrical" },
+    { id: "14", label: "Interior" },
+    { id: "15", label: "Exterior" },
+    { id: "16", label: "Performance" },
+    { id: "17", label: "Other" }
   ]);
   
   const categoryFilter = searchParams.get("category") || "all";
