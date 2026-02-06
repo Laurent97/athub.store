@@ -183,6 +183,8 @@ const EndlessCarGallery = () => {
       if (result.data) {
         // Filter for cars and vehicles primarily
         const carProducts = result.data.filter((product: any) => 
+          product.category === 'vehicles' || 
+          product.category === 'cars' ||
           product.category === 'car' || 
           product.category === 'vehicle' ||
           product.category_path?.category_name?.toLowerCase().includes('car') ||
