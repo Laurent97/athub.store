@@ -446,16 +446,27 @@ const Products = () => {
         { field: sortField, order: sortOrder }
       );
 
-      if (result.data) {
+      if (result.data && result.data.length > 0) {
+        console.log('=== PRODUCTS FROM DATABASE ===');
+        console.log('Found products:', result.data.length);
+        console.log('Category filter:', categoryFilter);
         setProducts(result.data);
-        setTotal(result.total);
+        setTotal(result.total || result.data.length);
       } else {
-        // Fallback to demo data if Supabase is not configured
+        console.log('=== USING FALLBACK DATA ===');
+        console.log('Category filter:', categoryFilter);
+        // Fallback to demo data if Supabase is not configured or no data
         const filtered = fallbackProducts.filter((product: any) => {
-          if (categoryFilter !== "all" && product.category !== categoryFilter) return false;
+          const productCategory = product.category || '';
+          console.log('Checking product:', product.title, 'Category:', productCategory, 'Filter:', categoryFilter);
+          if (categoryFilter !== "all" && productCategory !== categoryFilter) {
+            console.log('Filtering out product:', product.title, 'Product category:', productCategory, 'Filter:', categoryFilter);
+            return false;
+          }
           if (searchQuery && !product.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
           return true;
         });
+        console.log('Filtered fallback products:', filtered.length);
         // Convert fallback products to Product format
         const convertedProducts: Product[] = filtered.map((p: any) => ({
           id: p.id,
