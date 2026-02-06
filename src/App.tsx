@@ -104,6 +104,7 @@ const App = () => (
                   <AppLayout>
                     <Routes>
           <Route path="/" element={<Index />} />
+              <Route path="/products" element={<Navigate to="/" replace />} />
               <Route path="/products/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
