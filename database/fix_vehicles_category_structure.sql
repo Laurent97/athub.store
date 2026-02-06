@@ -43,10 +43,30 @@ WHERE NOT EXISTS (
 
 -- Step 4: Add other vehicle subcategories
 INSERT INTO product_categories (id, parent_id, name, slug, product_type, level, sort_order, item_count, is_active)
-VALUES
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'vehicles'), 'Trucks', 'trucks', 'vehicles', 2, 2, 4000, true),
-(gen_random_uuid(), (SELECT id FROM product_categories WHERE slug = 'vehicles'), 'SUVs', 'suvs', 'vehicles', 2, 3, 3000, true)
-ON CONFLICT (slug) DO NOTHING;
+SELECT 
+    gen_random_uuid(),
+    (SELECT id FROM product_categories WHERE slug = 'vehicles'),
+    'Trucks',
+    'trucks',
+    'vehicles',
+    2,
+    2,
+    4000,
+    true
+WHERE NOT EXISTS (SELECT 1 FROM product_categories WHERE slug = 'trucks');
+
+INSERT INTO product_categories (id, parent_id, name, slug, product_type, level, sort_order, item_count, is_active)
+SELECT 
+    gen_random_uuid(),
+    (SELECT id FROM product_categories WHERE slug = 'vehicles'),
+    'SUVs',
+    'suvs',
+    'vehicles',
+    2,
+    3,
+    3000,
+    true
+WHERE NOT EXISTS (SELECT 1 FROM product_categories WHERE slug = 'suvs');
 
 -- Step 5: Update the main vehicles item count to include subcategories
 UPDATE product_categories 
