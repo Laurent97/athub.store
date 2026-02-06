@@ -232,17 +232,6 @@ const ProductDetail = () => {
             {/* Product Info */}
             <div className="space-y-6">
               <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className="uppercase">
-                    {product.category}
-                  </Badge>
-                  <Badge
-                    variant={product.condition === 'new' ? 'default' : 'secondary'}
-                    className="capitalize"
-                  >
-                    {product.condition}
-                  </Badge>
-                </div>
                 <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                   {product.title}
                 </h1>
@@ -251,7 +240,6 @@ const ProductDetail = () => {
                     <Star className="w-4 h-4 fill-accent text-accent" />
                     <span className="font-medium">4.9</span>
                   </div>
-                  <span className="text-sm">SKU: {product.sku}</span>
                 </div>
               </div>
 
@@ -260,39 +248,34 @@ const ProductDetail = () => {
                 <div className="text-4xl font-bold text-foreground mb-2">
                   {formatPrice(product.original_price)}
                 </div>
-                {product.year && (
-                  <div className="text-muted-foreground">
-                    <span className="font-medium">Year:</span> {product.year}
-                    {product.mileage && (
-                      <>
-                        {' • '}
-                        <span className="font-medium">Mileage:</span> {product.mileage.toLocaleString()} km
-                      </>
-                    )}
-                  </div>
-                )}
               </div>
 
-              {/* Key Details for Cars */}
-              {product.category === 'car' && (
-                <div className="p-4 bg-secondary rounded-lg space-y-2">
+              {/* Product Details */}
+              <div className="p-4 bg-secondary rounded-lg space-y-3">
+                {product.make && (
                   <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>Available in Japan</span>
+                    <span className="text-muted-foreground">Make:</span> {product.make}
                   </div>
-                  {product.make && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Make:</span> {product.make}
-                      {product.model && (
-                        <>
-                          {' • '}
-                          <span className="text-muted-foreground">Model:</span> {product.model}
-                        </>
-                      )}
-                    </div>
-                  )}
+                )}
+                {product.model && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Model:</span> {product.model}
+                  </div>
+                )}
+                {product.year && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Year:</span> {product.year}
+                  </div>
+                )}
+                {product.mileage && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-muted-foreground">Mileage:</span> {product.mileage.toLocaleString()} km
+                  </div>
+                )}
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">SKU:</span> {product.sku}
                 </div>
-              )}
+              </div>
 
               {/* Quantity & Actions */}
               <div className="space-y-4 pt-4 border-t border-border">
