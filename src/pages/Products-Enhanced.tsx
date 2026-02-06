@@ -638,7 +638,7 @@ export default function ProductsEnhanced() {
   };
 
   const handleSubcategoryChange = (subcategory: string) => {
-    if (subcategory === "") {
+    if (subcategory === "all") {
       searchParams.delete("subcategory");
     } else {
       searchParams.set("subcategory", subcategory);
@@ -713,7 +713,7 @@ export default function ProductsEnhanced() {
                     <SelectValue placeholder="Subcategory" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Subcategories</SelectItem>
+                    <SelectItem value="all">All Subcategories</SelectItem>
                     {subcategories.map((subcategory) => (
                       <SelectItem key={subcategory.id} value={subcategory.name}>
                         {subcategory.name}
