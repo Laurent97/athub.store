@@ -280,7 +280,6 @@ const EndlessCarGallery = () => {
               key={product.id}
               ref={index === products.length - 3 ? lastProductRef : undefined}
               className="animate-slide-up-delayed"
-              style={{ '--animation-delay': `${index * 0.05}s` } as React.CSSProperties}
             >
               <ProductCard product={product} />
             </div>
