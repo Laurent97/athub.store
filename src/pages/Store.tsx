@@ -21,7 +21,7 @@ interface PartnerStore {
 }
 
 export default function Store() {
-  const { storeSlug } = useParams();
+  const { storeSlug } = useParams<{ storeSlug?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addItem } = useCart();

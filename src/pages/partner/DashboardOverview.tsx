@@ -103,7 +103,7 @@ export default function DashboardOverview() {
   }, [user?.id, parentStats]);
   
   // Use analytics data if available, otherwise fall back to parent stats
-  const stats = analyticsData || {
+  const stats = {
     totalRevenue: parentStats?.totalEarnings || parentStats?.totalRevenue || 0,
     totalOrders: parentStats?.totalOrders || 0,
     avgOrderValue: parentStats?.averageOrderValue || parentStats?.avgOrderValue || 0,
@@ -117,6 +117,10 @@ export default function DashboardOverview() {
     storeVisits: parentStats?.storeVisits?.allTime || 1000,
     storeRating: partner?.store_rating || 0,
     creditScore: partner?.store_credit_score || 750,
+    today: analyticsData?.today || 0,
+    allTime: analyticsData?.allTime || 0,
+    thisWeek: analyticsData?.thisWeek || 0,
+    thisMonth: analyticsData?.thisMonth || 0,
     commissionRate: partner?.commission_rate || 10
   };
   

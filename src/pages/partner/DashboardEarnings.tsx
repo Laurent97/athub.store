@@ -274,9 +274,9 @@ export default function DashboardEarnings() {
 
       // 7. Set final earnings state
       const finalEarnings = {
-        thisMonth: thisMonthEarnings,
-        lastMonth: lastMonthEarnings,
-        thisYear: thisYearEarnings,
+        thisMonth: monthlyEarningsData.thisMonth,
+        lastMonth: monthlyEarningsData.lastMonth,
+        thisYear: monthlyEarningsData.thisYear,
         allTime: totalCommission,
         availableBalance: walletBalance,
         pendingBalance: pendingBalance,
