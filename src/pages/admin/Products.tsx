@@ -364,51 +364,49 @@ export default function AdminProducts() {
                                     setNewProduct({
                                       sku: product.sku,
                                       title: product.title,
-                                      description: '',
+                                      description: product.description || '',
                                       category: product.category,
                                       make: product.make || '',
                                       model: product.model || '',
-                                      year: 2024,
-                                      mileage: 0,
-                                      condition: 'new',
+                                      year: product.year || 2024,
+                                      mileage: product.mileage || 0,
+                                      condition: product.condition || 'new',
                                       original_price: product.original_price,
                                       stock_quantity: product.stock_quantity,
                                     });
                                     setShowEditModal(true);
                                   }}
                                   className="px-2 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded text-xs font-semibold transition-all"
+                                  title="Edit product details"
                                 >
                                   📝 Edit
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    setSelectedProduct(product);
-                                    setNewProduct({
-                                      sku: product.sku,
-                                      title: product.title,
-                                      description: '',
-                                      category: product.category,
-                                      make: product.make || '',
-                                      model: product.model || '',
-                                      year: 2024,
-                                      mileage: 0,
-                                      condition: 'new',
-                                      original_price: product.original_price,
-                                      stock_quantity: product.stock_quantity,
-                                    });
-                                    setShowEditModal(true);
-                                  }}
+                                  onClick={() => toggleStockStatus(product.id, product.stock_quantity)}
                                   className="px-2 py-1 bg-amber-100 text-amber-800 hover:bg-amber-200 rounded text-xs font-semibold transition-all"
+                                  title="Toggle stock status (sets to 10 or 0)"
                                 >
-                                  📦 Stock Status
+                                  📦 Stock
+                                </button>
+                                <button
+                                  onClick={() => toggleProductStatus(product.id, product.is_active)}
+                                  className={`px-2 py-1 rounded text-xs font-semibold transition-all ${
+                                    product.is_active
+                                      ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                      : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                  }`}
+                                  title="Toggle active/inactive status"
+                                >
+                                  {product.is_active ? '✅ Active' : '❌ Inactive'}
                                 </button>
                                 <button
                                   onClick={() => {
-                                    if (confirm(`Are you sure you want to delete "${product.title}"?`)) {
+                                    if (confirm(`Are you sure you want to delete "${product.title}"? This action cannot be undone.`)) {
                                       deleteProduct(product.id);
                                     }
                                   }}
                                   className="px-2 py-1 bg-red-100 text-red-800 hover:bg-red-200 rounded text-xs font-semibold transition-all"
+                                  title="Delete product permanently"
                                 >
                                   🗑️ Delete
                                 </button>
