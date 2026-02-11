@@ -48,35 +48,54 @@ export default function Store() {
       if (storeError) {
         console.error('Store error from partner_profiles:', storeError);
         
-        // Fallback: try to create a mock store object for demonstration
-        console.log('Creating fallback store data for:', storeSlug);
-        const fallbackStore = {
-          id: 'fallback-' + storeSlug,
-          user_id: 'demo-user',
-          store_name: storeSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          store_slug: storeSlug,
-          description: 'Demo store for demonstration purposes',
-          logo_url: null,
-          banner_url: null,
-          contact_email: 'demo@example.com',
-          contact_phone: '+1234567890',
-          website: null,
-          address: 'Demo Address',
-          city: 'Demo City',
-          country: 'Demo Country',
-          is_active: true,
-          partner_status: 'approved',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        };
+        // Fallback: try to find partner by slug matching
+        console.log('Trying to find partner by slug:', storeSlug);
+        const { data: allPartners } = await supabase
+          .from('partner_profiles')
+          .select('id, user_id, store_name, store_slug')
+          .eq('partner_status', 'approved')
+          .eq('is_active', true);
         
-        setStore(fallbackStore);
+        // Find matching partner by slug or create fallback
+        const matchingPartner = allPartners?.find(p => 
+          p.store_slug === storeSlug || 
+          p.store_name?.toLowerCase().replace(/\s+/g, '-') === storeSlug
+        );
+        
+        if (matchingPartner) {
+          console.log('Found matching partner:', matchingPartner);
+          setStore(matchingPartner);
+        } else {
+          // Create fallback store object for demonstration
+          console.log('Creating fallback store data for:', storeSlug);
+          const fallbackStore = {
+            id: 'fallback-' + storeSlug,
+            user_id: 'demo-user',
+            store_name: storeSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            store_slug: storeSlug,
+            description: 'Demo store for demonstration purposes',
+            logo_url: null,
+            banner_url: null,
+            contact_email: 'demo@example.com',
+            contact_phone: '+1234567890',
+            website: null,
+            address: 'Demo Address',
+            city: 'Demo City',
+            country: 'Demo Country',
+            is_active: true,
+            partner_status: 'approved',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          };
+          
+          setStore(fallbackStore);
+        }
       } else {
         setStore(storeData);
       }
 
       // Load partner products using the dedicated service
-      const partnerId = storeData?.user_id || 'demo-user';
+      const partnerId = storeData?.user_id || matchingPartner?.user_id || 'demo-user';
       console.log('Loading products for partner:', partnerId);
       
       const productsData = await getPartnerProductsWithDetails(partnerId);

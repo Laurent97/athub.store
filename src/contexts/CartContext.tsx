@@ -51,11 +51,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
               description,
               stock_quantity,
               original_price
-            ),
-            partner_products!inner(
-              id,
-              selling_price,
-              partner_id
             )
           `);
 
