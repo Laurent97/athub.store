@@ -79,39 +79,8 @@ export default function Store() {
       const partnerId = storeData?.user_id || 'demo-user';
       console.log('Loading products for partner:', partnerId);
       
-      let productsData = await getPartnerProductsWithDetails(partnerId);
+      const productsData = await getPartnerProductsWithDetails(partnerId);
       console.log('Loaded partner products:', productsData.length, 'products');
-      
-      // If no partner products found, try to show all products as fallback
-      if (productsData.length === 0) {
-        console.log('No partner products found, loading all products as fallback');
-        try {
-          const { data: allProducts, error: allProductsError } = await supabase
-            .from('products')
-            .select('*')
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(20);
-
-          if (!allProductsError && allProducts) {
-            // Convert to PartnerProduct format
-            productsData = allProducts.map(product => ({
-              id: `fallback-${product.id}`,
-              partner_id: partnerId,
-              product_id: product.id,
-              selling_price: product.original_price,
-              profit_margin: 0,
-              is_active: true,
-              created_at: product.created_at || new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-              product
-            }));
-            console.log('Created fallback products:', productsData.length, 'products');
-          }
-        } catch (fallbackError) {
-          console.error('Error loading fallback products:', fallbackError);
-        }
-      }
       
       setProducts(productsData);
 
@@ -263,8 +232,9 @@ export default function Store() {
         {products.length === 0 ? (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">No Products Available</h3>
-            <p className="text-muted-foreground">This store hasn't added any products yet.</p>
+            <h3 className="text-lg font-semibold text-foreground mb-2">No Products in Partner Inventory</h3>
+            <p className="text-muted-foreground">This partner hasn't added any products to their store yet.</p>
+            <p className="text-muted-foreground text-sm mt-2">Partners can add products through their dashboard to make them available here.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
