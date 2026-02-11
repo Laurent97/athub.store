@@ -65,13 +65,24 @@ export default function DashboardInventory() {
   const loadInventory = async () => {
     setLoading(true);
     try {
-      // Use auth.uid() instead of userProfile.id to get the actual user ID
+      // Get the user from auth
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) {
         throw new Error('Not authenticated');
       }
 
-      const partnerId = user.id;
+      // Get the partner_profile ID from partner_profiles table (foreign key references partner_profiles.id)
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profileError || !partnerProfile?.id) {
+        throw new Error('Partner profile not found. Please complete your partner registration.');
+      }
+      
+      const partnerId = partnerProfile.id;
       
       console.log('Loading inventory for partner ID:', partnerId);
 

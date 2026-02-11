@@ -76,13 +76,28 @@ export default function DashboardProducts() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
 
+      // Get the partner_profile ID from partner_profiles table
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profileError || !partnerProfile?.id) {
+        console.warn('Partner profile not found');
+        setPartnerProducts([]);
+        return;
+      }
+      
+      const partnerId = partnerProfile.id;
+
       const { data, error } = await supabase
         .from('partner_products')
         .select(`
           *,
           product:products(*)
         `)
-        .eq('partner_id', user.id);
+        .eq('partner_id', partnerId);
       if (error) throw error;
       setPartnerProducts(data || []);
     } catch (err) {
@@ -99,14 +114,26 @@ export default function DashboardProducts() {
     try {
       const sellingPrice = basePrice * (1 + profitMargin / 100);
       
-      // Use auth.uid() instead of userProfile.id to get the actual user ID
-      // (userProfile.id might be overwritten when merging with partner_profiles)
+      // Get the user ID from auth
       const { data: { user } } = await supabase.auth.getUser();
-      const partnerId = user?.id;
+      const userId = user?.id;
       
-      if (!partnerId) {
+      if (!userId) {
         throw new Error('User authentication failed. Please log in again.');
       }
+      
+      // Get the partner_profile ID from partner_profiles table (foreign key references partner_profiles.id, not users.id)
+      const { data: partnerProfile, error: profileError } = await supabase
+        .from('partner_profiles')
+        .select('id')
+        .eq('user_id', userId)
+        .single();
+      
+      if (profileError || !partnerProfile?.id) {
+        throw new Error('Partner profile not found. Please complete your partner registration to add products.');
+      }
+      
+      const partnerId = partnerProfile.id;
       
       const payload = {
         product_id: selectedProduct.id,
@@ -116,8 +143,8 @@ export default function DashboardProducts() {
         is_active: true
       };
 
-      console.log('User Profile:', userProfile);
-      console.log('Auth User ID:', partnerId);
+      console.log('User ID:', userId);
+      console.log('Partner Profile ID:', partnerId);
       console.log('Adding product with payload:', payload);
 
       const { data, error } = await supabase

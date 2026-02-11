@@ -44,15 +44,15 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-primary text-primary-foreground">
+    <footer className="bg-primary text-primary-foreground safe-pad-bottom">
       {/* Features Bar */}
       <div className="border-b border-primary-foreground/10">
         <div className="container-wide py-6">
-          <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+          <div className="grid-features justify-center items-center">
             {features.map((feature, index) => (
               <div key={feature.text} className="flex items-center gap-3">
                 <feature.icon className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium">{feature.text}</span>
+                <span className="text-small-responsive font-medium">{feature.text}</span>
               </div>
             ))}
           </div>
@@ -61,43 +61,43 @@ const Footer = () => {
 
       {/* Main Footer */}
       <div className="container-wide py-16">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <div className="grid-products gap-8">
           {/* Brand Column */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="col-span-1 sm:col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-6">
               <div className="w-10 h-10 rounded-lg bg-accent flex items-center justify-center">
                 <span className="text-accent-foreground font-black text-xl">A</span>
               </div>
-              <span className="font-bold text-xl">AutoTradeHub</span>
+              <span className="font-bold h4-responsive">AutoTradeHub</span>
             </Link>
-            <p className="text-sm text-primary-foreground/70 mb-6">
+            <p className="text-small-responsive text-primary-foreground/70 mb-6">
               Your trusted global marketplace for vehicles, parts, and accessories.
             </p>
             
             {/* Contact Info */}
             <div className="space-y-3 text-sm">
-              <a href="mailto:support@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
-                <Mail className="w-4 h-4" />
-                support@athub.store
+              <a href="mailto:support@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors link-touch">
+                <Mail className="w-5 h-5" />
+                <span className="text-small-responsive">support@athub.store</span>
               </a>
-              <a href="mailto:admin@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
-                <Mail className="w-4 h-4" />
-                admin@athub.store
+              <a href="mailto:admin@athub.store" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors link-touch">
+                <Mail className="w-5 h-5" />
+                <span className="text-small-responsive">admin@athub.store</span>
               </a>
-              <a href="tel:+447719924445" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors">
-                <Phone className="w-4 h-4" />
-                +44 7719 924445
+              <a href="tel:+447719924445" className="flex items-center gap-2 text-primary-foreground/70 hover:text-accent transition-colors link-touch">
+                <Phone className="w-5 h-5" />
+                <span className="text-small-responsive">+44 7719 924445</span>
               </a>
             </div>
           </div>
 
           {/* Products */}
           <div>
-            <h4 className="font-semibold mb-4">Products</h4>
+            <h4 className="h4-responsive font-semibold mb-4">Products</h4>
             <ul className="space-y-3">
               {footerLinks.products.map((link, index) => (
                 <li key={`${link.name}-${index}`}>
-                  <Link to={link.href} className="text-sm text-primary-foreground/70 hover:text-accent transition-colors">
+                  <Link to={link.href} className="text-small-responsive text-primary-foreground/70 hover:text-accent transition-colors link-touch">
                     {link.name}
                   </Link>
                 </li>
@@ -107,11 +107,11 @@ const Footer = () => {
 
           {/* Company */}
           <div>
-            <h4 className="font-semibold mb-4">Company</h4>
+            <h4 className="h4-responsive font-semibold mb-4">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link, index) => (
                 <li key={`${link.name}-${index}`}>
-                  <Link to={link.href} className="text-sm text-primary-foreground/70 hover:text-accent transition-colors">
+                  <Link to={link.href} className="text-small-responsive text-primary-foreground/70 hover:text-accent transition-colors link-touch">
                     {link.name}
                   </Link>
                 </li>
@@ -121,11 +121,11 @@ const Footer = () => {
 
           {/* Support */}
           <div>
-            <h4 className="font-semibold mb-4">Support</h4>
+            <h4 className="h4-responsive font-semibold mb-4">Support</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link, index) => (
                 <li key={`${link.name}-${index}`}>
-                  <Link to={link.href} className="text-sm text-primary-foreground/70 hover:text-accent transition-colors">
+                  <Link to={link.href} className="text-small-responsive text-primary-foreground/70 hover:text-accent transition-colors link-touch">
                     {link.name}
                   </Link>
                 </li>
@@ -140,12 +140,12 @@ const Footer = () => {
       <div className="border-t border-primary-foreground/10">
         <div className="container-wide py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-primary-foreground/60">
+            <p className="text-small-responsive text-primary-foreground/60">
               © {new Date().getFullYear()} AutoTradeHub. All rights reserved.
             </p>
             <div className="flex gap-6">
               {footerLinks.legal.map((link, index) => (
-                <Link key={`${link.name}-${index}`} to={link.href} className="text-sm text-primary-foreground/60 hover:text-accent transition-colors">
+                <Link key={`${link.name}-${index}`} to={link.href} className="text-small-responsive text-primary-foreground/60 hover:text-accent transition-colors link-touch">
                   {link.name}
                 </Link>
               ))}

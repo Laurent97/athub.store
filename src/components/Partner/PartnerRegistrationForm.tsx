@@ -1,34 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { supabase } from '@/lib/supabase/client';
 import { 
   Store, Mail, Phone, MapPin, Gift, CheckCircle, AlertCircle, FileText, Globe,
-  Upload, Image as ImageIcon, X, ChevronRight, ChevronLeft, Building, User,
-  Shield, DollarSign, TrendingUp, Users, Award, Sparkles, Lock, Eye, EyeOff,
-  Calendar, Clock, CreditCard, Package, Truck, Headphones, MessageSquare,
-  FileCheck, Download, Search, Loader2, Camera, Palette, Layout, Wand2
+  ChevronRight, ChevronLeft, Building, User, Loader2, Camera, Palette, TrendingUp
 } from 'lucide-react';
+import ImageUploadField from './ImageUploadField';
+import { optimizeImage, cleanupBlobUrl, validateImageFile } from '../../utils/imageOptimization';
 import StoreIdBadge from '../../components/ui/StoreIdBadge';
 import StoreIdService from '../../services/storeIdService';
 
-// Wizard Steps
+// Wizard Steps - only import icons that are used
 const WIZARD_STEPS = [
   { id: 1, title: 'Business Info', icon: Store, description: 'Basic store details' },
   { id: 2, title: 'Store Design', icon: Palette, description: 'Branding & visuals' },
   { id: 3, title: 'Contact Details', icon: User, description: 'Contact information' },
   { id: 4, title: 'Invitation Code', icon: Gift, description: 'Referral entry' },
-  { id: 5, title: 'Review & Submit', icon: FileCheck, description: 'Final verification' }
+  { id: 5, title: 'Review & Submit', icon: FileText, description: 'Final verification' }
 ];
 
-// Business Types
+// Business Types - static constant array
 const BUSINESS_TYPES = [
   { value: 'individual', label: 'Individual/Sole Proprietor', icon: User },
-  { value: 'partnership', label: 'Partnership', icon: Users },
+  { value: 'partnership', label: 'Partnership', icon: Building },
   { value: 'llc', label: 'LLC (Limited Liability Company)', icon: Building },
   { value: 'corporation', label: 'Corporation', icon: Building },
-  { value: 'nonprofit', label: 'Non-Profit Organization', icon: Award }
+  { value: 'nonprofit', label: 'Non-Profit Organization', icon: Building }
 ];
 
 // Store Categories
@@ -92,8 +91,6 @@ interface FormData {
 const PartnerRegistrationForm: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const fileInputLogoRef = useRef<HTMLInputElement>(null);
-  const fileInputBannerRef = useRef<HTMLInputElement>(null);
   
   // Authentication check - redirect to login if not authenticated
   useEffect(() => {
@@ -174,6 +171,18 @@ const PartnerRegistrationForm: React.FC = () => {
     receiveUpdates: true
   });
 
+  // Clean up blob URLs on component unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (formData.storeLogoPreview) {
+        cleanupBlobUrl(formData.storeLogoPreview);
+      }
+      if (formData.storeBannerPreview) {
+        cleanupBlobUrl(formData.storeBannerPreview);
+      }
+    };
+  }, [formData.storeLogoPreview, formData.storeBannerPreview]);
+
   // Validate invitation code
   useEffect(() => {
     const validateInvitationCode = async () => {
@@ -238,57 +247,53 @@ const PartnerRegistrationForm: React.FC = () => {
     return () => clearTimeout(timeoutId);
   }, [formData.invitationCode]);
 
-  // Handle file uploads
-  const handleFileUpload = (type: 'logo' | 'banner', file: File) => {
+  // Optimized file upload handler using image optimization utilities
+  const handleFileUpload = useCallback((type: 'logo' | 'banner', file: File) => {
     if (!file) return;
 
-    // Validate file size (logo: 2MB, banner: 5MB)
+    // Validate file
     const maxSize = type === 'logo' ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError(`${type === 'logo' ? 'Logo' : 'Banner'} size should be less than ${type === 'logo' ? '2MB' : '5MB'}`);
+    const validation = validateImageFile(file, maxSize);
+    
+    if (!validation.valid) {
+      setError(validation.error || 'Invalid file');
       return;
     }
 
-    // Validate file type
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml'];
-    if (!validTypes.includes(file.type)) {
-      setError('Please upload a valid image (JPEG, PNG, WebP, SVG)');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onloadstart = () => {
-      setUploadProgress(prev => ({ ...prev, [type]: 10 }));
-    };
-    reader.onprogress = (e) => {
-      if (e.lengthComputable) {
-        const progress = Math.round((e.loaded / e.total) * 90) + 10;
-        setUploadProgress(prev => ({ ...prev, [type]: progress }));
-      }
-    };
-    reader.onloadend = () => {
-      setUploadProgress(prev => ({ ...prev, [type]: 100 }));
-      setTimeout(() => setUploadProgress(prev => ({ ...prev, [type]: 0 })), 1000);
-    };
-    reader.onload = (e) => {
-      const previewUrl = e.target?.result as string;
-      
+    // Set error to null for successful uploads
+    setError('');
+    
+    // Optimize and create blob URL for efficient preview
+    optimizeImage(file, {
+      maxWidth: type === 'logo' ? 256 : 1024,
+      maxHeight: type === 'logo' ? 256 : 400,
+      quality: 0.85,
+      format: 'webp'
+    }).then(({ file: optimizedFile, preview: blobUrl }) => {
       setFormData(prev => ({
         ...prev,
-        [type === 'logo' ? 'storeLogo' : 'storeBanner']: file,
-        [type === 'logo' ? 'storeLogoPreview' : 'storeBannerPreview']: previewUrl
+        [type === 'logo' ? 'storeLogo' : 'storeBanner']: optimizedFile,
+        [type === 'logo' ? 'storeLogoPreview' : 'storeBannerPreview']: blobUrl
       }));
-    };
-    reader.readAsDataURL(file);
-  };
+    }).catch(err => {
+      setError(`Failed to process ${type}: ${err.message}`);
+    });
+  }, []);
 
-  const removeFile = (type: 'logo' | 'banner') => {
+  const removeFile = useCallback((type: 'logo' | 'banner') => {
+    // Clean up blob URL to prevent memory leaks
+    const previewKey = type === 'logo' ? 'storeLogoPreview' : 'storeBannerPreview';
+    const previewUrl = formData[previewKey as keyof FormData] as string;
+    if (previewUrl) {
+      cleanupBlobUrl(previewUrl);
+    }
+
     setFormData(prev => ({
       ...prev,
       [type === 'logo' ? 'storeLogo' : 'storeBanner']: null,
       [type === 'logo' ? 'storeLogoPreview' : 'storeBannerPreview']: ''
     }));
-  };
+  }, [formData]);
 
   // Handle step navigation
   const goToNextStep = () => {
@@ -640,16 +645,16 @@ const PartnerRegistrationForm: React.FC = () => {
 
   // STEP 1: Business Information
   const renderStep1 = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full mb-4">
           <Store className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-6">Business Information</h2>
-        <p className="text-muted-foreground">Tell us about your store</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground mb-6">Business Information</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Tell us about your store</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-foreground mb-2">
@@ -775,79 +780,27 @@ const PartnerRegistrationForm: React.FC = () => {
 
   // STEP 2: Store Design
   const renderStep2 = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full mb-4">
           <Palette className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Store Design</h2>
-        <p className="text-muted-foreground">Customize your store's appearance</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Store Design</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Customize your store's appearance</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Logo Upload */}
         <div className="space-y-6">
-          <div className="dark:bg-gray-800/95 dark:border-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
-            <input
-              type="file"
-              ref={fileInputLogoRef}
-              onChange={(e) => e.target.files?.[0] && handleFileUpload('logo', e.target.files[0])}
-              className="hidden"
-              accept="image/*"
-            />
-            
-            {formData.storeLogoPreview ? (
-              <div className="relative">
-                <img
-                  src={formData.storeLogoPreview}
-                  alt="Logo preview"
-                  className="w-48 h-48 mx-auto rounded-xl object-contain"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeFile('logo')}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                {uploadProgress.logo > 0 && uploadProgress.logo < 100 && (
-                  <div className="mt-4">
-                    <div className="h-2 dark:bg-gray-700 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 transition-all duration-300"
-                        style={{ width: `${uploadProgress.logo}%` }}
-                      />
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">Uploading...</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div 
-                className="cursor-pointer"
-                onClick={() => fileInputLogoRef.current?.click()}
-              >
-                <div className="inline-flex items-center justify-center w-20 h-20 dark:bg-gray-700 bg-gray-100 rounded-full mb-4">
-                  <Upload className="w-8 h-8 dark:text-gray-400 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Upload Store Logo
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  PNG, JPG, SVG or WebP • Max 2MB
-                </p>
-                <button
-                  type="button"
-                  className="px-6 py-2 dark:bg-gray-700 dark:hover:bg-gray-600 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
-                >
-                  Choose File
-                </button>
-                <p className="text-xs dark:text-gray-500 text-gray-500 mt-4">
-                  Recommended: 512×512px, transparent background
-                </p>
-              </div>
-            )}
-          </div>
+          <ImageUploadField
+            label="Store Logo"
+            description="PNG, JPG, SVG or WebP • Max 2MB"
+            preview={formData.storeLogoPreview}
+            maxSize={2 * 1024 * 1024}
+            onFileSelect={(file) => handleFileUpload('logo', file)}
+            onRemove={() => removeFile('logo')}
+            uploadProgress={uploadProgress.logo}
+          />
 
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-semibold text-foreground mb-4">Color Scheme</h3>
@@ -895,64 +848,15 @@ const PartnerRegistrationForm: React.FC = () => {
 
         {/* Banner Upload */}
         <div className="space-y-6">
-          <div className="dark:bg-gray-800/95 dark:border-gray-600 bg-white border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-blue-400 transition-colors">
-            <input
-              type="file"
-              ref={fileInputBannerRef}
-              onChange={(e) => e.target.files?.[0] && handleFileUpload('banner', e.target.files[0])}
-              className="hidden"
-              accept="image/*"
-            />
-            
-            {formData.storeBannerPreview ? (
-              <div className="relative">
-                <img
-                  src={formData.storeBannerPreview}
-                  alt="Banner preview"
-                  className="w-full h-48 object-cover rounded-xl"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeFile('banner')}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                {uploadProgress.banner > 0 && uploadProgress.banner < 100 && (
-                  <div className="mt-4">
-                    <div className="h-2 dark:bg-gray-700 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-blue-500 transition-all duration-300"
-                        style={{ width: `${uploadProgress.banner}%` }}
-                      />
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">Uploading...</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div 
-                className="cursor-pointer"
-                onClick={() => fileInputBannerRef.current?.click()}
-              >
-                <div className="inline-flex items-center justify-center w-20 h-20 dark:bg-gray-700 bg-gray-100 rounded-full mb-4">
-                  <ImageIcon className="w-8 h-8 dark:text-gray-400 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">
-                  Upload Store Banner
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  PNG or JPG • Max 5MB • 1920×400px recommended
-                </p>
-                <button
-                  type="button"
-                  className="px-6 py-2 dark:bg-gray-700 dark:hover:bg-gray-600 bg-gray-900 text-white rounded-lg hover:bg-black transition-colors"
-                >
-                  Choose File
-                </button>
-              </div>
-            )}
-          </div>
+          <ImageUploadField
+            label="Store Banner"
+            description="PNG or JPG • Max 5MB • 1920×400px recommended"
+            preview={formData.storeBannerPreview}
+            maxSize={5 * 1024 * 1024}
+            onFileSelect={(file) => handleFileUpload('banner', file)}
+            onRemove={() => removeFile('banner')}
+            uploadProgress={uploadProgress.banner}
+          />
 
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="font-semibold text-foreground mb-4">Preview</h3>
@@ -975,8 +879,8 @@ const PartnerRegistrationForm: React.FC = () => {
                 )}
                 
                 {/* Logo Overlay Preview */}
-                <div className="absolute -bottom-6 left-6">
-                  <div className="w-16 h-16 dark:bg-gray-800/95 dark:border-gray-600 bg-white rounded-xl border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center">
+                <div className="absolute -bottom-6 left-4 sm:left-6">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 dark:bg-gray-800/95 dark:border-gray-600 bg-white rounded-xl border-4 border-white dark:border-gray-800 shadow-lg flex items-center justify-center">
                     {formData.storeLogoPreview ? (
                       <img
                         src={formData.storeLogoPreview}
@@ -1019,16 +923,16 @@ const PartnerRegistrationForm: React.FC = () => {
 
   // STEP 3: Contact Details
   const renderStep3 = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full mb-4">
           <User className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Contact Details</h2>
-        <p className="text-muted-foreground">How customers can reach you</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Contact Details</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">How customers can reach you</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="space-y-6">
           <div>
             <label className="block text-sm font-semibold text-foreground mb-2">
@@ -1115,7 +1019,7 @@ const PartnerRegistrationForm: React.FC = () => {
             <label className="block text-sm font-semibold text-foreground mb-2">
               Location *
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <input
                   type="text"
@@ -1143,16 +1047,16 @@ const PartnerRegistrationForm: React.FC = () => {
 
   // STEP 4: Invitation Code
   const renderStep4 = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-full mb-4">
           <Gift className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Invitation Code</h2>
-        <p className="text-muted-foreground">Join through an existing partner</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Invitation Code</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Join through an existing partner</p>
       </div>
 
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto px-2">
         {/* Referrer Info */}
         {invitationValidation?.valid && (
           <div className="dark:bg-blue-900 dark:border-blue-700 bg-gradient-to-r from-blue-50 to-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
@@ -1231,7 +1135,7 @@ const PartnerRegistrationForm: React.FC = () => {
           )}
 
           {/* Instructions */}
-          <div className="mt-8 p-6 dark:bg-blue-900/20 dark:border-blue-800/30 bg-blue-50 border border-blue-200 rounded-xl">
+          <div className="mt-8 p-4 sm:p-6 dark:bg-blue-900/20 dark:border-blue-800/30 bg-blue-50 border border-blue-200 rounded-xl">
             <h4 className="font-semibold text-foreground mb-3">How to get an invitation code:</h4>
             <ul className="space-y-2">
               <li className="flex items-start gap-2">
@@ -1261,16 +1165,16 @@ const PartnerRegistrationForm: React.FC = () => {
 
   // STEP 5: Review & Submit
   const renderStep5 = () => (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="text-center mb-8">
         <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full mb-4">
           <FileCheck className="w-8 h-8 text-white" />
         </div>
-        <h2 className="text-2xl font-bold text-foreground">Review & Submit</h2>
-        <p className="text-muted-foreground">Final check before submitting your application</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Review & Submit</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Final check before submitting your application</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Summary Card */}
         <div className="bg-card border border-border rounded-2xl p-6">
           <h3 className="text-lg font-bold text-foreground mb-6">Application Summary</h3>
@@ -1526,66 +1430,79 @@ const PartnerRegistrationForm: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Progress Bar */}
       <div className="sticky top-0 z-10 dark:bg-gray-800 dark:border-gray-700 bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            {/* Steps */}
-            <div className="flex items-center gap-8">
-              {WIZARD_STEPS.map((step) => (
-                <button
-                  key={step.id}
-                  onClick={() => goToStep(step.id)}
-                  className={`flex items-center gap-3 transition-all ${
-                    currentStep >= step.id ? 'opacity-100' : 'opacity-50'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    currentStep > step.id 
-                      ? 'bg-green-500 text-white' 
-                      : currentStep === step.id
-                      ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg'
-                      : 'dark:bg-gray-700 dark:text-gray-400 bg-gray-100 text-gray-400'
-                  }`}>
-                    {currentStep > step.id ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <step.icon className="w-5 h-5" />
-                    )}
+              {/* Steps - horizontal scroll on small screens */}
+              <div className="-mx-4 px-4 w-full">
+                <div className="overflow-x-auto">
+                  <div className="flex items-center gap-4 flex-nowrap">
+                    {WIZARD_STEPS.map((step) => (
+                      <button
+                        key={step.id}
+                        onClick={() => goToStep(step.id)}
+                        className={`flex-shrink-0 flex items-center gap-3 transition-all px-1 ${
+                          currentStep >= step.id ? 'opacity-100' : 'opacity-50'
+                        }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          currentStep > step.id 
+                            ? 'bg-green-500 text-white' 
+                            : currentStep === step.id
+                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg'
+                            : 'dark:bg-gray-700 dark:text-gray-400 bg-gray-100 text-gray-400'
+                        }`}>
+                          {currentStep > step.id ? (
+                            <CheckCircle className="w-5 h-5" />
+                          ) : (
+                            <step.icon className="w-5 h-5" />
+                          )}
+                        </div>
+                        <div className="text-left hidden md:block">
+                          <p className={`text-sm font-medium ${
+                            currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
+                          }`}>
+                            Step {step.id}
+                          </p>
+                          <p className={`text-xs ${
+                            currentStep >= step.id ? 'text-muted-foreground' : 'dark:text-gray-500 text-gray-400'
+                          }`}>
+                            {step.title}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
                   </div>
-                  <div className="text-left hidden md:block">
-                    <p className={`text-sm font-medium ${
-                      currentStep >= step.id ? 'text-foreground' : 'text-muted-foreground'
-                    }`}>
-                      Step {step.id}
-                    </p>
-                    <p className={`text-xs ${
-                      currentStep >= step.id ? 'text-muted-foreground' : 'dark:text-gray-500 text-gray-400'
-                    }`}>
-                      {step.title}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
+                </div>
+              </div>
 
-            {/* Step Counter */}
-            <div className="text-right">
-              <p className="text-sm font-medium text-foreground">
-                Step {currentStep} of {WIZARD_STEPS.length}
-              </p>
-              <div className="w-32 h-2 dark:bg-gray-700 bg-gray-200 rounded-full overflow-hidden mt-1">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
-                  style={{ width: `${(currentStep / WIZARD_STEPS.length) * 100}%` }}
-                />
+              {/* Step Counter - visible on all screens with responsive sizing */}
+              <div className="text-right block ml-2 sm:ml-4">
+                <p className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
+                  Step {currentStep} of {WIZARD_STEPS.length}
+                </p>
+                <div className="w-20 sm:w-32 h-1.5 sm:h-2 dark:bg-gray-700 bg-gray-200 rounded-full overflow-hidden mt-1">
+                  <div 
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
+                    style={{ width: `${(currentStep / WIZARD_STEPS.length) * 100}%` }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="dark:bg-gray-800 bg-white rounded-3xl shadow-xl overflow-hidden">
+          {/* Mobile compact step header (visible on small screens) */}
+          <div className="sm:hidden border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900">
+            <div className="max-w-4xl mx-auto px-4 py-2 flex items-center justify-center">
+              <div className="text-xs font-medium text-foreground text-center">
+                Step {currentStep}: {WIZARD_STEPS.find(s => s.id === currentStep)?.title}
+              </div>
+            </div>
+          </div>
+
           {/* Error Display */}
           {error && (
             <div className="dark:bg-red-900/20 dark:border-red-800 bg-red-50 border-l-4 border-red-500 p-6">
@@ -1600,7 +1517,7 @@ const PartnerRegistrationForm: React.FC = () => {
           )}
 
           {/* Form Content */}
-          <div className="p-8 md:p-12">
+          <div className="p-6 md:p-12">
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
             {currentStep === 3 && renderStep3()}
@@ -1609,13 +1526,13 @@ const PartnerRegistrationForm: React.FC = () => {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="dark:border-gray-700 border-t border-gray-200 p-8">
-            <div className="flex justify-between items-center">
+          <div className="dark:border-gray-700 border-t border-gray-200 p-4 sm:p-8 safe-pad-bottom">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3 items-center">
               <button
                 type="button"
                 onClick={goToPreviousStep}
                 disabled={currentStep === 1}
-                className={`px-6 py-3 rounded-lg flex items-center gap-2 transition-all ${
+                className={`w-full sm:w-auto px-6 py-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
                   currentStep === 1
                     ? 'opacity-50 cursor-not-allowed dark:text-gray-500 text-gray-400'
                     : 'dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 text-gray-700 hover:text-gray-900 hover:bg-gray-100'
@@ -1625,13 +1542,13 @@ const PartnerRegistrationForm: React.FC = () => {
                 Back
               </button>
 
-              <div className="flex items-center gap-4">
+              <div className="w-full sm:w-auto">
                 {currentStep === WIZARD_STEPS.length ? (
                   <button
                     type="button"
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3"
+                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                   >
                     {loading ? (
                       <>
@@ -1649,7 +1566,7 @@ const PartnerRegistrationForm: React.FC = () => {
                   <button
                     type="button"
                     onClick={goToNextStep}
-                    className="px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center gap-3"
+                    className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-3"
                   >
                     Continue
                     <ChevronRight className="w-5 h-5" />

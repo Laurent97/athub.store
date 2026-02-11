@@ -96,8 +96,8 @@ const Navbar = () => {
           <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <span className="hidden sm:inline text-xs">Mon-Fri: 9AM-6PM EST</span>
             <Link to="/contact">
-              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 h-auto p-1 sm:p-0">
-                <Headphones className="w-3 h-3 sm:w-4 sm:h-4" />
+              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800 icon-btn p-0">
+                <Headphones className="w-4 h-4" />
                 <span className="hidden xs:inline ml-1">Support</span>
               </Button>
             </Link>
@@ -153,13 +153,13 @@ const Navbar = () => {
               {/* Search Button */}
               <Link to="/products">
                 <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-blue-600">
-                  <Search className="w-4 h-4" />
+                  <Search className="w-5 h-5" />
                 </Button>
               </Link>
               
               <Link to="/cart">
                 <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-blue-600 relative">
-                  <ShoppingCart className="w-4 h-4" />
+                  <ShoppingCart className="w-5 h-5" />
                   {getItemCount() > 0 && (
                     <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
                       {getItemCount()}
@@ -174,13 +174,13 @@ const Navbar = () => {
                 className="text-muted-foreground hover:text-blue-600 relative"
                 onClick={() => setIsNotificationsOpen(true)}
               >
-                <Bell className="w-4 h-4" />
+                <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
               </Button>
               
               <Link to="/liked-items">
                 <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-blue-600">
-                  <Heart className="w-4 h-4" />
+                  <Heart className="w-5 h-5" />
                 </Button>
               </Link>
               
@@ -199,7 +199,7 @@ const Navbar = () => {
                   <>
                     <Link to={dashboardUrl}>
                       <Button variant="outline" size="sm" className="border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white">
-                        <User className="w-3 h-3 mr-2" />
+                        <User className="w-4 h-4 mr-2" />
                         Dashboard
                       </Button>
                     </Link>
@@ -228,7 +228,7 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="icon"
-              className="lg:hidden"
+              className="lg:hidden icon-btn"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -246,7 +246,7 @@ const Navbar = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6"
+                      className="icon-btn-sm"
                       onClick={() => setIsOpen(false)}
                     >
                       <X className="w-4 h-4" />
@@ -284,8 +284,8 @@ const Navbar = () => {
                 <div className="px-4 py-2">
                   <div className="grid grid-cols-3 gap-2">
                     <Link to="/cart" className="flex-1" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full gap-1 relative text-xs p-2">
-                        <ShoppingCart className="w-3 h-3" />
+                      <Button variant="outline" className="w-full gap-1 relative text-xs p-2 icon-btn-sm">
+                        <ShoppingCart className="w-4 h-4" />
                         <span className="hidden xs:inline">Cart</span>
                         {getItemCount() > 0 && (
                           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-semibold">
@@ -296,16 +296,16 @@ const Navbar = () => {
                     </Link>
                     <Button 
                       variant="outline" 
-                      className="w-full gap-1 relative text-xs p-2"
+                      className="w-full gap-1 relative text-xs p-2 icon-btn-sm"
                       onClick={() => { setIsNotificationsOpen(true); setIsOpen(false); }}
                     >
-                      <Bell className="w-3 h-3" />
+                      <Bell className="w-4 h-4" />
                       <span className="hidden xs:inline">Notif</span>
                       <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></span>
                     </Button>
                     <Link to="/liked-items" className="flex-1" onClick={() => setIsOpen(false)}>
-                      <Button variant="outline" className="w-full gap-1 text-xs p-2">
-                        <Heart className="w-3 h-3" />
+                      <Button variant="outline" className="w-full gap-1 text-xs p-2 icon-btn-sm">
+                        <Heart className="w-4 h-4" />
                         <span className="hidden xs:inline">Liked</span>
                       </Button>
                     </Link>

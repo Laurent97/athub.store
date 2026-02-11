@@ -165,7 +165,7 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="pt-24 pb-16">
+      <main className="pt-24 pb-16 pad-responsive">
         <div className="container-wide">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
@@ -180,10 +180,10 @@ const ProductDetail = () => {
             <span className="text-foreground">{product.title}</span>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
+          <div className="grid-two gap-responsive mb-12">
             {/* Image Gallery */}
             <div className="space-y-4">
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-secondary">
+              <div className="relative img-aspect-4-3 rounded-2xl overflow-hidden bg-secondary">
                 <img
                   src={product.images && product.images[selectedImageIndex] ? product.images[selectedImageIndex] : '/placeholder.svg'}
                   alt={product.title}
@@ -194,14 +194,14 @@ const ProductDetail = () => {
                     <button
                       onClick={prevImage}
                       aria-label="Previous image"
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
+                      className="absolute left-4 top-1/2 -translate-y-1/2 icon-btn bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       onClick={nextImage}
                       aria-label="Next image"
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 icon-btn bg-card/80 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -211,12 +211,12 @@ const ProductDetail = () => {
 
               {/* Thumbnail Images */}
               {product.images && product.images.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="flex gap-2 overflow-x-auto">
                   {product.images.map((image, index) => (
                     <button
                       key={`${image}-${index}`}
                       onClick={() => setSelectedImageIndex(index)}
-                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                      className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors min-w-[64px] ${
                         selectedImageIndex === index
                           ? 'border-accent'
                           : 'border-transparent hover:border-border'
@@ -232,9 +232,9 @@ const ProductDetail = () => {
             {/* Product Info */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                  {product.title}
-                </h1>
+                  <h1 className="h1-responsive text-foreground mb-4">
+                    {product.title}
+                  </h1>
                 <div className="flex items-center gap-4 text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Star className="w-4 h-4 fill-accent text-accent" />
@@ -245,13 +245,13 @@ const ProductDetail = () => {
 
               {/* Price */}
               <div>
-                <div className="text-4xl font-bold text-foreground mb-2">
+                <div className="h2-responsive font-bold text-foreground mb-2">
                   {formatPrice(product.original_price)}
                 </div>
               </div>
 
               {/* Product Details */}
-              <div className="p-4 bg-secondary rounded-lg space-y-3">
+              <div className="card-responsive">
                 {product.make && (
                   <div className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">Make:</span> {product.make}
@@ -285,6 +285,7 @@ const ProductDetail = () => {
                     <Button
                       variant="outline"
                       size="icon"
+                      className="icon-btn-sm"
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                     >
                       -
@@ -293,6 +294,7 @@ const ProductDetail = () => {
                     <Button
                       variant="outline"
                       size="icon"
+                      className="icon-btn-sm"
                       onClick={() => setQuantity(quantity + 1)}
                     >
                       +
@@ -302,7 +304,7 @@ const ProductDetail = () => {
 
                 <div className="flex gap-3">
                   <Button
-                    className="flex-1"
+                    className="flex-1 btn-touch"
                     size="lg"
                     onClick={handleAddToCart}
                     disabled={product.stock_quantity === 0}
@@ -333,7 +335,7 @@ const ProductDetail = () => {
                 </div>
 
                 {product.stock_quantity === 0 && (
-                  <p className="text-sm text-destructive">Out of stock</p>
+                  <p className="text-small-responsive text-destructive">Out of stock</p>
                 )}
               </div>
             </div>

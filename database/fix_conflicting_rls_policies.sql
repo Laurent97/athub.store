@@ -15,7 +15,7 @@ CREATE POLICY "Public users can view active products" ON products
     FOR SELECT USING (
         auth.role() = 'anon' 
         AND is_active = true
-    );
+    );  
 
 -- Policy 2: Authenticated users can view active products  
 CREATE POLICY "Authenticated users can view active products" ON products

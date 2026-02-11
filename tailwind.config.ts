@@ -15,7 +15,14 @@ export default {
     },
     extend: {
       screens: {
-        'xs': '475px',
+        'xs': '320px',    // Mobile phones (portrait)
+        'sm': '375px',    // iPhone SE/small phones
+        'md': '414px',    // Standard phone (portrait)
+        'tab': '620px',   // iPad mini (portrait)
+        'lg': '768px',    // iPad/tablet (portrait)
+        'xl': '1024px',   // iPad landscape/small desktop
+        '2xl': '1280px',  // Desktop
+        '3xl': '1536px',  // Large desktop
       },
       colors: {
         border: "hsl(var(--border))",
