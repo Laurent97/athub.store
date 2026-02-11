@@ -19,7 +19,7 @@ interface PartnerStore {
   country?: string;
   city?: string;
   total_earnings?: number;
-  store_visits?: number;
+  store_visits?: { today: number; thisWeek: number; thisMonth: number; allTime: number };
 }
 
 export default function Stores() {
@@ -74,7 +74,7 @@ export default function Stores() {
   }).sort((a, b) => {
     switch (sortBy) {
       case 'popular':
-        return (b.store_visits || 0) - (a.store_visits || 0);
+        return (b.store_visits?.allTime || 0) - (a.store_visits?.allTime || 0);
       case 'newest':
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       case 'earnings':
@@ -220,7 +220,7 @@ export default function Stores() {
                 <Users className="w-8 h-8 text-orange-600 mr-3" />
                 <div>
                   <div className="text-3xl font-bold text-orange-600">
-                    {stores.reduce((sum, store) => sum + (store.store_visits || 0), 0).toLocaleString()}
+                    {stores.reduce((sum, store) => sum + (store.store_visits?.allTime || 0), 0).toLocaleString()}
                   </div>
                   <div className="text-muted-foreground">Total Visits</div>
                 </div>
@@ -280,7 +280,7 @@ export default function Stores() {
                     <div className="flex justify-between text-sm text-muted-foreground mb-4">
                       <div className="flex items-center">
                         <Users className="w-4 h-4 mr-1" />
-                        {store.store_visits || 0} visits
+                        {(store.store_visits?.allTime || 0).toLocaleString()} visits
                       </div>
                       <div className="flex items-center">
                         <TrendingUp className="w-4 h-4 mr-1" />

@@ -27,7 +27,6 @@ import FAQ from "./pages/FAQ";
 import PartnerFAQ from "./pages/FAQ-Partner";
 import Careers from "./pages/Careers";
 import Returns from "./pages/Returns";
-import Stores from "./pages/Stores";
 import Store from "./pages/Store";
 import Auth from "./pages/Auth";
 import Manufacturers from "./pages/Manufacturers";
@@ -115,7 +114,6 @@ const App = () => (
               <Route path="/order-success/:orderId" element={<OrderSuccessStore />} />
               <Route path="/liked-items" element={<LikedItems />} />
               <Route path="/notifications" element={<Notifications />} />
-              <Route path="/stores" element={<Stores />} />
               <Route path="/manufacturers" element={<Manufacturers />} />
               <Route path="/suppliers" element={<Manufacturers />} />
               <Route path="/suppliers/:id" element={<Manufacturers />} />

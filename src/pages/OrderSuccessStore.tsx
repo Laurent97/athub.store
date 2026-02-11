@@ -246,7 +246,7 @@ export default function OrderSuccessStore() {
                     View All Orders
                   </Link>
                   <Link
-                    to="/stores"
+                    to="/manufacturers"
                     className="bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 text-center"
                   >
                     Browse More Stores

@@ -232,7 +232,7 @@ export default function StoreSearch() {
       {/* All Stores Link */}
       <div className="mt-8 text-center">
         <Link
-          to="/stores"
+          to="/manufacturers"
           className="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium"
         >
           View All Partner Stores

@@ -327,7 +327,7 @@ export default function Store() {
           <div className="text-center">
             <h2 className="text-2xl font-bold text-gray-800">Store not found</h2>
             <button
-              onClick={() => navigate('/stores')}
+              onClick={() => navigate('/manufacturers')}
               className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
               Browse Stores
