@@ -164,6 +164,22 @@ export default function OrderDetails() {
         // For external access, try public order lookup
         if (!user) {
           console.log('User not logged in, trying public order access...');
+          try {
+            const response = await fetch(`/api/public/orders/${orderId}`);
+            if (response.ok) {
+              const publicOrder = await response.json();
+              console.log('Found order via public API:', publicOrder);
+              setOrder({
+                ...publicOrder,
+                isPublicView: true
+              });
+              setLoading(false);
+              return;
+            }
+          } catch (publicError) {
+            console.log('Public API failed, trying direct database access...');
+          }
+          
           const { data: publicOrder, error: publicError } = await supabase
             .from('orders')
             .select('*')

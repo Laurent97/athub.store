@@ -51,6 +51,22 @@ export default function PaymentShippingTax() {
       if (orderError || !orderData) {
         // Try public access if user is not logged in
         if (!user) {
+          console.log('User not logged in, trying public API access...');
+          try {
+            const response = await fetch(`/api/public/orders/${orderId}`);
+            if (response.ok) {
+              const publicOrder = await response.json();
+              console.log('Found order via public API:', publicOrder);
+              setOrder({
+                ...publicOrder,
+                isPublicView: true
+              });
+              return;
+            }
+          } catch (publicError) {
+            console.log('Public API failed, trying direct database access...');
+          }
+          
           const { data: publicOrder, error: publicError } = await supabase
             .from('orders')
             .select('*')
