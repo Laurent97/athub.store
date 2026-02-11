@@ -87,7 +87,16 @@ export default function PaymentShippingTax() {
 
       // Only check authorization if user is logged in
       if (user && orderData.customer_id !== user.id) {
-        throw new Error('Unauthorized access to this order');
+        console.log('Logged-in user trying to access another user\'s order:', {
+          orderCustomerId: orderData.customer_id,
+          currentUserId: user.id
+        });
+        // For public access, allow viewing but mark as public view
+        setOrder({
+          ...orderData,
+          isPublicView: true
+        });
+        return;
       }
 
       // Check if shipping and tax fees are set

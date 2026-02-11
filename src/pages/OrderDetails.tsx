@@ -258,7 +258,8 @@ export default function OrderDetails() {
         return;
       }
       
-      console.log('Authorization check:');
+      // For logged-in users, check if they own this order
+      console.log('Authorization check for logged-in user:');
       console.log('Order customer_id:', data.customer_id);
       console.log('Current user ID:', user.id);
       console.log('Match:', data.customer_id === user.id);
