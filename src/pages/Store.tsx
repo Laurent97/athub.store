@@ -32,24 +32,51 @@ export default function Store() {
   const [error, setError] = useState<string | null>(null);
 
   const loadStore = useCallback(async () => {
+    if (!storeSlug) {
+      setError('No store specified');
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     
+    let matchingPartner = null;
+
     try {
-      // Try to load store info from partner_profiles first
+      // Try to get store by exact slug match first
       const { data: storeData, error: storeError } = await supabase
         .from('partner_profiles')
         .select('*')
         .eq('store_slug', storeSlug)
-        .eq('is_active', true)
         .eq('partner_status', 'approved')
-        .single();
+        .eq('is_active', true)
+        .maybeSingle();
 
       if (storeError) {
         console.error('Store error from partner_profiles:', storeError);
+        console.log('Store slug requested:', storeSlug);
+        console.log('Trying to find partner by slug:', storeSlug);
+        
+        // First check if ANY store with this slug exists (regardless of status)
+        const { data: anyStore } = await supabase
+          .from('partner_profiles')
+          .select('id, store_slug, is_active, partner_status')
+          .eq('store_slug', storeSlug);
+        
+        if (anyStore && anyStore.length > 0) {
+          console.log('Store found but filters not met:', anyStore[0]);
+          const store = anyStore[0];
+          if (!store.is_active) {
+            setError('This store is currently inactive');
+          } else if (store.partner_status !== 'approved') {
+            setError(`This store is ${store.partner_status} and not yet available`);
+          }
+          return;
+        }
         
         // Fallback: try to find partner by slug matching
-        console.log('Trying to find partner by slug:', storeSlug);
+        console.log('No store found, trying alternative search...');
         const { data: allPartners } = await supabase
           .from('partner_profiles')
           .select('id, user_id, store_name, store_slug')
@@ -57,7 +84,7 @@ export default function Store() {
           .eq('is_active', true);
         
         // Find matching partner by slug or create fallback
-        const matchingPartner = allPartners?.find(p => 
+        matchingPartner = allPartners?.find(p => 
           p.store_slug === storeSlug || 
           p.store_name?.toLowerCase().replace(/\s+/g, '-') === storeSlug
         );
@@ -95,12 +122,12 @@ export default function Store() {
       }
 
       // Load partner products using the dedicated service
-      const partnerId = storeData?.user_id || matchingPartner?.user_id || 'demo-user';
+      const partnerId = storeData?.id || matchingPartner?.id || 'demo-user';
       console.log('=== STORE DEBUG INFO ===');
       console.log('Store slug:', storeSlug);
       console.log('Store data:', storeData);
       console.log('Matching partner:', matchingPartner);
-      console.log('Final partner ID:', partnerId);
+      console.log('Final partner ID (using partner.id, not user_id):', partnerId);
       console.log('=== END DEBUG INFO ===');
       
       const productsData = await getPartnerProductsWithDetails(partnerId);
@@ -198,9 +225,17 @@ export default function Store() {
           <div className="text-center">
             <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-foreground mb-2">Store Not Found</h1>
-            <p className="text-muted-foreground mb-6">The store you're looking for doesn't exist or isn't available.</p>
+            <p className="text-muted-foreground mb-2">The store you're looking for doesn't exist or isn't available.</p>
+            <p className="text-muted-foreground text-sm mb-6">
+              Check the store URL or browse all available stores below.
+            </p>
+            {storeSlug && (
+              <p className="text-muted-foreground text-xs mb-6 p-3 bg-card rounded">
+                Searched for: <code>{storeSlug}</code>
+              </p>
+            )}
             <button
-              onClick={() => navigate('/stores')}
+              onClick={() => navigate('/manufacturers')}
               className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90"
             >
               Browse All Stores
