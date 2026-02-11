@@ -14,12 +14,14 @@ interface PaymentMethodSelectorProps {
   onPaymentMethodSelect: (method: PaymentMethod) => void;
   selectedMethod?: PaymentMethod;
   className?: string;
+  isPublicView?: boolean; // New prop to indicate public access
 }
 
 export default function PaymentMethodSelector({ 
   onPaymentMethodSelect, 
   selectedMethod, 
-  className = '' 
+  className = '',
+  isPublicView = false 
 }: PaymentMethodSelectorProps) {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ export default function PaymentMethodSelector({
         </div>
       </div>
 
-      {/* Cryptocurrency Option */}
+      {/* Cryptocurrency Option - Always show for public view */}
       <div 
         className={`border rounded-lg p-4 cursor-pointer transition-all hover:border-orange-500 hover:shadow-md ${
           selectedMethod?.type === 'crypto' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'
