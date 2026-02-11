@@ -5,7 +5,8 @@ import { uploadImageToCloudinary } from '../../services/cloudinaryService';
 import { supabase } from '@/lib/supabase/client';
 import { 
   Store, Mail, Phone, MapPin, Gift, CheckCircle, AlertCircle, FileText, Globe,
-  ChevronRight, ChevronLeft, Building, User, Loader2, Camera, Palette, TrendingUp
+  ChevronRight, ChevronLeft, Building, User, Loader2, Camera, Palette, TrendingUp,
+  ImageIcon, FileCheck, Clock
 } from 'lucide-react';
 import ImageUploadField from './ImageUploadField';
 import { optimizeImage, cleanupBlobUrl, validateImageFile } from '../../utils/imageOptimization';
@@ -130,7 +131,7 @@ const PartnerRegistrationForm: React.FC = () => {
     storeCategory: '',
     storeTagline: '',
     storeDescription: '',
-    yearEstablished: new Date().getFullYear().toString(),
+    yearEstablished: typeof Date !== 'undefined' ? new Date().getFullYear().toString() : '2024',
     
     // Step 2
     storeLogo: null,
@@ -150,7 +151,7 @@ const PartnerRegistrationForm: React.FC = () => {
     // Step 4
     country: '',
     city: '',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezone: typeof Intl !== 'undefined' ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'UTC',
     businessHours: {
       monday: { open: '09:00', close: '17:00' },
       tuesday: { open: '09:00', close: '17:00' },
@@ -1472,19 +1473,6 @@ const PartnerRegistrationForm: React.FC = () => {
                       </button>
                     ))}
                   </div>
-                </div>
-              </div>
-
-              {/* Step Counter - visible on all screens with responsive sizing */}
-              <div className="text-right block ml-2 sm:ml-4">
-                <p className="text-xs sm:text-sm font-medium text-foreground whitespace-nowrap">
-                  Step {currentStep} of {WIZARD_STEPS.length}
-                </p>
-                <div className="w-20 sm:w-32 h-1.5 sm:h-2 dark:bg-gray-700 bg-gray-200 rounded-full overflow-hidden mt-1">
-                  <div 
-                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300"
-                    style={{ width: `${(currentStep / WIZARD_STEPS.length) * 100}%` }}
-                  />
                 </div>
               </div>
             </div>
