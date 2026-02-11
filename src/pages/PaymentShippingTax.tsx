@@ -3,6 +3,7 @@ import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { orderService } from '../lib/supabase/order-service';
 import { shippingTaxPaymentService } from '../lib/supabase/shipping-tax-payment-service';
+import { supabase } from '../lib/supabase/client';
 import PaymentMethodSelector from '../components/Payment/PaymentMethodSelector';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -21,14 +22,16 @@ export default function PaymentShippingTax() {
   const [paymentProcessing, setPaymentProcessing] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth', { state: { from: location.pathname } });
-      return;
-    }
-
     if (!orderId) {
       setError('No order ID provided');
       setLoading(false);
+      return;
+    }
+
+    // Allow access without login for external sharing
+    if (!user) {
+      console.log('User not logged in, allowing public access to payment page');
+      loadOrder();
       return;
     }
 
@@ -46,10 +49,28 @@ export default function PaymentShippingTax() {
       const { data: orderData, error: orderError } = await orderService.getOrderById(orderId);
       
       if (orderError || !orderData) {
+        // Try public access if user is not logged in
+        if (!user) {
+          const { data: publicOrder, error: publicError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('id', orderId)
+            .maybeSingle();
+          
+          if (publicOrder && !publicError) {
+            console.log('Found order via public access:', publicOrder);
+            setOrder({
+              ...publicOrder,
+              isPublicView: true
+            });
+            return;
+          }
+        }
         throw new Error('Failed to load order');
       }
 
-      if (orderData.customer_id !== user?.id) {
+      // Only check authorization if user is logged in
+      if (user && orderData.customer_id !== user.id) {
         throw new Error('Unauthorized access to this order');
       }
 
@@ -58,7 +79,10 @@ export default function PaymentShippingTax() {
         throw new Error('No shipping fees set for this order');
       }
 
-      setOrder(orderData);
+      setOrder({
+        ...orderData,
+        isPublicView: !user
+      });
     } catch (err) {
       console.error('Error loading order:', err);
       setError(err instanceof Error ? err.message : 'Failed to load order');

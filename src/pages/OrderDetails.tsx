@@ -161,6 +161,22 @@ export default function OrderDetails() {
           hint: error.hint
         });
         
+        // For external access, try public order lookup
+        if (!user) {
+          console.log('User not logged in, trying public order access...');
+          const { data: publicOrder, error: publicError } = await supabase
+            .from('orders')
+            .select('*')
+            .or(`order_number.eq.${orderId},id.eq.${orderId}`)
+            .maybeSingle();
+          
+          if (publicOrder && !publicError) {
+            console.log('Found order via public access:', publicOrder);
+            data = publicOrder;
+            error = null;
+          }
+        }
+        
         // Provide more specific error messages
         let errorMessage = 'Order not found';
         if (error.code === 'PGRST116') {
@@ -216,9 +232,13 @@ export default function OrderDetails() {
       
       // Check if user is authorized to view this order
       if (!user) {
-        console.log('User not logged in, redirecting to auth');
-        // Redirect to auth with return URL
-        navigate('/auth', { state: { from: `/orders/${orderId}` } });
+        console.log('User not logged in, showing public order view');
+        // Allow public access with limited information
+        setOrder({
+          ...data,
+          isPublicView: true
+        });
+        setLoading(false);
         return;
       }
       
@@ -232,7 +252,9 @@ export default function OrderDetails() {
           orderCustomerId: data.customer_id, 
           currentUserId: user.id 
         });
-        throw new Error('You are not authorized to view this order');
+        setError('You do not have permission to view this order');
+        setLoading(false);
+        return;
       }
       
       console.log('=== ORDER LOOKUP SUCCESS ===');
