@@ -96,10 +96,18 @@ export default function Store() {
 
       // Load partner products using the dedicated service
       const partnerId = storeData?.user_id || matchingPartner?.user_id || 'demo-user';
-      console.log('Loading products for partner:', partnerId);
+      console.log('=== STORE DEBUG INFO ===');
+      console.log('Store slug:', storeSlug);
+      console.log('Store data:', storeData);
+      console.log('Matching partner:', matchingPartner);
+      console.log('Final partner ID:', partnerId);
+      console.log('=== END DEBUG INFO ===');
       
       const productsData = await getPartnerProductsWithDetails(partnerId);
-      console.log('Loaded partner products:', productsData.length, 'products');
+      console.log('=== PRODUCTS DEBUG INFO ===');
+      console.log('Partner products loaded:', productsData.length);
+      console.log('Products data:', productsData);
+      console.log('=== END PRODUCTS DEBUG ===');
       
       setProducts(productsData);
 
