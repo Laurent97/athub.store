@@ -166,10 +166,15 @@ const ResetPassword = () => {
     }
 
     try {
-      // Get the reset request details
+      // Get reset request details with user email
       const { data: resetData, error: resetError } = await supabase
         .from('password_reset_requests')
-        .select('user_id')
+        .select(`
+          user_id,
+          users!password_reset_requests_user_id_fkey (
+            email
+          )
+        `)
         .eq('token', token)
         .eq('status', 'pending')
         .single();
@@ -180,19 +185,31 @@ const ResetPassword = () => {
         return;
       }
 
-      // Update the user's password in Supabase Auth
-      const { error: updateError } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
-      });
-
-      if (updateError) {
-        console.error('Error updating password:', updateError);
-        setError('Failed to update password. Please try again.');
+      // Access the email from the joined users data
+      const userEmail = (resetData as any).users?.email;
+      if (!userEmail) {
+        setError('User email not found. Please contact support.');
         setLoading(false);
         return;
       }
 
-      // Mark the reset request as used
+      // Use Supabase's built-in password reset with OTP
+      // This will send a new reset link that allows password change without session
+      const { error: resetError2 } = await supabase.auth.resetPasswordForEmail(
+        userEmail,
+        {
+          redirectTo: `${window.location.origin}/reset-password?token=${token}&direct=true`
+        }
+      );
+
+      if (resetError2) {
+        console.error('Error sending reset email:', resetError2);
+        setError('Failed to send reset email. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Mark the original reset request as used
       await supabase
         .from('password_reset_requests')
         .update({ 
@@ -203,8 +220,8 @@ const ResetPassword = () => {
 
       setSuccess(true);
       toast({
-        title: 'Password reset successful!',
-        description: 'Your password has been updated successfully.',
+        title: 'Reset Email Sent!',
+        description: 'A new password reset link has been sent to your email. Please check your inbox and click the link to set your new password.',
       });
 
     } catch (error: any) {
@@ -294,16 +311,16 @@ const ResetPassword = () => {
                     <CheckCircle className="w-8 h-8 text-green-600" />
                   </div>
                   <CardTitle className="text-2xl font-bold text-foreground">
-                    Password Reset Successful!
+                    Reset Email Sent!
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Your password has been updated successfully.
+                    A new password reset link has been sent to your email. Please check your inbox and click the link to set your new password.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="px-8 pb-8 text-center space-y-4">
                   <Link to="/auth">
                     <Button className="w-full">
-                      Sign In with New Password
+                      Back to Sign In
                     </Button>
                   </Link>
                 </CardContent>

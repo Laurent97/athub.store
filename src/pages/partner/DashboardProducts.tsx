@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase/client';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -34,11 +34,125 @@ interface PartnerProduct {
   product?: Product;
 }
 
+// Memoized ProductCard component to prevent unnecessary re-renders
+const ProductCard = memo(({ 
+  product, 
+  partnerProduct, 
+  isAdded, 
+  onAddProduct, 
+  onEditProduct, 
+  onRemoveProduct,
+  formatCurrency 
+}: {
+  product: Product;
+  partnerProduct?: PartnerProduct;
+  isAdded: boolean;
+  onAddProduct: (product: Product) => void;
+  onEditProduct: (product: Product, partnerProduct?: PartnerProduct) => void;
+  onRemoveProduct: (partnerProductId: string) => void;
+  formatCurrency: (amount: number) => string;
+}) => {
+  return (
+    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 ${isAdded ? 'ring-2 ring-green-500' : ''}`}>
+      {/* Product Image */}
+      <div className="h-48 bg-gray-200 dark:bg-gray-600 relative">
+        {product.images && product.images.length > 0 ? (
+          <img
+            src={product.images[0]}
+            alt={`${product.make} ${product.model}`}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="w-16 h-16 text-gray-400" />
+          </div>
+        )}
+        {isAdded && (
+          <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+            Added
+          </div>
+        )}
+      </div>
+
+      {/* Product Info */}
+      <div className="p-4">
+        <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">{product.title}</h3>
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">{product.description}</p>
+        
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Category</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{product.category}</p>
+          </div>
+          <div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Stock</p>
+            <p className="font-semibold text-gray-900 dark:text-white">{product.stock_quantity}</p>
+          </div>
+        </div>
+
+        {/* Original Price Display */}
+        <div className="flex items-center justify-between mb-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+          <div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Base Price</p>
+            <p className="font-bold text-blue-900 dark:text-blue-300 text-lg">{formatCurrency(product.original_price)}</p>
+          </div>
+          <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+        </div>
+
+        {isAdded && partnerProduct && (
+          <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-green-800 dark:text-green-300">Your Selling Price</span>
+              <span className="font-bold text-green-900 dark:text-green-200">{formatCurrency(partnerProduct.selling_price)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-green-700 dark:text-green-400">Profit Margin</span>
+              <span className="font-semibold text-green-900 dark:text-green-200">{partnerProduct.profit_margin}%</span>
+            </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          {!isAdded ? (
+            <button
+              onClick={() => onAddProduct(product)}
+              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg flex items-center justify-center"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Product
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={() => onEditProduct(product, partnerProduct)}
+                className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg flex items-center justify-center"
+              >
+                <Edit className="w-4 h-4 mr-1" />
+                Edit
+              </button>
+              <button
+                onClick={() => onRemoveProduct(partnerProduct!.id)}
+                className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ProductCard.displayName = 'ProductCard';
+
 export default function DashboardProducts() {
   const { userProfile } = useAuth();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [partnerProducts, setPartnerProducts] = useState<PartnerProduct[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
@@ -46,14 +160,19 @@ export default function DashboardProducts() {
   const [basePrice, setBasePrice] = useState(0); // Manual price input
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showFullDescription, setShowFullDescription] = useState(false);
 
   useEffect(() => {
     loadAllProducts();
     loadPartnerProducts();
   }, [userProfile]);
 
-  const loadAllProducts = async () => {
-    setLoading(true);
+  const loadAllProducts = async (isBackgroundRefresh = false) => {
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
     try {
       const { data, error } = await supabase
@@ -67,11 +186,15 @@ export default function DashboardProducts() {
       console.error('Failed to load products:', err);
       setError(err instanceof Error ? err.message : 'Failed to load products');
     } finally {
-      setLoading(false);
+      if (!isBackgroundRefresh) {
+        setLoading(false);
+      } else {
+        setRefreshing(false);
+      }
     }
   };
 
-  const loadPartnerProducts = async () => {
+  const loadPartnerProducts = async (isBackgroundRefresh = false) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.id) return;
@@ -162,7 +285,9 @@ export default function DashboardProducts() {
       setSelectedProduct(null);
       setProfitMargin(0);
       setBasePrice(0);
-      await loadPartnerProducts();
+      setShowFullDescription(false);
+      // Background refresh without blocking UI
+      await loadPartnerProducts(true);
       alert('✅ Product added successfully! View it in "My Inventory" page.');
     } catch (err) {
       console.error('Failed to add product:', err);
@@ -190,7 +315,8 @@ export default function DashboardProducts() {
 
       if (error) throw error;
 
-      loadPartnerProducts();
+      // Background refresh without blocking UI
+      await loadPartnerProducts(true);
       alert('Product updated successfully!');
     } catch (err) {
       console.error('Failed to update product:', err);
@@ -209,7 +335,8 @@ export default function DashboardProducts() {
 
       if (error) throw error;
 
-      loadPartnerProducts();
+      // Background refresh without blocking UI
+      await loadPartnerProducts(true);
       alert('Product removed from your store!');
     } catch (err) {
       console.error('Failed to remove product:', err);
@@ -217,30 +344,53 @@ export default function DashboardProducts() {
     }
   };
 
-  const isProductAdded = (productId: string) => {
+  const isProductAdded = useCallback((productId: string) => {
     return partnerProducts.some(pp => pp.product_id === productId);
-  };
+  }, [partnerProducts]);
 
-  const getPartnerProduct = (productId: string) => {
+  const getPartnerProduct = useCallback((productId: string) => {
     return partnerProducts.find(pp => pp.product_id === productId);
-  };
+  }, [partnerProducts]);
 
-  const filteredProducts = allProducts.filter(product => {
-    const matchesSearch = (product.make?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                         (product.model?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-                         (product.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredProducts = useMemo(() => {
+    return allProducts.filter(product => {
+      const matchesSearch = (product.make?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                           (product.model?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                           (product.description?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allProducts, searchTerm, selectedCategory]);
 
-  const categories = ['all', ...Array.from(new Set(allProducts.map(p => p.category)))];
+  const categories = useMemo(() => {
+    return ['all', ...Array.from(new Set(allProducts.map(p => p.category)))];
+  }, [allProducts]);
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = useCallback((amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
     }).format(amount);
-  };
+  }, []);
+
+  const truncateDescription = useCallback((description: string, maxLength: number = 150) => {
+    if (!description) return '';
+    if (description.length <= maxLength) return description;
+    return description.substring(0, maxLength) + '...';
+  }, []);
+
+  // Callback handlers for ProductCard
+  const handleAddProductClick = useCallback((product: Product) => {
+    setSelectedProduct(product);
+    setShowAddModal(true);
+    setProfitMargin(20); // Default 20% profit
+    setBasePrice(product.original_price); // Use product's original price as base
+  }, []);
+
+  const handleEditProductClick = useCallback((product: Product, partnerProduct?: PartnerProduct) => {
+    setSelectedProduct(product);
+    setProfitMargin(partnerProduct?.profit_margin || 0);
+  }, []);
 
   if (loading && allProducts.length === 0) {
     return (
@@ -294,10 +444,18 @@ export default function DashboardProducts() {
           </div>
           <div className="flex items-end">
             <button
-              onClick={loadAllProducts}
-              className="w-full bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg"
+              onClick={() => loadAllProducts(true)}
+              disabled={refreshing}
+              className="w-full bg-amber-600 hover:bg-amber-700 disabled:bg-amber-400 text-white px-4 py-2 rounded-lg flex items-center justify-center"
             >
-              Refresh
+              {refreshing ? (
+                <>
+                  <LoadingSpinner />
+                  <span className="ml-2">Refreshing...</span>
+                </>
+              ) : (
+                'Refresh'
+              )}
             </button>
           </div>
         </div>
@@ -310,103 +468,16 @@ export default function DashboardProducts() {
           const isAdded = isProductAdded(product.id);
 
           return (
-            <div key={product.id} className={`bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700 ${isAdded ? 'ring-2 ring-green-500' : ''}`}>
-              {/* Product Image */}
-              <div className="h-48 bg-gray-200 dark:bg-gray-600 relative">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={product.images[0]}
-                    alt={`${product.make} ${product.model}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-16 h-16 text-gray-400" />
-                  </div>
-                )}
-                {isAdded && (
-                  <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                    Added
-                  </div>
-                )}
-              </div>
-
-              {/* Product Info */}
-              <div className="p-4">
-                <h3 className="font-semibold text-lg text-gray-900 dark:text-white mb-2">{product.title}</h3>
-                <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">{product.description}</p>
-                
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Category</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{product.category}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Stock</p>
-                    <p className="font-semibold text-gray-900 dark:text-white">{product.stock_quantity}</p>
-                  </div>
-                </div>
-
-                {/* Original Price Display */}
-                <div className="flex items-center justify-between mb-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                  <div>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Base Price</p>
-                    <p className="font-bold text-blue-900 dark:text-blue-300 text-lg">{formatCurrency(product.original_price)}</p>
-                  </div>
-                  <DollarSign className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-
-                {isAdded && partnerProduct && (
-                  <div className="mb-3 p-3 bg-green-50 dark:bg-green-900/30 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-green-800 dark:text-green-300">Your Selling Price</span>
-                      <span className="font-bold text-green-900 dark:text-green-200">{formatCurrency(partnerProduct.selling_price)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-green-700 dark:text-green-400">Profit Margin</span>
-                      <span className="font-semibold text-green-900 dark:text-green-200">{partnerProduct.profit_margin}%</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  {!isAdded ? (
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(product);
-                        setShowAddModal(true);
-                        setProfitMargin(20); // Default 20% profit
-                        setBasePrice(product.original_price); // Use product's original price as base
-                      }}
-                      className="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-lg flex items-center justify-center"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Product
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          setSelectedProduct(product);
-                          setProfitMargin(partnerProduct?.profit_margin || 0);
-                        }}
-                        className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg flex items-center justify-center"
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleRemoveProduct(partnerProduct!.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ProductCard
+              key={product.id}
+              product={product}
+              partnerProduct={partnerProduct}
+              isAdded={isAdded}
+              onAddProduct={handleAddProductClick}
+              onEditProduct={handleEditProductClick}
+              onRemoveProduct={handleRemoveProduct}
+              formatCurrency={formatCurrency}
+            />
           );
         })}
       </div>
@@ -428,7 +499,17 @@ export default function DashboardProducts() {
             
             <div className="mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">{selectedProduct.make} {selectedProduct.model}</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">{selectedProduct.description}</p>
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                {showFullDescription ? selectedProduct.description : truncateDescription(selectedProduct.description || '')}
+                {selectedProduct.description && selectedProduct.description.length > 150 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="text-amber-600 hover:text-amber-700 ml-1 font-medium"
+                  >
+                    {showFullDescription ? 'Show less' : 'Show more'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="mb-4">
@@ -482,6 +563,7 @@ export default function DashboardProducts() {
                   setSelectedProduct(null);
                   setProfitMargin(0);
                   setBasePrice(0);
+                  setShowFullDescription(false);
                 }}
                 className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
               >
@@ -507,7 +589,17 @@ export default function DashboardProducts() {
             
             <div className="mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white">{selectedProduct.make} {selectedProduct.model}</h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">{selectedProduct.description}</p>
+              <div className="text-gray-600 dark:text-gray-400 text-sm">
+                {showFullDescription ? selectedProduct.description : truncateDescription(selectedProduct.description || '')}
+                {selectedProduct.description && selectedProduct.description.length > 150 && (
+                  <button
+                    onClick={() => setShowFullDescription(!showFullDescription)}
+                    className="text-amber-600 hover:text-amber-700 ml-1 font-medium"
+                  >
+                    {showFullDescription ? 'Show less' : 'Show more'}
+                  </button>
+                )}
+              </div>
             </div>
 
             <div className="mb-6">
@@ -544,6 +636,7 @@ export default function DashboardProducts() {
                 onClick={() => {
                   setSelectedProduct(null);
                   setProfitMargin(0);
+                  setShowFullDescription(false);
                 }}
                 className="flex-1 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
               >
@@ -556,6 +649,7 @@ export default function DashboardProducts() {
                     handleUpdateProduct(partnerProduct.id, profitMargin);
                     setSelectedProduct(null);
                     setProfitMargin(0);
+                    setShowFullDescription(false);
                   }
                 }}
                 className="flex-1 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg"
